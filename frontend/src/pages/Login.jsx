@@ -68,7 +68,7 @@ const LoginPage = () => {
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
       <h1 className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold leading-tight max-w-[300px] sm:text-7xl sm:max-w-[590px] mx-auto mt-[-70px] text-center mb-10">
         Welcome to{" "}
-        <span className="text-blue-500 relative inline-block">TripGo</span>
+        <span className="text-blue-500 relative inline-block">VietNam Travel</span>
       </h1>
       <div className="bg-white/50 p-8 rounded-lg shadow-lg max-w-md w-full">
         <h2 className="text-3xl font-semibold text-center text-black">

@@ -38,7 +38,7 @@ const Header = () => {
             whileHover={{ scale: 1.05 }}
             transition={{ type: "spring", stiffness: 400, damping: 25 }}
           >
-            TripGo
+            VietNam Travel
             <motion.div
               className="absolute -bottom-2 left-0 right-0 h-1 bg-blue-500/30 rounded-full"
               initial={{ scaleX: 0 }}
@@ -55,7 +55,7 @@ const Header = () => {
           transition={{ delay: 0.6, duration: 0.8 }}
         >
           <p className="text-xl md:text-2xl lg:text-3xl font-medium text-gray-700">
-            Your ultimate travel companion!
+            Người bạn đồng hành lý tưởng cho mọi chuyến đi!
           </p>
 
           <motion.p
@@ -64,8 +64,7 @@ const Header = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.8, duration: 0.8 }}
           >
-            Discover exciting destinations, exclusive deals, and seamless
-            booking experience.
+            Khám phá những điểm đến hấp dẫn, ưu đãi độc quyền và trải nghiệm đặt vé liền mạch.
           </motion.p>
         </motion.div>
       </motion.div>

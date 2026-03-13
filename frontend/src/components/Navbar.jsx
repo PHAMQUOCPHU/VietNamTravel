@@ -84,7 +84,7 @@ const Navbar = () => {
                   <img src={logo} alt="Logo" />
                 </div>
                 <span className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-sky-600 to-blue-600 bg-clip-text text-transparent">
-                  TripGo
+                  VietNam Travel
                 </span>
               </div>
             </Link>

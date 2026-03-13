@@ -24,7 +24,7 @@ const About = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
         >
-          Welcome to <span className="text-blue-400">TripGo</span>
+          Welcome to <span className="text-blue-400">VietNam Travel</span>
         </motion.h1>
         <motion.p
           className="text-white mt-4 text-lg relative z-10"

@@ -12,10 +12,10 @@ const SearchBar = () => {
       viewport={{ once: true }}
     >
       <h1 className="text-3xl sm:text-4xl font-semibold mb-2 text-center">
-        Find Your Perfect <span className="text-blue-500">Destination</span>
+        Tìm điểm đến hoàn hảo của bạn cùng <span className="text-blue-500">VietNam Travel</span>
       </h1>
       <p className="text-center text-lg text-gray-600 mb-8">
-        Discover Destinations Based on Your Interests
+        Khám phá các điểm đến dựa trên sở thích của bạn
       </p>
 
       <motion.div
