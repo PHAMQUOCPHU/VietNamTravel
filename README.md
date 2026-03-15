@@ -1,6 +1,6 @@
-# TripGo - Travel Agency Booking System
+# VietNamTravel - Travel Agency Booking System
 
-Welcome to the TripGo repository! This project is a Travel Agency Booking System designed to help customers easily explore and book exciting travel packages. It provides a user-friendly interface for customers to view available packages, book their trips, and receive basic invoices for their bookings.
+Welcome to the VietNamTravel repository! This project is a Travel Agency Booking System designed to help customers easily explore and book exciting travel packages. It provides a user-friendly interface for customers to view available packages, book their trips, and receive basic invoices for their bookings.
 
 ## Project Overview
 
