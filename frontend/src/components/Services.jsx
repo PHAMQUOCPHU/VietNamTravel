@@ -17,7 +17,7 @@ const Services = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3, duration: 0.8 }}
       >
-        What we <span className="text-blue-500">Serve</span>
+        Dịch vụ của <span className="text-blue-500">Chúng tôi</span>
       </motion.h1>
       <motion.p
         className="text-lg text-gray-600 mb-12 text-center"
@@ -25,7 +25,7 @@ const Services = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5, duration: 0.8 }}
       >
-        We offer our best services
+        Chúng tôi mang đến những trải nghiệm dịch vụ tốt nhất dành cho bạn
       </motion.p>
 
       <ServiceList />

@@ -17,7 +17,7 @@ const AllTours = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3, duration: 0.8 }}
       >
-        Our Featured <span className="text-blue-500">Tours</span>
+        Những Tour <span className="text-blue-500">Nổi Bật</span>
       </motion.h1>
       <motion.p
         className="text-lg text-gray-600 mb-12 text-center max-w-2xl"
@@ -25,8 +25,8 @@ const AllTours = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.6, duration: 0.8 }}
       >
-        Unforgettable Journeys Tailored to Your Interests. Explore the world in
-        the most beautiful and luxurious ways possible.
+        Những hành trình khó quên được thiết kế riêng cho sở thích của bạn. 
+        Khám phá thế giới theo cách tuyệt vời và sang trọng nhất có thể.
       </motion.p>
       <TourList />
     </motion.div>

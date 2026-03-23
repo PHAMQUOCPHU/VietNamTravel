@@ -4,19 +4,21 @@ import { Hotel, Plane, Pyramid } from "lucide-react";
 
 const services = [
   {
-    icon: <Hotel className="text-blue-500" />,
-    title: "Flight Booking",
-    desc: "Book flights to your desired destination with ease. Our platform offers competitive prices and convenient booking options.",
+    // Đã đổi lại icon Plane cho đúng với Đặt vé máy bay
+    icon: <Plane className="text-blue-500 w-8 h-8" />, 
+    title: "Đặt vé máy bay",
+    desc: "Dễ dàng đặt vé đến điểm đến mơ ước. Nền tảng của chúng tôi luôn cung cấp giá cạnh tranh và nhiều lựa chọn linh hoạt.",
   },
   {
-    icon: <Plane className="text-blue-500" />,
-    title: "Hotel Booking",
-    desc: "Find and book the best hotels at your destination. From budget stays to luxury accommodations, we have something for every traveler.",
+    // Đã đổi lại icon Hotel cho đúng với Đặt phòng khách sạn
+    icon: <Hotel className="text-blue-500 w-8 h-8" />, 
+    title: "Đặt phòng khách sạn",
+    desc: "Tìm và đặt những khách sạn tốt nhất. Từ chỗ nghỉ bình dân đến nghỉ dưỡng sang trọng, chúng tôi đều có lựa chọn phù hợp.",
   },
   {
-    icon: <Pyramid className="text-blue-500" />,
-    title: "Adventure Tours",
-    desc: "Embark on thrilling adventure tours to some of the most exciting and unexplored destinations. Perfect for adrenaline junkies and nature lovers.",
+    icon: <Pyramid className="text-blue-500 w-8 h-8" />,
+    title: "Tour khám phá",
+    desc: "Dấn thân vào những hành trình đầy kịch tính tại các điểm đến mới lạ. Lựa chọn hoàn hảo cho những người yêu thiên nhiên và cảm giác mạnh.",
   },
 ];
 

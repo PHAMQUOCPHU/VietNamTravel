@@ -29,7 +29,7 @@ const TourCard = ({ tour }) => {
         <img src={photo} alt="tourimg" className="w-full h-64 object-cover" />
         {featured && (
           <span className="absolute top-4 left-4 bg-blue-500 text-white py-1 px-3 rounded-md text-sm font-semibold">
-            Featured
+            Nổi bật
           </span>
         )}
       </div>

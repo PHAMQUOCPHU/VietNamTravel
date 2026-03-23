@@ -138,7 +138,7 @@ const TourDetails = () => {
               }}
               className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 px-6 rounded-xl font-semibold shadow hover:shadow-lg hover:scale-105 transition-all duration-300"
             >
-              🎉 Book This Tour
+              🎉 Đặt Tour Ngay!
             </button>
           </div>
 

@@ -1,162 +1,123 @@
-import tourImg01 from "../t1.jpg";
-import tourImg02 from "../t2.jpg";
-import tourImg03 from "../t3.jpg";
-import tourImg04 from "../t4.jpg";
-import tourImg05 from "../t5.jpg";
-import tourImg06 from "../t6.jpg";
-import tourImg07 from "../t7.jpg";
+import tourImg01 from "../caurongdanang.png";
+import tourImg02 from "../tranganninhbinh.png";
+import tourImg03 from "../thunglungtinhyeudalat.png";
+import tourImg04 from "../vuonquocgiapumat.png";
+import tourImg05 from "../nuibadentayninh.png";
+import tourImg06 from "../muicamau.png";
+import tourImg07 from "../biennhatrangkhanhhoa.png";
+import tourImg08 from "../thapnghinhphongphuyen.png";
 
 const tours = [
   {
     id: "01",
-    title: "Westminster Bridge",
-    city: "London",
+    title: "Cầu Rồng",
+    city: "Đà Nẵng",
     distance: 300,
     price: 10000,
     maxGroupSize: 10,
-    desc: "Experience the iconic Westminster Bridge, offering stunning views of the Houses of Parliament and Big Ben in the heart of London.",
+    desc: "Biểu tượng kiến trúc độc đáo của Đà Nẵng với hình ảnh con rồng vươn mình ra biển lớn, đặc sắc với màn phun lửa và nước vào cuối tuần.",
     availableDates: ["5-1-2025", "2-1-2025", "7-2-2025"],
-    reviews: [
-      {
-        name: "John Doe",
-        rating: 4.6,
-      },
-    ],
+    reviews: [{ name: "John Doe", rating: 4.6 }],
     avgRating: 4.5,
     photo: tourImg01,
     featured: true,
   },
   {
     id: "02",
-    title: "Bali, Indonesia",
-    city: "Indonesia",
+    title: "Tràng An",
+    city: "Ninh Bình",
     distance: 400,
     price: 10000,
     maxGroupSize: 8,
-    desc: "Relax in the tropical paradise of Bali, Indonesia, known for its beaches, jungles, and vibrant culture.",
+    desc: "Khám phá di sản thế giới với hệ thống hang động xuyên thủy kỳ ảo và những dãy núi đá vôi sừng sững bên dòng sông Sào Khê thơ mộng.",
     availableDates: ["5-1-2025", "2-1-2025", "7-2-2025"],
-    reviews: [
-      {
-        name: "John Doe",
-        rating: 4.6,
-      },
-    ],
+    reviews: [{ name: "John Doe", rating: 4.6 }],
     avgRating: 4.5,
     photo: tourImg02,
     featured: true,
   },
   {
     id: "03",
-    title: "Snowy Mountains, Thailand",
-    city: "Thailand",
+    title: "Thung Lũng Tình Yêu",
+    city: "Đà Lạt",
     distance: 500,
     price: 10000,
     maxGroupSize: 8,
-    desc: "Discover the serene beauty of the Snowy Mountains in Thailand, perfect for adventurers and nature lovers.",
+    desc: "Điểm đến lãng mạn bậc nhất xứ sở sương mù với cảnh sắc thiên nhiên xanh mướt, đồi thông bạt ngàn và các tiểu cảnh đầy nghệ thuật.",
     availableDates: ["5-1-2025", "2-1-2025", "7-2-2025"],
-    reviews: [
-      {
-        name: "John Doe",
-        rating: 4.6,
-      },
-    ],
+    reviews: [{ name: "John Doe", rating: 4.6 }],
     avgRating: 4.5,
     photo: tourImg03,
     featured: true,
   },
   {
     id: "04",
-    title: "Beautiful Sunrise, Thailand",
-    city: "Thailand",
+    title: "Vườn Quốc Gia Pù Mát",
+    city: "Nghệ An",
     distance: 500,
     price: 10000,
     maxGroupSize: 8,
-    desc: "Wake up early to witness the breathtaking sunrise over Thailand's stunning landscapes.",
+    desc: "Trải nghiệm thiên nhiên hoang sơ tại vùng lõi khu dự trữ sinh quyển thế giới, nơi có thác Kèm hùng vĩ và dòng sông Giăng êm đềm.",
     availableDates: ["5-1-2025", "2-1-2025", "7-2-2025"],
-    reviews: [
-      {
-        name: "John Doe",
-        rating: 4.6,
-      },
-    ],
+    reviews: [{ name: "John Doe", rating: 4.6 }],
     avgRating: 4.5,
     photo: tourImg04,
     featured: true,
   },
   {
     id: "05",
-    title: "Nusa Pendia Bali, Indonesia",
-    city: "Indonesia",
+    title: "Núi Bà Đen",
+    city: "Tây Ninh",
     distance: 500,
     price: 10000,
     maxGroupSize: 8,
-    desc: "Explore the exotic beauty of Nusa Pendia, a tranquil island near Bali, offering pristine beaches and crystal-clear waters.",
+    desc: "Chinh phục 'Nóc nhà Nam Bộ' bằng cáp treo hiện đại, chiêm bái tượng Phật Bà Tây Bổ Đà Sơn cao nhất châu Á giữa biển mây bồng bềnh.",
     availableDates: ["5-1-2025", "2-1-2025", "7-2-2025"],
-    reviews: [
-      {
-        name: "John Doe",
-        rating: 4.6,
-      },
-    ],
+    reviews: [{ name: "John Doe", rating: 4.6 }],
     avgRating: 4.5,
     photo: tourImg05,
     featured: false,
   },
   {
     id: "06",
-    title: "Cherry Blossoms Spring",
-    city: "Japan",
+    title: "Mũi Cà Mau",
+    city: "Cà Mau",
     distance: 500,
     price: 10000,
     maxGroupSize: 8,
-    desc: "Experience the magic of Japan in spring, as cherry blossoms bloom, transforming the country into a pink wonderland.",
+    desc: "Đặt chân lên mảnh đất tận cùng phía Nam Tổ quốc, nơi bạn có thể ngắm mặt trời mọc và lặn trên biển tại cùng một địa điểm.",
     availableDates: ["5-1-2025", "2-1-2025", "7-2-2025"],
-    reviews: [
-      {
-        name: "John Doe",
-        rating: 4.6,
-      },
-    ],
+    reviews: [{ name: "John Doe", rating: 4.6 }],
     avgRating: 4.5,
     photo: tourImg06,
     featured: false,
   },
   {
     id: "07",
-    title: "Holmen Lofoten",
-    city: "France",
+    title: "Biển Nha Trang",
+    city: "Khánh Hòa",
     distance: 500,
     price: 10000,
     maxGroupSize: 8,
-    desc: "Explore the rugged beauty of Holmen Lofoten, with its dramatic landscapes, crystal-clear waters, and vibrant fishing villages.",
+    desc: "Tận hưởng kỳ nghỉ tại một trong những vịnh biển đẹp nhất thế giới với làn nước trong xanh, bãi cát trắng mịn và các dịch vụ giải trí đẳng cấp.",
     availableDates: ["5-1-2025", "2-1-2025", "7-2-2025"],
-    reviews: [
-      {
-        name: "John Doe",
-        rating: 4.6,
-      },
-    ],
+    reviews: [{ name: "John Doe", rating: 4.6 }],
     avgRating: 4.5,
     photo: tourImg07,
     featured: false,
   },
   {
     id: "08",
-    title: "Snowy Mountains, Thailand",
-    city: "Thailand",
+    title: "Tháp Nghinh Phong",
+    city: "Phú Yên",
     distance: 500,
     price: 10000,
     maxGroupSize: 8,
-    desc: "Revisit the magical Snowy Mountains, Thailand, a place of tranquility and adventure perfect for a memorable getaway.",
+    desc: "Kiệt tác kiến trúc mới lấy cảm hứng từ Gành Đá Đĩa, nơi đón gió biển và tạo nên những bản nhạc thiên nhiên độc đáo bên bờ biển Tuy Hòa.",
     availableDates: ["5-1-2025", "2-1-2025", "7-2-2025"],
-    reviews: [
-      {
-        name: "John Doe",
-        rating: 4.6,
-      },
-    ],
+    reviews: [{ name: "John Doe", rating: 4.6 }],
     avgRating: 4.5,
-    photo: tourImg03,
+    photo: tourImg08,
     featured: false,
   },
 ];

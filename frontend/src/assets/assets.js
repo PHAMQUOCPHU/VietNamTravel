@@ -4,7 +4,7 @@ import twitter_icon from "./twitter_icon.svg";
 import earth from "./earth.png";
 import headerimg from "./headerimg.png";
 
-import { Compass, MapPin, UsersRound } from "lucide-react";
+import { Compass, MapPin, UsersRound, Wallet } from "lucide-react";
 import user from "./profile_icon.png";
 
 export const assets = {
@@ -18,21 +18,23 @@ export const assets = {
 
 export const stepsData = [
   {
-    title: "Location",
-    description:
-      "Where are you going? We'll find the perfect destination for your trip.",
+    title: "Địa điểm",
+    description: "Bạn dự định đi đâu? Chúng tôi sẽ tìm điểm đến hoàn hảo cho chuyến đi của bạn.",
     icon: MapPin,
   },
   {
-    title: "Distance",
-    description:
-      "Distance from your location. Choose the perfect distance for your trip.",
+    title: "Khoảng cách",
+    description: "Khoảng cách từ vị trí của bạn. Chọn phạm vi phù hợp nhất cho lộ trình.",
     icon: Compass,
   },
   {
-    title: "Max People",
-    description:
-      "Max people. Choose the perfect number of people for your trip.",
+    title: "Số lượng người",
+    description: "Số người tối đa. Chọn số lượng thành viên tham gia chuyến đi của bạn.",
     icon: UsersRound,
+  },
+  {
+    title: "Ngân sách",
+    description: "Lựa chọn mức giá phù hợp để chúng tôi đề xuất các tour vừa túi tiền nhất.",
+    icon: Wallet,
   },
 ];

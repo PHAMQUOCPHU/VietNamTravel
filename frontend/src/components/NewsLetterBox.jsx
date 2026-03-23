@@ -6,7 +6,8 @@ const NewsLetterBox = () => {
   const onSubmitHandler = (event) => {
     event.preventDefault();
     event.target.reset();
-    toast("Thank you for subscribing!");
+    // Chuyển thông báo thành tiếng Việt
+    toast.success("Cảm ơn bạn đã đăng ký nhận tin!");
   };
 
   return (
@@ -23,7 +24,7 @@ const NewsLetterBox = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3, duration: 0.8 }}
       >
-        Subscribe Now for <span className="text-blue-500">Notifications!</span>
+        Đăng ký ngay để nhận <span className="text-blue-500">Thông báo!</span>
       </motion.h1>
       <motion.p
         className="text-lg text-gray-600 mb-12 max-w-2xl mx-auto"
@@ -31,15 +32,15 @@ const NewsLetterBox = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.6, duration: 0.8 }}
       >
-        Stay one step ahead with our exclusive travel alerts!
+        Luôn dẫn đầu xu hướng với những ưu đãi du lịch độc quyền từ chúng tôi!
       </motion.p>
       <form
         onSubmit={onSubmitHandler}
-        className="w-full sm:w-1/2 mx-auto flex items-center gap-4"
+        className="w-full sm:w-1/2 mx-auto flex flex-col sm:flex-row items-center gap-4 px-4"
       >
         <motion.input
           type="email"
-          placeholder="Enter your email"
+          placeholder="Nhập email của bạn"
           className="bg-inherit w-full py-3 px-4 border-2 border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           required
           initial={{ opacity: 0, x: -50 }}
@@ -48,12 +49,12 @@ const NewsLetterBox = () => {
         />
         <motion.button
           type="submit"
-          className="bg-gradient-to-b from-sky-500 to-blue-500 text-white py-3 px-6 rounded-lg hover:from-sky-600 hover:to-blue-600 transition ease-in-out duration-200"
+          className="bg-gradient-to-b from-sky-500 to-blue-500 text-white py-3 px-8 rounded-lg hover:from-sky-600 hover:to-blue-600 transition ease-in-out duration-200 whitespace-nowrap"
           initial={{ opacity: 0, x: 50 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 1, duration: 0.5 }}
         >
-          Subscribe
+          Đăng ký
         </motion.button>
       </form>
     </motion.div>
