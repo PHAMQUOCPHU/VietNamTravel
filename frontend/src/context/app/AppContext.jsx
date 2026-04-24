@@ -3,6 +3,7 @@ import React, { createContext, useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { getSocket } from "../../lib/socketClient";
+import { BACKEND_URL } from "../../config/env";
 import {
   getNotifications,
   getTours,
@@ -43,7 +44,7 @@ const writeToursCache = (tours) => {
 
 const AppContextProvider = (props) => {
   const navigate = useNavigate();
-  const backendUrl = import.meta.env.VITE_BACKEND_URL;
+  const backendUrl = BACKEND_URL;
 
   const [token, setToken] = useState(localStorage.getItem("token") || "");
   const [user, setUser] = useState(null);

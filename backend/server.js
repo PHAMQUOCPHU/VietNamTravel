@@ -38,6 +38,8 @@ const allowedOrigins = [
   "http://127.0.0.1:5173",
   "http://127.0.0.1:5174",
   "http://127.0.0.1:3000",
+  "https://viet-nam-travel.vercel.app",
+  "https://viet-nam-travel-ioy6lru7z-phamquocphus-projects.vercel.app",
 ];
 
 // --- 2. CẤU HÌNH HTTP SERVER & SOCKET.IO ---
@@ -109,7 +111,11 @@ app.get("/api/messages/admin/users", async (req, res) => {
       {
         $group: {
           _id: {
-            $cond: [{ $eq: ["$senderId", "ADMIN"] }, "$receiverId", "$senderId"],
+            $cond: [
+              { $eq: ["$senderId", "ADMIN"] },
+              "$receiverId",
+              "$senderId",
+            ],
           },
           lastMessage: { $first: "$message" },
           lastMessageAt: { $first: "$createdAt" },
@@ -144,7 +150,9 @@ app.get("/api/messages/admin/users", async (req, res) => {
     const userDetails = await userModel
       .find({ _id: { $in: userIds } })
       .select("name email image");
-    const userMap = new Map(userDetails.map((user) => [String(user._id), user]));
+    const userMap = new Map(
+      userDetails.map((user) => [String(user._id), user]),
+    );
 
     const users = conversations.map((item) => {
       const user = userMap.get(item._id);
@@ -286,6 +294,6 @@ app.get("/", (req, res) => {
 });
 
 // DÙNG httpServer.listen ĐỂ CHẠY CẢ APP VÀ SOCKET
-httpServer.listen(PORT, () => {
+httpServer.listen(PORT, "0.0.0.0", () => {
   console.log(`🚀 Server chạy ổn định tại: http://localhost:${PORT}`);
 });

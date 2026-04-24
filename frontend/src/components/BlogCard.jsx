@@ -1,10 +1,11 @@
 import React from "react";
 import { Calendar, Eye, MessageCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { BACKEND_URL } from "../config/env";
 
 const BlogCard = ({ blog }) => {
   const navigate = useNavigate();
-  const backendUrl = "http://localhost:5001";
+  const backendUrl = BACKEND_URL;
   const imageUrl =
     blog?.image && String(blog.image).startsWith("http")
       ? blog.image

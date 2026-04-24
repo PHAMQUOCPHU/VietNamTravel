@@ -5,6 +5,7 @@ import { Calendar, ArrowLeft, Loader2, User, Eye, MessageCircle } from "lucide-r
 import { toast } from "react-toastify";
 import { useContext } from "react";
 import { AppContext } from "../context/AppContext";
+import { BACKEND_URL } from "../config/env";
 
 const BlogDetail = () => {
   const { id } = useParams();
@@ -14,7 +15,7 @@ const BlogDetail = () => {
   const [comment, setComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
-  const backendUrl = "http://localhost:5001";
+  const backendUrl = BACKEND_URL;
   const resolveImageUrl = (imageValue) => {
     if (!imageValue) return "";
     if (String(imageValue).startsWith("http")) return imageValue;

@@ -21,6 +21,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { insuranceImages } from "../assets";
+import { BACKEND_URL } from "../config/env";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 28 },
@@ -163,7 +164,7 @@ const vietNamTravelTimeline = [
   },
 ];
 
-const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:5001";
+const backendUrl = BACKEND_URL;
 
 const insuranceFaq = [
   {

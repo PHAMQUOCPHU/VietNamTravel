@@ -1,4 +1,5 @@
 import { io } from "socket.io-client";
+import { BACKEND_URL } from "../config/env";
 
 let socket = null;
 let currentBase = "";
@@ -7,7 +8,7 @@ let currentBase = "";
  * Một kết nối Socket.io dùng chung (chat + thông báo).
  */
 export function getSocket(baseUrl) {
-  const url = (baseUrl || "http://localhost:5001").replace(/\/+$/, "");
+  const url = (baseUrl || BACKEND_URL).replace(/\/+$/, "");
   if (socket && currentBase !== url) {
     socket.disconnect();
     socket = null;

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { MessageCircle, X, Send } from "lucide-react";
 import axios from "axios";
 import { getSocket } from "../lib/socketClient";
+import { BACKEND_URL } from "../config/env";
 
 const ChatWidget = ({ layout = "fixed" }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -10,7 +11,7 @@ const ChatWidget = ({ layout = "fixed" }) => {
   const [userId, setUserId] = useState(null);
   const [unreadCount, setUnreadCount] = useState(0);
   const scrollRef = useRef();
-  const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:5001";
+  const backendUrl = BACKEND_URL;
 
   // 1. Logic kiểm tra Login/Logout liên tục
   useEffect(() => {

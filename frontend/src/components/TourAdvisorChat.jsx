@@ -3,13 +3,7 @@ import axios from "axios";
 import ReactMarkdown from "react-markdown";
 import { Link } from "react-router-dom";
 import { Sparkles, Send, Loader2, X, Bot } from "lucide-react";
-
-/** Tránh VITE_BACKEND_URL dạng .../api khiến thành .../api/api/tour-advisor → 404 */
-const getBackendBase = () => {
-  const raw =
-    import.meta.env.VITE_BACKEND_URL?.trim() || "http://localhost:5001";
-  return raw.replace(/\/+$/, "").replace(/\/api\/?$/i, "");
-};
+import { BACKEND_BASE_URL } from "../config/env";
 
 const TourAdvisorChat = () => {
   const [open, setOpen] = useState(false);
@@ -56,7 +50,7 @@ const TourAdvisorChat = () => {
     setLoading(true);
     try {
       const { data } = await axios.post(
-        `${getBackendBase()}/api/tour-advisor`,
+        `${BACKEND_BASE_URL}/api/tour-advisor`,
         { message: text },
         { timeout: 25000 },
       );
