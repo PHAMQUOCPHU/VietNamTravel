@@ -39,7 +39,6 @@ const allowedOrigins = [
   "http://127.0.0.1:5174",
   "http://127.0.0.1:3000",
   "https://viet-nam-travel.vercel.app",
-  "https://viet-nam-travel-ioy6lru7z-phamquocphus-projects.vercel.app",
 ];
 
 // --- 2. CẤU HÌNH HTTP SERVER & SOCKET.IO ---
@@ -61,7 +60,11 @@ app.use(express.urlencoded({ extended: true }));
 app.use(
   cors({
     origin: function (origin, callback) {
-      if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      if (
+        !origin ||
+        allowedOrigins.indexOf(origin) !== -1 ||
+        origin.endsWith(".vercel.app")
+      ) {
         callback(null, true);
       } else {
         callback(new Error("CORS policy không cho phép nguồn này"));
