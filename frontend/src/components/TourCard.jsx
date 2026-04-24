@@ -148,15 +148,9 @@ const TourCard = ({ tour }) => {
       </div>
 
       <div className="p-4 flex flex-col flex-grow">
-        <div className="flex justify-between items-center mb-2 text-gray-500 text-[12px] dark:text-slate-400">
-          <div className="flex items-center">
-            <MapPin size={14} className="mr-1 text-blue-500" />
-            <span>{city}</span>
-          </div>
-          <div className="flex items-center text-orange-400 font-medium">
-            <Star size={14} className="mr-1 fill-orange-400" />
-            <span>{avgRating || "4.5"}</span>
-          </div>
+        <div className="flex items-center mb-2 text-gray-500 text-[12px] dark:text-slate-400">
+          <MapPin size={14} className="mr-1 text-blue-500" />
+          <span>{city}</span>
         </div>
 
         <h3 className="text-md font-bold text-gray-800 mb-1 line-clamp-2 h-12 leading-tight dark:text-slate-100">

@@ -17,6 +17,7 @@ import {
   SearchX,
   SlidersHorizontal,
   MapPinned,
+  Search,
 } from "lucide-react";
 import TourCard from "../components/TourCard";
 import { AppContext } from "../context/AppContext";
@@ -257,6 +258,7 @@ const Tour = () => {
   const [priceMax, setPriceMax] = useState(20_000_000);
   const [sliderMax, setSliderMax] = useState(20_000_000);
   const [selectedRegions, setSelectedRegions] = useState(() => new Set());
+  const [searchQuery, setSearchQuery] = useState("");
 
   const toursByCategory = useMemo(() => {
     if (!Array.isArray(tours)) return [];
@@ -303,6 +305,14 @@ const Tour = () => {
     if (selectedRegions.size > 0) {
       list = list.filter((t) => selectedRegions.has(t.region));
     }
+    if (searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase();
+      list = list.filter((t) => {
+        const titleMatch = String(t.title || "").toLowerCase().includes(q);
+        const cityMatch = String(t.city || "").toLowerCase().includes(q);
+        return titleMatch || cityMatch;
+      });
+    }
     const arr = [...list];
     if (sortBy === "price-asc") {
       arr.sort((a, b) => getTourListPrice(a) - getTourListPrice(b));
@@ -314,7 +324,7 @@ const Tour = () => {
       );
     }
     return arr;
-  }, [toursByCategory, priceMin, priceMax, selectedRegions, sortBy]);
+  }, [toursByCategory, priceMin, priceMax, selectedRegions, sortBy, searchQuery]);
 
   const emptyLabel = selectedCategory
     ? TOUR_CATEGORY_LABELS[selectedCategory] || selectedCategory
@@ -399,21 +409,33 @@ const Tour = () => {
                   "Không có tour phù hợp"
                 )}
               </p>
-              <div className="flex flex-wrap items-center gap-2">
-                <label className="text-xs font-bold uppercase text-slate-400">
-                  Sắp xếp
-                </label>
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm outline-none focus:border-blue-400 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200"
-                >
-                  {SORT_OPTIONS.map((o) => (
-                    <option key={o.value} value={o.value}>
-                      {o.label}
-                    </option>
-                  ))}
-                </select>
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Tìm tên tour, tỉnh thành..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="rounded-xl border border-slate-200 bg-white pl-4 pr-10 py-2 text-sm font-semibold text-slate-700 shadow-sm outline-none focus:border-blue-400 min-w-[220px] dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200"
+                  />
+                  <Search size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                </div>
+                <div className="flex items-center gap-2">
+                  <label className="text-xs font-bold uppercase text-slate-400">
+                    Sắp xếp
+                  </label>
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm outline-none focus:border-blue-400 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200"
+                  >
+                    {SORT_OPTIONS.map((o) => (
+                      <option key={o.value} value={o.value}>
+                        {o.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
             </div>
 

@@ -1,5 +1,6 @@
 import reviewModel from "../models/reviewModel.js";
 import bookingModel from "../models/bookingModel.js";
+import { uploadBufferToCloudinary, CLOUDINARY_FOLDERS } from "../services/cloudinaryUpload.js";
 
 const surveyKeys = ["guide", "transport", "food", "schedule"];
 
@@ -20,8 +21,20 @@ const getTravelStatus = (bookAt, duration) => {
 
 export const createReview = async (req, res) => {
   try {
+    console.log("=== CREATE REVIEW ===");
+    console.log("req.body:", req.body);
+    console.log("req.files:", req.files);
+    
     const userId = req.userId;
-    const { bookingId, rating, comment = "", survey } = req.body;
+    let { bookingId, rating, comment = "", survey } = req.body;
+
+    if (typeof survey === "string") {
+      try {
+        survey = JSON.parse(survey);
+      } catch (err) {
+        return res.json({ success: false, message: "Dữ liệu khảo sát không hợp lệ" });
+      }
+    }
 
     if (!bookingId || !rating || !survey) {
       return res.json({ success: false, message: "Thiếu dữ liệu đánh giá" });
@@ -64,12 +77,21 @@ export const createReview = async (req, res) => {
       return res.json({ success: false, message: "Đơn này đã được đánh giá trước đó" });
     }
 
+    let imageUrls = [];
+    if (req.files && req.files.length > 0) {
+      const uploadPromises = req.files.map((file) =>
+        uploadBufferToCloudinary(file, CLOUDINARY_FOLDERS.reviews)
+      );
+      imageUrls = await Promise.all(uploadPromises);
+    }
+
     const newReview = await reviewModel.create({
       userId,
       tourId: booking.tourId?._id,
       bookingId,
       rating: Number(rating),
       comment: String(comment || "").trim(),
+      images: imageUrls,
       survey,
     });
 
@@ -121,6 +143,7 @@ export const getReviewStatsByTour = async (req, res) => {
       _id: r._id,
       rating: r.rating,
       comment: r.comment,
+      images: r.images || [],
       createdAt: r.createdAt,
       userName: r.userId?.name || "Khách hàng",
     }));
@@ -129,6 +152,7 @@ export const getReviewStatsByTour = async (req, res) => {
       _id: r._id,
       rating: r.rating,
       comment: r.comment,
+      images: r.images || [],
       createdAt: r.createdAt,
       userName: r.userId?.name || "Khách hàng",
     }));

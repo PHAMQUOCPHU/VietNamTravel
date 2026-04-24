@@ -30,7 +30,7 @@ const SearchResultList = () => {
     () => location.state ?? EMPTY_SEARCH_FILTERS,
     [location.state],
   );
-  const [filteredTours, setFilteredTours] = useState([]);
+  const [filteredSchedules, setFilteredSchedules] = useState([]);
 
   useEffect(() => {
     if (!tours || !searchData) return;
@@ -47,7 +47,9 @@ const SearchResultList = () => {
       return dayStamp(dayKey);
     };
 
-    const results = tours.filter((tour) => {
+    const results = [];
+
+    tours.forEach((tour) => {
       const prov = String(searchData.province ?? "").trim();
       const matchCity =
         !prov ||
@@ -70,54 +72,46 @@ const SearchResultList = () => {
       const pref = String(searchData.preference ?? "").trim();
       const matchCategory =
         !pref ||
+        pref === "Tất cả loại hình" ||
         pref === "Tất cả" ||
         normalizeTourCategory(tour.category) === normalizeTourCategory(pref);
 
-      const totalGuestsRequested =
-        (Number(searchData.adults) || 0) + (Number(searchData.children) || 0);
-      const maxGs = Number(tour.maxGroupSize) || 0;
-      const joined = Number(tour.joinedParticipants) || 0;
-      const remainingSlots = Math.max(0, maxGs - joined);
-      const hasEnoughSpace = remainingSlots >= totalGuestsRequested;
+      if (!matchCity || !matchRegion || !matchCategory) return;
 
       const slots = Array.isArray(tour.availableDates) ? tour.availableDates : [];
       const hasDateFilter = Boolean(searchData.startDate || searchData.endDate);
 
-      let matchTime = true;
-      if (hasDateFilter) {
-        if (!slots.length) {
-          matchTime = false;
-        } else {
-          const startT = searchData.startDate
-            ? dayStamp(searchData.startDate)
-            : null;
-          const endT = searchData.endDate ? dayStamp(searchData.endDate) : null;
+      const startT = searchData.startDate ? dayStamp(searchData.startDate) : null;
+      const endT = searchData.endDate ? dayStamp(searchData.endDate) : null;
 
-          matchTime = slots.some((slot) => {
-            const t = slotDayStamp(slot);
-            if (t == null) return false;
-            if (startT != null && endT != null) {
-              const lo = Math.min(startT, endT);
-              const hi = Math.max(startT, endT);
-              return t >= lo && t <= hi;
-            }
-            if (startT != null && endT == null) return t >= startT;
-            if (startT == null && endT != null) return t <= endT;
-            return true;
-          });
-        }
+      let matchedSlots = slots;
+      if (hasDateFilter) {
+        matchedSlots = slots.filter((slot) => {
+          const t = slotDayStamp(slot);
+          if (t == null) return false;
+          if (startT != null && endT != null) {
+            const lo = Math.min(startT, endT);
+            const hi = Math.max(startT, endT);
+            return t >= lo && t <= hi;
+          }
+          if (startT != null && endT == null) return t >= startT;
+          if (startT == null && endT != null) return t <= endT;
+          return true;
+        });
       }
 
-      return (
-        matchCity &&
-        matchRegion &&
-        matchCategory &&
-        hasEnoughSpace &&
-        matchTime
-      );
+      if (hasDateFilter && matchedSlots.length === 0) return;
+
+      if (matchedSlots.length > 0) {
+        matchedSlots.forEach((slot) => {
+          results.push({ tour, slot });
+        });
+      } else {
+        results.push({ tour, slot: null });
+      }
     });
 
-    setFilteredTours(results);
+    setFilteredSchedules(results);
     window.scrollTo(0, 0);
   }, [tours, searchData]);
 
@@ -132,9 +126,26 @@ const SearchResultList = () => {
     return image;
   };
 
+  const formatDate = (isoString) => {
+    if (!isoString) return "Đang cập nhật";
+    const datePart = String(isoString).split("|")[0];
+    const d = new Date(datePart);
+    if (isNaN(d)) return "Đang cập nhật";
+    return d.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
+  };
+
+  const calculateEndDate = (isoString, duration) => {
+    if (!isoString) return "Đang cập nhật";
+    const datePart = String(isoString).split("|")[0];
+    const d = new Date(datePart);
+    if (isNaN(d)) return "Đang cập nhật";
+    d.setDate(d.getDate() + (Number(duration) - 1 || 0));
+    return d.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-blue-50/40 py-12 px-4">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-slate-50 py-12 px-4">
+      <div className="max-w-[1400px] mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
@@ -143,14 +154,14 @@ const SearchResultList = () => {
           <div className="flex items-center gap-2 text-white/95 mb-2">
             <Sparkles size={18} />
             <span className="text-xs font-black uppercase tracking-widest">
-              Kết quả thông minh
+              Lịch trình khả dụng
             </span>
           </div>
           <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight uppercase">
             Kết quả tìm kiếm
           </h1>
           <p className="text-blue-100 text-sm mt-2 font-medium">
-            Đang hiển thị các tour phù hợp cho{" "}
+            Đang hiển thị {filteredSchedules.length} lịch trình phù hợp cho{" "}
             <span className="font-black text-white">
               {(Number(searchData.adults) || 0) + (Number(searchData.children) || 0)}{" "}
               khách
@@ -189,7 +200,7 @@ const SearchResultList = () => {
           </div>
         </div>
 
-        {filteredTours.length > 0 ? (
+        {filteredSchedules.length > 0 ? (
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
@@ -197,141 +208,125 @@ const SearchResultList = () => {
             className="bg-white rounded-[32px] shadow-[0_20px_60px_rgba(37,99,235,0.10)] border border-slate-100 overflow-hidden"
           >
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
+              <table className="w-full text-left border-collapse min-w-[1000px]">
                 <thead>
                   <tr className="bg-slate-50 border-b border-slate-100">
-                    <th className="p-6 text-[10px] font-black uppercase text-slate-400 tracking-widest">
-                      Tour & Địa điểm
-                    </th>
-                    <th className="p-6 text-[10px] font-black uppercase text-slate-400 tracking-widest text-center">
-                      Thể loại
-                    </th>
-                    <th className="p-6 text-[10px] font-black uppercase text-slate-400 tracking-widest text-center">
-                      Thời gian
-                    </th>
-                    <th className="p-6 text-[10px] font-black uppercase text-slate-400 tracking-widest text-center">
-                      Tình trạng chỗ
-                    </th>
-                    <th className="p-6 text-[10px] font-black uppercase text-slate-400 tracking-widest text-center">
-                      Giá vé
-                    </th>
-                    <th className="p-6 text-[10px] font-black uppercase text-slate-400 tracking-widest text-right">
-                      Hành động
-                    </th>
+                    <th className="p-4 text-[11px] font-black uppercase text-slate-500 tracking-widest">Tour</th>
+                    <th className="p-4 text-[11px] font-black uppercase text-slate-500 tracking-widest w-32">Số chỗ</th>
+                    <th className="p-4 text-[11px] font-black uppercase text-slate-500 tracking-widest w-40">Thời gian</th>
+
+                    <th className="p-4 text-[11px] font-black uppercase text-slate-500 tracking-widest w-40 text-center">Giá tour</th>
+                    <th className="p-4 text-[11px] font-black uppercase text-slate-500 tracking-widest w-40 text-center">Hành động</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-50">
-                  {filteredTours.map((tour) => {
-                    const remainingSlots =
-                      tour.maxGroupSize - (tour.joinedParticipants || 0);
+                <tbody className="divide-y divide-slate-100">
+                  {filteredSchedules.map((schedule, idx) => {
+                    const { tour, slot } = schedule;
+                    const maxGs = Number(tour.maxGroupSize) || 0;
+                    const joined = Number(tour.joinedParticipants) || 0;
+                    const remainingSlots = Math.max(0, maxGs - joined);
+                    const isFull = remainingSlots === 0;
+
                     return (
                       <motion.tr
-                        key={tour._id}
-                        className="group hover:bg-blue-50/40 transition-all cursor-default"
-                        whileHover={{ scale: 1.003 }}
+                        key={`${tour._id}-${slot || idx}`}
+                        className="group hover:bg-slate-50/80 transition-colors"
                       >
-                        <td className="p-6">
-                          <div className="flex items-center gap-4">
+                        <td className="p-4">
+                          <div className="flex gap-4">
                             <div className="relative flex-shrink-0">
                               <img
                                 src={getImageUrl(tour.images?.[0] || tour.image)}
                                 alt={tour.title}
-                                className="w-20 h-20 rounded-2xl object-cover shadow-md group-hover:scale-105 transition-transform"
+                                className="w-20 h-20 rounded-xl object-cover shadow-sm group-hover:scale-105 transition-transform"
                                 onError={(e) => {
-                                  e.target.src =
-                                    "https://via.placeholder.com/150?text=No+Image";
+                                  e.target.src = "https://via.placeholder.com/150?text=No+Image";
                                 }}
                               />
-                              {tour.featured && (
-                                <div className="absolute -top-2 -left-2 bg-orange-500 text-white p-1.5 rounded-lg shadow-lg">
-                                  <Tag size={12} fill="white" />
-                                </div>
-                              )}
                             </div>
-                            <div className="max-w-[280px]">
-                              <p className="font-black text-slate-800 text-base leading-tight mb-1 group-hover:text-blue-600 transition-colors line-clamp-2">
+                            <div className="flex flex-col justify-center max-w-[320px]">
+                              <span className="text-[10px] font-bold text-blue-500 uppercase tracking-wider mb-1 flex items-center gap-1">
+                                <MapPin size={10} /> {tour.city}
+                              </span>
+                              <p className="font-bold text-slate-800 text-sm leading-snug group-hover:text-blue-600 transition-colors line-clamp-2">
                                 {tour.title}
                               </p>
-                              <div className="flex items-center gap-1 text-slate-400 font-bold text-[10px] uppercase tracking-tighter">
-                                <MapPin size={12} className="text-blue-500" />{" "}
-                                {tour.city} ({tour.region})
+                              <div className="mt-1 flex flex-wrap gap-1">
+                                {tour.featured && (
+                                  <span className="bg-orange-100 text-orange-600 px-2 py-0.5 rounded text-[9px] font-bold uppercase">Nổi bật</span>
+                                )}
+                                <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-[9px] font-bold uppercase">
+                                  {tourCategoryDisplayLabel(tour.category)}
+                                </span>
                               </div>
                             </div>
                           </div>
                         </td>
-                        <td className="p-6 text-center">
-                          <span className="bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-[10px] font-black uppercase border border-slate-200">
-                            {tourCategoryDisplayLabel(tour.category)}
-                          </span>
-                        </td>
-                        <td className="p-6 text-center">
-                          <div className="inline-flex flex-col items-center">
-                            <span className="font-black text-slate-900 text-sm">
-                              {tour.duration || 1} Ngày
-                            </span>
-                            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
-                              Trọn gói
-                            </span>
-                          </div>
-                        </td>
-                        <td className="p-6 text-center">
-                          <div className="flex flex-col items-center">
-                            <div className="flex items-center gap-1 mb-1">
-                              <Users
-                                size={14}
-                                className={
-                                  remainingSlots <= 5
-                                    ? "text-red-500"
-                                    : "text-emerald-500"
-                                }
-                              />
-                              <span
-                                className={`text-sm font-black ${remainingSlots <= 5 ? "text-red-500" : "text-emerald-600"}`}
-                              >
-                                Còn {remainingSlots} chỗ
-                              </span>
+                        <td className="p-4 align-top pt-6">
+                          <div className="flex flex-col gap-1.5 text-xs font-bold text-slate-600">
+                            <div className="flex items-center gap-1.5">
+                              <span className="w-4 flex justify-center text-emerald-500"><Users size={14}/></span>
+                              <span>Số chỗ: <span className="text-slate-800">{maxGs}</span></span>
                             </div>
-                            <div className="w-24 bg-slate-100 h-2 rounded-full overflow-hidden border border-slate-200">
-                              <div
-                                className={`h-full transition-all duration-1000 ${remainingSlots <= 5 ? "bg-red-500" : "bg-emerald-500"}`}
-                                style={{
-                                  width: `${Math.min(100, (remainingSlots / tour.maxGroupSize) * 100)}%`,
-                                }}
-                              ></div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="w-4 flex justify-center text-blue-500"><Users size={14}/></span>
+                              <span>Đã bán: <span className="text-slate-800">{joined}</span></span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="w-4 flex justify-center text-orange-500"><Users size={14}/></span>
+                              <span>Còn: <span className={remainingSlots <= 5 ? "text-red-500" : "text-emerald-600"}>{remainingSlots}</span></span>
                             </div>
                           </div>
                         </td>
-                        <td className="p-6 text-center">
-                          <div className="flex flex-col items-center">
+                        <td className="p-4 align-top pt-6">
+                          <div className="flex flex-col gap-1.5 text-xs font-bold text-slate-600">
+                            <div className="flex items-center gap-1.5">
+                              <span className="w-4 flex justify-center text-emerald-500"><Calendar size={14}/></span>
+                              <span>Đi: <span className="text-slate-800">{formatDate(slot)}</span></span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="w-4 flex justify-center text-red-500"><Calendar size={14}/></span>
+                              <span>Về: <span className="text-slate-800">{calculateEndDate(slot, tour.duration)}</span></span>
+                            </div>
+                          </div>
+                        </td>
+
+                        <td className="p-4 align-top pt-6 text-center">
+                          <div className="flex flex-col items-center justify-center h-full">
                             {tour.isSaleActive ? (
                               <>
-                                <span className="text-slate-400 text-[11px] line-through font-bold decoration-red-400/30">
-                                  {Number(tour.originalPrice || tour.price)?.toLocaleString()}đ
+                                <span className="text-red-500 font-black text-lg tracking-tight">
+                                  {Number(tour.salePrice || tour.price)?.toLocaleString()}đ
                                 </span>
-                                <span className="text-red-500 font-black text-xl tracking-tighter">
-                                  {Number(tour.salePrice || tour.price)?.toLocaleString()}
-                                  <small className="text-[10px] ml-0.5 uppercase">
-                                    đ
-                                  </small>
+                                <span className="text-slate-400 text-[10px] line-through font-bold decoration-red-400/30">
+                                  {Number(tour.originalPrice || tour.price)?.toLocaleString()}đ
                                 </span>
                               </>
                             ) : (
-                              <span className="text-blue-600 font-black text-xl tracking-tighter">
-                                {tour.price?.toLocaleString()}
-                                <small className="text-[10px] ml-0.5 uppercase">
-                                  đ
-                                </small>
+                              <span className="text-blue-600 font-black text-lg tracking-tight">
+                                {Number(tour.price)?.toLocaleString()}đ
                               </span>
                             )}
                           </div>
                         </td>
-                        <td className="p-6 text-right">
-                          <button
-                            onClick={() => navigate(`/tours/${buildTourSlug(tour)}`)}
-                            className="bg-[#1e3a8a] hover:bg-blue-600 text-white w-12 h-12 flex items-center justify-center rounded-2xl transition-all active:scale-90 shadow-xl shadow-blue-200 ml-auto"
-                          >
-                            <Eye size={20} />
-                          </button>
+                        <td className="p-4 align-top pt-6 text-center">
+                          <div className="flex flex-col items-center gap-2">
+                            {isFull ? (
+                              <span className="text-red-500 font-black text-xs uppercase bg-red-50 px-3 py-1.5 rounded-lg border border-red-100">
+                                Đã hết chỗ
+                              </span>
+                            ) : (
+                              <span className="text-orange-500 font-black text-xs uppercase bg-orange-50 px-3 py-1.5 rounded-lg border border-orange-100 whitespace-nowrap">
+                                Còn nhận {remainingSlots} chỗ
+                              </span>
+                            )}
+                            <button
+                              onClick={() => navigate(`/tours/${buildTourSlug(tour)}`)}
+                              className="bg-white border-2 border-orange-400 text-orange-500 hover:bg-orange-50 w-full py-2 rounded-xl text-xs font-black uppercase transition-colors"
+                            >
+                              Xem chi tiết
+                            </button>
+                          </div>
                         </td>
                       </motion.tr>
                     );
@@ -341,17 +336,17 @@ const SearchResultList = () => {
             </div>
           </motion.div>
         ) : (
-          <div className="bg-white rounded-[40px] p-20 text-center border-2 border-dashed border-slate-200 shadow-sm">
+          <div className="bg-white rounded-[40px] p-20 text-center border border-slate-100 shadow-sm">
             <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6">
               <SearchX size={48} className="text-slate-300" />
             </div>
             <h3 className="text-2xl font-black text-slate-900 mb-2 uppercase tracking-tighter">
-              Không tìm thấy tour phù hợp
+              Không tìm thấy lịch trình phù hợp
             </h3>
             <div className="flex items-center justify-center gap-2 text-amber-600 bg-amber-50 w-fit mx-auto px-4 py-2 rounded-xl mb-8 border border-amber-100">
               <AlertCircle size={16} />
               <p className="text-xs font-bold uppercase">
-                Gợi ý: Thử chọn "Tất cả" sở thích hoặc giảm số khách
+                Gợi ý: Thử chọn "Tất cả" hoặc thay đổi khoảng thời gian
               </p>
             </div>
             <button

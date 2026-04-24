@@ -7,7 +7,7 @@ const Header = () => {
     <motion.div
       // Thêm id="step-header-container" để làm điểm bắt đầu cho lời chào tổng quát
       id="step-header-container"
-      className="mt-20 flex flex-col lg:flex-row items-center justify-between text-center lg:text-left py-20 px-6 relative overflow-hidden max-w-7xl mx-auto"
+      className="mt-16 md:mt-20 flex flex-col lg:flex-row items-center justify-between text-center lg:text-left py-10 md:py-20 px-4 md:px-6 relative overflow-hidden max-w-7xl mx-auto"
       initial={{ opacity: 0.2, y: 100 }}
       transition={{ duration: 1, ease: "easeInOut" }}
       whileInView={{ opacity: 1, y: 0 }}
@@ -23,7 +23,7 @@ const Header = () => {
 
       {/* Left Section - Text Content */}
       <motion.div
-        className="relative z-10 flex-1 lg:pr-12 mb-12 lg:mb-0"
+        className="relative z-10 flex-1 lg:pr-12 mb-8 lg:mb-0"
         initial={{ opacity: 0, x: -50 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ delay: 0.2, duration: 1, ease: "easeOut" }}
@@ -31,7 +31,7 @@ const Header = () => {
         <motion.h1
           // Thêm id="nav-home" vào tiêu đề chính để hướng dẫn viên giới thiệu trang chủ
           id="nav-home"
-          className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold leading-tight mb-6"
+          className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-extrabold leading-tight mb-4 md:mb-6"
           initial={{ opacity: 0, y: -30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 1, ease: "easeOut" }}

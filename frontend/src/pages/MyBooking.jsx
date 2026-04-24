@@ -247,6 +247,7 @@ const MyBooking = () => {
         food: "Hài lòng",
         schedule: "Hài lòng",
       },
+      images: [],
     });
     setShowReviewModal(true);
   };
@@ -263,6 +264,7 @@ const MyBooking = () => {
         rating: reviewForm.rating,
         comment: reviewForm.comment,
         survey: reviewForm.survey,
+        images: reviewForm.images,
       });
       if (!data.success) {
         toast.error(data.message || "Không thể gửi đánh giá");
@@ -547,16 +549,15 @@ const MyBooking = () => {
                         )}
                         {isCompleted && booking.status?.toLowerCase() === "confirmed" && (
                           <button
-                            onClick={() => !isReviewed && openReviewModal(booking)}
-                            disabled={isReviewed}
+                            onClick={() => isReviewed ? navigate(`/tours/${booking.tourId?._id || booking.tourId}`) : openReviewModal(booking)}
                             className={`font-bold py-2.5 px-6 rounded-xl flex items-center justify-center gap-2 border transition ${
                               isReviewed
-                                ? "bg-emerald-50 text-emerald-700 border-emerald-200 cursor-not-allowed"
+                                ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
                                 : "bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100"
                             }`}
                           >
                             <MessageSquareText size={18} />
-                            {isReviewed ? "Đã đánh giá" : "Đánh giá chuyến đi"}
+                            {isReviewed ? "Xem đánh giá" : "Đánh giá chuyến đi"}
                           </button>
                         )}
                       </div>

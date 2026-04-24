@@ -8,6 +8,7 @@ import {
   Clock,
   Star,
   MessageSquareText,
+  X,
 } from "lucide-react";
 import { AppContext } from "../context/AppContext";
 import { toast } from "react-toastify";
@@ -73,6 +74,7 @@ const TourDetails = () => {
   const [showDuplicateModal, setShowDuplicateModal] = useState(false);
   const [duplicateBooking, setDuplicateBooking] = useState(null);
   const [checkingDuplicate, setCheckingDuplicate] = useState(false);
+  const [zoomedImage, setZoomedImage] = useState(null);
 
   // --- 2. FETCH LỊCH TRÌNH (FIX PORT 5001 & URL) ---
   useEffect(() => {
@@ -759,6 +761,13 @@ const TourDetails = () => {
                           <p className="text-xs text-slate-600 line-clamp-2">
                             {review.comment || "Khách hàng hài lòng với chuyến đi."}
                           </p>
+                          {review.images && review.images.length > 0 && (
+                            <div className="flex gap-2 mt-2 overflow-x-auto pb-1 no-scrollbar">
+                              {review.images.map((img, idx) => (
+                                <img key={idx} src={img} alt="review" className="w-12 h-12 object-cover rounded-lg border border-slate-200 shrink-0 cursor-pointer hover:opacity-80 transition-opacity" onClick={() => setZoomedImage(img)} />
+                              ))}
+                            </div>
+                          )}
                         </div>
                       ))
                     ) : (
@@ -807,6 +816,13 @@ const TourDetails = () => {
                   <p className="text-sm text-slate-600">
                     {review.comment || "Khách hàng đánh giá tích cực về tour này."}
                   </p>
+                  {review.images && review.images.length > 0 && (
+                    <div className="flex gap-2 mt-3 flex-wrap">
+                      {review.images.map((img, idx) => (
+                        <img key={idx} src={img} alt="review" className="w-16 h-16 object-cover rounded-xl border border-slate-200 shrink-0 shadow-sm cursor-pointer hover:opacity-80 transition-opacity" onClick={() => setZoomedImage(img)} />
+                      ))}
+                    </div>
+                  )}
                 </div>
               ))}
               {allReviews.length === 0 && (
@@ -886,6 +902,28 @@ const TourDetails = () => {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {zoomedImage && (
+        <div 
+          className="fixed inset-0 z-[10000] bg-black/90 flex items-center justify-center p-4 cursor-zoom-out"
+          onClick={() => setZoomedImage(null)}
+        >
+          <img 
+            src={zoomedImage} 
+            alt="zoomed-review" 
+            className="max-w-full max-h-full object-contain rounded-xl shadow-2xl"
+          />
+          <button 
+            className="absolute top-6 right-6 text-white bg-black/50 p-2 rounded-full hover:bg-black/80 transition-colors"
+            onClick={(e) => {
+              e.stopPropagation();
+              setZoomedImage(null);
+            }}
+          >
+            <X size={24} />
+          </button>
         </div>
       )}
     </div>

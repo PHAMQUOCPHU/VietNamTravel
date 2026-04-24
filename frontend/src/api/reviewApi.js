@@ -7,8 +7,29 @@ export const submitReviewApi = async ({
   rating,
   comment,
   survey,
+  images,
 }) => {
   const client = buildHttpClient(backendUrl);
+
+  if (images && images.length > 0) {
+    const formData = new FormData();
+    formData.append("bookingId", bookingId);
+    formData.append("rating", rating);
+    formData.append("comment", comment);
+    formData.append("survey", JSON.stringify(survey));
+    
+    images.forEach((image) => {
+      formData.append("images", image);
+    });
+    
+    const { data } = await client.post(
+      "/api/reviews",
+      formData,
+      withTokenHeader(token),
+    );
+    return data;
+  }
+
   const { data } = await client.post(
     "/api/reviews",
     { bookingId, rating, comment, survey },

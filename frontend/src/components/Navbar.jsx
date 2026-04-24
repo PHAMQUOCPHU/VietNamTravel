@@ -22,6 +22,7 @@ import {
   getDisplayRank,
   getRankConfig,
 } from "./navbar/navConfig";
+import { motion, AnimatePresence } from "framer-motion";
 
 const Navbar = () => {
   const {
@@ -391,9 +392,22 @@ const Navbar = () => {
       </nav>
 
       {/* MOBILE MENU */}
-      {menuOpen && (
-        <div className="md:hidden fixed inset-0 z-40 bg-black/20 backdrop-blur-sm">
-          <div className="fixed top-16 left-0 right-0 bg-white shadow-xl border-t border-gray-100 mobile-menu-container rounded-b-[2rem] overflow-hidden dark:bg-slate-900 dark:border-slate-700">
+      <AnimatePresence>
+        {menuOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="md:hidden fixed inset-0 z-40 bg-black/40 backdrop-blur-md"
+          >
+            <motion.div
+              initial={{ y: -20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: -20, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed top-16 left-0 right-0 bg-white shadow-xl border-t border-gray-100 mobile-menu-container rounded-b-[2rem] overflow-hidden dark:bg-slate-900 dark:border-slate-700 max-h-[85vh] overflow-y-auto"
+            >
             <div className="px-4 py-6 space-y-4">
               {user && (
                 <MembershipCard
@@ -485,9 +499,10 @@ const Navbar = () => {
                 )}
               </div>
             </div>
-          </div>
-        </div>
-      )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <ChangePassword
         isOpen={showChangePass}

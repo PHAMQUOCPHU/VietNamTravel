@@ -7,8 +7,9 @@ export const submitReview = async ({
   rating,
   comment,
   survey,
+  images,
 }) => {
-  return submitReviewApi({ backendUrl, token, bookingId, rating, comment, survey });
+  return submitReviewApi({ backendUrl, token, bookingId, rating, comment, survey, images });
 };
 
 export const getReviewStats = async ({ backendUrl, target }) => {

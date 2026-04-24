@@ -5,6 +5,7 @@ export const CLOUDINARY_FOLDERS = {
   tours: "vietnam-travel/tours",
   blogs: "vietnam-travel/blogs",
   avatars: "vietnam-travel/avatars",
+  reviews: "vietnam-travel/reviews",
 };
 
 export const uploadBufferToCloudinary = async (

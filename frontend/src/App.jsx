@@ -37,7 +37,7 @@ const App = () => {
   const isHome = location.pathname === "/";
 
   return (
-    <div className="flex flex-col min-h-screen px-4 sm:px-8 md:px-10 lg:px-22">
+    <div className="flex flex-col min-h-screen">
       <ToastContainer theme="dark" position="bottom-right" autoClose={1000} />
       <Navbar />
       <ScrollToTop />

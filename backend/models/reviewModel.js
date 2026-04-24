@@ -32,6 +32,10 @@ const reviewSchema = new mongoose.Schema(
       trim: true,
       maxlength: 2000,
     },
+    images: {
+      type: [String],
+      default: [],
+    },
     survey: {
       guide: {
         type: String,
