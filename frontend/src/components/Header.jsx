@@ -1,10 +1,12 @@
 import React from "react";
-import { assets } from "../assets/assets";
+import { assets } from "../assets";
 import { motion } from "framer-motion";
 
 const Header = () => {
   return (
     <motion.div
+      // Thêm id="step-header-container" để làm điểm bắt đầu cho lời chào tổng quát
+      id="step-header-container"
       className="mt-20 flex flex-col lg:flex-row items-center justify-between text-center lg:text-left py-20 px-6 relative overflow-hidden max-w-7xl mx-auto"
       initial={{ opacity: 0.2, y: 100 }}
       transition={{ duration: 1, ease: "easeInOut" }}
@@ -27,6 +29,8 @@ const Header = () => {
         transition={{ delay: 0.2, duration: 1, ease: "easeOut" }}
       >
         <motion.h1
+          // Thêm id="nav-home" vào tiêu đề chính để hướng dẫn viên giới thiệu trang chủ
+          id="nav-home"
           className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold leading-tight mb-6"
           initial={{ opacity: 0, y: -30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -64,7 +68,8 @@ const Header = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.8, duration: 0.8 }}
           >
-            Khám phá những điểm đến hấp dẫn, ưu đãi độc quyền và trải nghiệm đặt vé liền mạch.
+            Khám phá những điểm đến hấp dẫn, ưu đãi độc quyền và trải nghiệm đặt
+            vé liền mạch.
           </motion.p>
         </motion.div>
       </motion.div>

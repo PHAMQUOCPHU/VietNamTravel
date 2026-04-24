@@ -12,7 +12,7 @@ const AllTours = () => {
       viewport={{ once: true }}
     >
       <motion.h1
-        className="text-3xl sm:text-4xl font-semibold mb-4 text-center text-gray-800"
+        className="text-3xl sm:text-4xl font-semibold mb-4 text-center text-gray-800 dark:text-slate-100"
         initial={{ opacity: 0, y: -30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3, duration: 0.8 }}
@@ -20,7 +20,7 @@ const AllTours = () => {
         Những Tour <span className="text-blue-500">Nổi Bật</span>
       </motion.h1>
       <motion.p
-        className="text-lg text-gray-600 mb-12 text-center max-w-2xl"
+        className="text-lg text-gray-600 mb-12 text-center max-w-2xl dark:text-slate-300"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.6, duration: 0.8 }}

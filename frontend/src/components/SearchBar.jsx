@@ -1,5 +1,5 @@
 import React from "react";
-import { stepsData } from "../assets/assets";
+import { stepsData } from "../constants/homeData";
 import { motion } from "framer-motion";
 
 const SearchBar = () => {

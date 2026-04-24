@@ -5,7 +5,7 @@ import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'
 
 export default [
-  { ignores: ['dist'] },
+  { ignores: ['dist', 'tailwind.config.js'] },
   {
     files: ['**/*.{js,jsx}'],
     languageOptions: {
@@ -29,9 +29,35 @@ export default [
       ...react.configs['jsx-runtime'].rules,
       ...reactHooks.configs.recommended.rules,
       'react/jsx-no-target-blank': 'off',
+      'react/prop-types': 'off',
+      'react/no-unescaped-entities': 'off',
+      'no-unused-vars': [
+        'error',
+        {
+          varsIgnorePattern: '^[A-Z_]',
+          argsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
+        },
+      ],
       'react-refresh/only-export-components': [
         'warn',
         { allowConstantExport: true },
+      ],
+    },
+  },
+  {
+    files: ['src/{components,pages,hooks,context,utils,constants}/**/*.{js,jsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['../api', '../api/*', '../../api', '../../api/*', '@/api', '@/api/*'],
+              message: 'Import API layer through services to keep architecture boundaries.',
+            },
+          ],
+        },
       ],
     },
   },

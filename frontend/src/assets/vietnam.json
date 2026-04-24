@@ -1,0 +1,20 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "name": "Hồ Chí Minh" },
+      "geometry": { "type": "Polygon", "coordinates": [[[106.6, 10.7], [106.8, 10.7], [106.8, 10.9], [106.6, 10.9], [106.6, 10.7]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Hà Nội" },
+      "geometry": { "type": "Polygon", "coordinates": [[[105.7, 20.9], [105.9, 20.9], [105.9, 21.1], [105.7, 21.1], [105.7, 20.9]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Đà Nẵng" },
+      "geometry": { "type": "Polygon", "coordinates": [[[108.1, 16.0], [108.3, 16.0], [108.3, 16.2], [108.1, 16.2], [108.1, 16.0]]] }
+    }
+  ]
+}
