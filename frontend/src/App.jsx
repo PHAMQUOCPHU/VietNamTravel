@@ -25,6 +25,8 @@ import Privileges from "./pages/Privileges";
 import MyCollection from "./pages/MyCollection"; // Giả sử sếp để trong folder pages
 import Favorites from "./pages/Favorites";
 import Notifications from "./pages/Notifications";
+import Diaries from "./pages/Diaries";
+import DisasterMap from "./pages/DisasterMap";
 
 // --- BƯỚC 1: IMPORT CHAT WIDGET ---
 import ChatWidget from "./components/ChatWidget";
@@ -66,7 +68,9 @@ const App = () => {
           <Route path="/privileges" element={<Privileges />} />
           <Route path="/favorites" element={<Favorites />} />
           <Route path="/notifications" element={<Notifications />} />
+          <Route path="/disaster-map" element={<DisasterMap />} />
           <Route path="/my-collection" element={<MyCollection />} />
+          <Route path="/diaries" element={<Diaries />} />
         </Routes>
       </main>
       <Footer />

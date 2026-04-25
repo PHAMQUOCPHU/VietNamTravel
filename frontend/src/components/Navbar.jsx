@@ -23,6 +23,8 @@ import {
   getRankConfig,
 } from "./navbar/navConfig";
 import { motion, AnimatePresence } from "framer-motion";
+import AppSidebar from "./AppSidebar";
+import { TicketPercent } from "lucide-react";
 
 const Navbar = () => {
   const {
@@ -40,6 +42,7 @@ const Navbar = () => {
   const [notifOpen, setNotifOpen] = useState(false);
   const notifDesktopRef = useRef(null);
   const notifMobileRef = useRef(null);
+  const [appSidebarOpen, setAppSidebarOpen] = useState(false);
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -125,19 +128,28 @@ const Navbar = () => {
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16 sm:h-20">
-            <Link
-              to="/"
-              className="flex-shrink-0 transition-transform hover:scale-105 duration-200"
-            >
-              <div className="flex items-center">
-                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center mr-2 bg-sky-50 text-sky-600 border border-sky-100">
-                  <Compass className="w-5 h-5 sm:w-6 sm:h-6" />
+            <div className="flex items-center gap-3 sm:gap-4">
+              <button
+                onClick={() => setAppSidebarOpen(true)}
+                className="p-2 text-gray-600 hover:bg-gray-100 dark:text-slate-200 dark:hover:bg-slate-800 rounded-lg transition-colors"
+              >
+                <Menu className="w-6 h-6" />
+              </button>
+
+              <Link
+                to="/"
+                className="flex-shrink-0 transition-transform hover:scale-105 duration-200"
+              >
+                <div className="flex items-center">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center mr-2 bg-sky-50 text-sky-600 border border-sky-100">
+                    <Compass className="w-5 h-5 sm:w-6 sm:h-6" />
+                  </div>
+                  <span className="text-xl sm:text-2xl font-extrabold bg-gradient-to-r from-sky-600 to-blue-600 bg-clip-text text-transparent hidden sm:block">
+                    VietNam Travel
+                  </span>
                 </div>
-                <span className="text-xl sm:text-2xl font-extrabold bg-gradient-to-r from-sky-600 to-blue-600 bg-clip-text text-transparent">
-                  VietNam Travel
-                </span>
-              </div>
-            </Link>
+              </Link>
+            </div>
 
             <div className="hidden md:flex items-center space-x-2">
               {navLinks.map((link) => (
@@ -508,6 +520,12 @@ const Navbar = () => {
         isOpen={showChangePass}
         onClose={() => setShowChangePass(false)}
       />
+
+      <AppSidebar 
+        isOpen={appSidebarOpen} 
+        onClose={() => setAppSidebarOpen(false)} 
+      />
+
       <div className="h-16 sm:h-20" />
     </>
   );

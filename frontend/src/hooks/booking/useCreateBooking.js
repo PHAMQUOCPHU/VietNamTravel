@@ -23,6 +23,7 @@ const useBooking = (
     specialRequests: "",
   });
   const [totalPrice, setTotalPrice] = useState(initialTotalPrice || price);
+  const [discountAmount, setDiscountAmount] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -39,15 +40,16 @@ const useBooking = (
   useEffect(() => {
     const adultPrice = price * guestSize.adult;
     const childrenPrice = price * 0.6 * guestSize.children;
-    setTotalPrice(adultPrice + childrenPrice);
-  }, [guestSize, price]);
+    const baseTotal = adultPrice + childrenPrice;
+    setTotalPrice(Math.max(0, baseTotal - discountAmount));
+  }, [guestSize, price, discountAmount]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e, appliedVoucherCode = "") => {
     if (e) e.preventDefault();
     setIsSubmitting(true);
 
@@ -80,6 +82,7 @@ const useBooking = (
           totalPrice,
           bookAt: dateString,
           paymentMethod,
+          voucherCode: appliedVoucherCode
         },
       });
 
@@ -122,6 +125,8 @@ const useBooking = (
     formData,
     guestSize,
     totalPrice,
+    discountAmount,
+    setDiscountAmount,
     isSubmitting,
     handleChange,
     handleSubmit,

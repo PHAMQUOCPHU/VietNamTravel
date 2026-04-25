@@ -37,6 +37,7 @@ const bookingSchema = new mongoose.Schema(
     paymentStatus: { type: Boolean, default: false },
     vnpayOrderId: { type: String },
     cancellationReason: { type: String, default: "" },
+    voucherCode: { type: String, default: "" },
 
     // TRẠNG THÁI ĐƠN HÀNG
     status: { type: String, default: "pending" },

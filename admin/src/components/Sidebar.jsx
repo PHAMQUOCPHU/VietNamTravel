@@ -15,6 +15,7 @@ import {
   MessageCircle,
   BadgePercent,
   Handshake,
+  Ticket,
 } from "lucide-react";
 
 // Import logo từ thư mục assets
@@ -98,10 +99,10 @@ const Sidebar = ({ onNavigate }) => {
       matchPaths: ["/admin/partners"],
     },
     {
-      icon: <Settings size={20} />,
-      label: "Cài đặt",
-      path: "/admin/settings",
-      matchPaths: ["/admin/settings"],
+      icon: <Ticket size={20} />,
+      label: "Quản lý Voucher",
+      path: "/admin/vouchers",
+      matchPaths: ["/admin/vouchers"],
     },
   ];
 

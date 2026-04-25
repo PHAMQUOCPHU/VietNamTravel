@@ -19,7 +19,7 @@ import PostManagement from "./pages/PostManagement";
 import AddBlog from "./pages/AddBlog";
 import ListBlog from "./pages/ListBlog.jsx";
 import EditBlog from "./pages/EditBlog.jsx";
-import Settings from "./pages/Settings";
+import Vouchers from "./pages/Vouchers";
 import Messages from "./pages/Messages"; // Đảm bảo file này đã tồn tại trong admin/src/pages/
 import PromotionManager from "./pages/PromotionManager.jsx";
 import InsurancePartners from "./pages/InsurancePartners.jsx";
@@ -68,7 +68,7 @@ function App() {
           {/* Các quản lý khác */}
           <Route path="bookings" element={<BookingManagement />} />
           <Route path="users" element={<UserManagement />} />
-          <Route path="settings" element={<Settings />} />
+          <Route path="vouchers" element={<Vouchers />} />
         </Route>
 
         {/* 3. Điều hướng mặc định */}

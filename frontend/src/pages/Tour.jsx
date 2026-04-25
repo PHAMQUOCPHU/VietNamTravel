@@ -18,9 +18,12 @@ import {
   SlidersHorizontal,
   MapPinned,
   Search,
+  TicketPercent,
 } from "lucide-react";
 import TourCard from "../components/TourCard";
+import VoucherCard from "../components/VoucherCard";
 import { AppContext } from "../context/AppContext";
+import axios from "axios";
 import {
   TOUR_CATEGORY_LABELS,
   normalizeTourCategory,
@@ -251,7 +254,7 @@ const SORT_OPTIONS = [
 ];
 
 const Tour = () => {
-  const { tours } = useContext(AppContext);
+  const { tours, backendUrl } = useContext(AppContext);
   const [selectedCategory, setSelectedCategory] = useState("");
   const [sortBy, setSortBy] = useState("default");
   const [priceMin, setPriceMin] = useState(0);
@@ -259,6 +262,21 @@ const Tour = () => {
   const [sliderMax, setSliderMax] = useState(20_000_000);
   const [selectedRegions, setSelectedRegions] = useState(() => new Set());
   const [searchQuery, setSearchQuery] = useState("");
+  const [vouchers, setVouchers] = useState([]);
+
+  useEffect(() => {
+    const fetchVouchers = async () => {
+      try {
+        const { data } = await axios.get(`${backendUrl}/api/vouchers/public`);
+        if (data.success) {
+          setVouchers(data.vouchers);
+        }
+      } catch (error) {
+        console.error("Error fetching vouchers:", error);
+      }
+    };
+    if (backendUrl) fetchVouchers();
+  }, [backendUrl]);
 
   const toursByCategory = useMemo(() => {
     if (!Array.isArray(tours)) return [];
@@ -368,6 +386,23 @@ const Tour = () => {
           Tất Cả Tour Du Lịch
         </motion.h1>
       </motion.div>
+
+      {/* VOUCHER BANNER */}
+      {vouchers.length > 0 && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-12">
+          <div className="flex items-center gap-2 mb-4">
+            <TicketPercent className="text-orange-500" size={24} />
+            <h2 className="text-lg font-black text-slate-800 uppercase tracking-tight">Mã Giảm Giá Dành Cho Bạn</h2>
+          </div>
+          <div className="flex gap-4 overflow-x-auto pb-4 snap-x hide-scrollbar">
+            {vouchers.map(v => (
+              <div key={v._id} className="snap-start shrink-0">
+                <VoucherCard voucher={v} />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="max-w-7xl mx-auto px-2 sm:px-4">
         <p className="text-center text-sm text-slate-500 mb-3 font-semibold">

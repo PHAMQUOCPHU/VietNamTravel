@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   Calendar,
@@ -9,7 +9,12 @@ import {
   MessageSquare,
   Baby,
   AlertCircle,
+  TicketPercent,
+  X
 } from "lucide-react";
+import axios from "axios";
+import { toast } from "react-toastify";
+import { AppContext } from "../context/AppContext";
 import useBooking from "../hooks/useCreateBooking";
 import PaymentMethod from "../components/PaymentMethod";
 
@@ -35,7 +40,7 @@ const Booking = () => {
   const [paymentMethod, setPaymentMethod] = useState("COD");
 
   // Hooks phải gọi trước mọi return (Rules of Hooks)
-  const { formData, totalPrice, isSubmitting, handleChange, handleSubmit } =
+  const { formData, totalPrice, discountAmount, setDiscountAmount, isSubmitting, handleChange, handleSubmit } =
     useBooking(
       tour,
       scheduleId,
@@ -43,6 +48,49 @@ const Booking = () => {
       initialTotalPrice,
       paymentMethod,
     );
+
+  const { backendUrl } = useContext(AppContext);
+  const [voucherCode, setVoucherCode] = useState("");
+  const [appliedVoucherCode, setAppliedVoucherCode] = useState("");
+  const [voucherError, setVoucherError] = useState("");
+  const [isApplyingVoucher, setIsApplyingVoucher] = useState(false);
+
+  const handleApplyVoucher = async () => {
+    setVoucherError("");
+    if (!voucherCode.trim()) {
+      setVoucherError("Vui lòng nhập mã giảm giá");
+      return;
+    }
+    setIsApplyingVoucher(true);
+    try {
+      const basePrice = (price * guestSizeFromState.adult) + (price * 0.6 * guestSizeFromState.children);
+      const token = localStorage.getItem("token");
+      const { data } = await axios.post(`${backendUrl}/api/vouchers/apply`, {
+        code: voucherCode,
+        orderValue: basePrice
+      }, {
+        headers: { token }
+      });
+      if (data.success) {
+        setDiscountAmount(data.discountAmount);
+        setAppliedVoucherCode(data.code);
+        toast.success(data.message);
+      } else {
+        setVoucherError(data.message);
+      }
+    } catch (error) {
+      setVoucherError("Lỗi kết nối máy chủ");
+    } finally {
+      setIsApplyingVoucher(false);
+    }
+  };
+
+  const handleRemoveVoucher = () => {
+    setDiscountAmount(0);
+    setAppliedVoucherCode("");
+    setVoucherCode("");
+    setVoucherError("");
+  };
 
   // Kiểm tra nếu không có dữ liệu tour thì quay về trang chủ
   useEffect(() => {
@@ -82,7 +130,7 @@ const Booking = () => {
         <div className="grid lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
             <div className="bg-white rounded-[2rem] shadow-xl p-8 border border-white">
-              <form onSubmit={handleSubmit} className="space-y-6">
+              <form onSubmit={(e) => handleSubmit(e, appliedVoucherCode)} className="space-y-6">
                 {/* Thông tin ngày khởi hành - Sửa lỗi Invalid Date */}
                 <div className="bg-blue-50/50 p-5 rounded-2xl border border-blue-100 flex items-center space-x-4">
                   <div className="p-3 bg-white rounded-xl shadow-sm">
@@ -239,12 +287,57 @@ const Booking = () => {
                   </div>
                 )}
 
-                <div className="pt-5 border-t border-dashed border-gray-200">
+                {/* VOUCHER INPUT */}
+                <div className="py-3 border-y border-dashed border-gray-200 space-y-3">
+                  <p className="text-[11px] font-bold text-blue-600 italic">Đi du lịch tiết kiệm hơn với mã ưu đãi độc quyền!</p>
+                  
+                  {appliedVoucherCode ? (
+                    <div className="bg-emerald-50 border border-emerald-100 p-3 rounded-xl flex justify-between items-center">
+                      <div className="flex items-center gap-2">
+                        <TicketPercent size={16} className="text-emerald-500" />
+                        <div>
+                          <p className="text-xs font-bold text-emerald-700">Mã: {appliedVoucherCode}</p>
+                          <p className="text-[10px] text-emerald-600 font-medium">- {discountAmount.toLocaleString()}đ</p>
+                        </div>
+                      </div>
+                      <button onClick={handleRemoveVoucher} className="p-1 text-emerald-400 hover:text-emerald-600 hover:bg-emerald-100 rounded-full transition-colors">
+                        <X size={16} />
+                      </button>
+                    </div>
+                  ) : (
+                    <div>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={voucherCode}
+                          onChange={(e) => setVoucherCode(e.target.value.toUpperCase())}
+                          placeholder="Nhập mã giảm giá"
+                          className="flex-1 p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold uppercase focus:ring-2 focus:ring-blue-400 outline-none"
+                        />
+                        <button 
+                          onClick={handleApplyVoucher}
+                          disabled={isApplyingVoucher || !voucherCode.trim()}
+                          className="px-4 py-2.5 bg-[#1e3a8a] text-white rounded-xl text-sm font-bold hover:bg-blue-800 disabled:opacity-50 transition-colors"
+                        >
+                          Áp dụng
+                        </button>
+                      </div>
+                      {voucherError && <p className="text-red-500 text-[10px] font-semibold mt-1.5 px-1">{voucherError}</p>}
+                    </div>
+                  )}
+                </div>
+
+                <div className="pt-2">
                   <div className="flex justify-between items-end">
                     <span className="text-gray-400 text-xs font-bold uppercase">
                       Tổng cộng
                     </span>
                     <div className="text-right">
+                      {discountAmount > 0 && (
+                        <p className="text-xs text-gray-400 line-through font-bold mb-1">
+                          {((price * guestSizeFromState.adult) + (price * 0.6 * guestSizeFromState.children)).toLocaleString()}đ
+                        </p>
+                      )}
                       <p className="text-2xl font-black text-orange-500 tracking-tighter">
                         {totalPrice?.toLocaleString()}đ
                       </p>

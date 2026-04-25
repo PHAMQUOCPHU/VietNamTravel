@@ -5,3 +5,4 @@ export * from "./notificationService";
 export * from "./reviewService";
 export * from "./tourService";
 export * from "./userService";
+export * from "./weatherService";

@@ -2,6 +2,7 @@ import bookingModel from "../models/bookingModel.js";
 import tourModel from "../models/TourModel.js";
 import userModel from "../models/userModel.js";
 import scheduleModel from "../models/scheduleModel.js";
+import voucherModel from "../models/voucherModel.js";
 import {
   notifyBookingCancelled,
   notifyBookingConfirmedByAdmin,
@@ -131,8 +132,27 @@ export const createBooking = async (req, res) => {
 
     const priceAdult = tour.price;
     const priceChild = tour.price * 0.6;
-    const finalTotalPrice =
+    let finalTotalPrice =
       guestSize.adult * priceAdult + guestSize.children * priceChild;
+
+    // Apply Voucher if provided
+    if (req.body.voucherCode) {
+      const voucher = await voucherModel.findOne({
+        code: req.body.voucherCode,
+        isActive: true,
+      });
+      if (
+        voucher &&
+        voucher.status === "active" &&
+        !voucher.usedBy.includes(userId) &&
+        new Date() <= new Date(voucher.expiryDate) &&
+        finalTotalPrice >= voucher.minOrderValue &&
+        voucher.usedCount < voucher.usageLimit
+      ) {
+        finalTotalPrice = Math.max(0, finalTotalPrice - voucher.discountValue);
+        // KHÔNG TĂNG usedCount ở đây, chỉ tăng khi Admin xác nhận thanh toán
+      }
+    }
 
     const newBooking = new bookingModel({
       ...req.body,
@@ -284,10 +304,13 @@ export const updateBookingStatus = async (req, res) => {
       }
     }
 
-    /** Xác nhận đơn ≠ đã thu tiền: COD có thể chưa thanh toán; VNPay callback tự set paymentStatus */
+    const isConfirmedCashOrder =
+      status === "confirmed" &&
+      String(booking.paymentMethod || "").toLowerCase() !== "online";
+
     const nextUpdate = {
       status,
-      paymentStatus: booking.paymentStatus,
+      paymentStatus: isConfirmedCashOrder ? true : booking.paymentStatus,
     };
     if (status === "cancelled" && previousStatus === "cancel_pending") {
       nextUpdate.cancellationReason = USER_CANCEL_REASON;
@@ -298,7 +321,10 @@ export const updateBookingStatus = async (req, res) => {
     }
 
     const updated = await bookingModel
-      .findByIdAndUpdate(bookingId, nextUpdate, { new: true, runValidators: false })
+      .findByIdAndUpdate(bookingId, nextUpdate, {
+        new: true,
+        runValidators: false,
+      })
       .populate("userId", "name email")
       // Móc thêm duration ở đây để Frontend tính toán sau khi cập nhật
       .populate("tourId", "title duration city")
@@ -307,6 +333,22 @@ export const updateBookingStatus = async (req, res) => {
     if (updated) {
       try {
         if (status === "confirmed" && previousStatus !== "confirmed") {
+          // Xử lý xác nhận Voucher (Nếu có)
+          if (updated.voucherCode) {
+            const voucher = await voucherModel.findOne({
+              code: updated.voucherCode,
+            });
+            if (voucher && !voucher.usedBy.includes(updated.userId)) {
+              voucher.usedCount += 1;
+              voucher.usedBy.push(updated.userId);
+
+              if (voucher.usedCount >= voucher.usageLimit) {
+                voucher.status = "exhausted";
+              }
+              await voucher.save();
+            }
+          }
+
           await notifyBookingConfirmedByAdmin(updated);
           try {
             await trySendDepartureReminderIfDue(updated);
@@ -402,7 +444,10 @@ export const cancelExpiredBookingByUser = async (req, res) => {
       });
     }
 
-    const updatedBooking = await autoCancelOneBooking(booking, AUTO_CANCEL_REASON);
+    const updatedBooking = await autoCancelOneBooking(
+      booking,
+      AUTO_CANCEL_REASON,
+    );
     return res.status(200).json({
       success: true,
       message: "Đơn hàng của bạn đã bị hủy tự động do quá hạn thanh toán",
@@ -420,7 +465,12 @@ export const getAdminStats = async (req, res) => {
     const totalUsers = await userModel.countDocuments();
     const totalTours = await tourModel.countDocuments();
     const bookings = await bookingModel
-      .find({ paymentStatus: true })
+      .find({
+        $or: [
+          { paymentStatus: true },
+          { status: "confirmed", paymentMethod: { $ne: "Online" } },
+        ],
+      })
       .populate("tourId", "region");
 
     const totalRevenue = bookings.reduce(
@@ -542,9 +592,9 @@ export const getUserCollection = async (req, res) => {
   try {
     const userId = req.userId || req.body.userId;
 
-    // Chỉ lấy những đơn đã xác nhận
+    // Lấy những đơn đã xác nhận hoặc đã chuyển sang completed
     const bookings = await bookingModel
-      .find({ userId, status: "confirmed" })
+      .find({ userId, status: { $in: ["confirmed", "completed"] } })
       .populate("tourId", "city duration");
 
     const now = new Date();

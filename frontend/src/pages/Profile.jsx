@@ -9,6 +9,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { toast } from "react-toastify";
+import VoucherWallet from "../components/VoucherWallet";
 
 const Profile = () => {
   const { user } = useContext(AppContext);

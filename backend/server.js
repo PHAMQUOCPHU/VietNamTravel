@@ -25,6 +25,9 @@ import notificationRouter from "./routes/notificationRoute.js";
 import adminNotificationRouter from "./routes/adminNotificationRoute.js";
 import insuranceLeadRouter from "./routes/insuranceLeadRoute.js";
 import geminiTourAdvisorRouter from "./routes/geminiTourAdvisorRoute.js";
+import voucherRouter from "./routes/voucherRoute.js";
+import diaryRouter from "./routes/diaryRoute.js";
+import safetyRouter from "./routes/safetyRoute.js";
 
 const PORT = process.env.PORT || 5001;
 const app = express();
@@ -290,6 +293,9 @@ app.use("/api/reviews", reviewRouter);
 app.use("/api/notifications", notificationRouter);
 app.use("/api/admin/notifications", adminNotificationRouter);
 app.use("/api/insurance-leads", insuranceLeadRouter);
+app.use("/api/vouchers", voucherRouter);
+app.use("/api/diaries", diaryRouter);
+app.use("/api/safety", safetyRouter);
 app.use("/api", geminiTourAdvisorRouter);
 
 app.get("/", (req, res) => {
