@@ -73,7 +73,7 @@ const TravelLog = () => {
       </motion.div>
 
       {/* GALLERY RESORT - HIỆU ỨNG FLEX XỊN SÒ */}
-      <div className="flex flex-col md:flex-row gap-4 h-[450px]">
+      <div className="flex flex-col md:flex-row gap-4 h-auto md:h-[450px]">
         {/* Tăng chiều cao lên 450px nhìn cho đã mắt trên Mac nha Phú */}
         {resorts.map((res, idx) => (
           <motion.div
@@ -82,7 +82,7 @@ const TravelLog = () => {
             whileInView={{ opacity: 1, x: 0 }}
             transition={{ delay: idx * 0.2 }}
             whileHover={{ flex: 3 }}
-            className="flex-1 overflow-hidden rounded-3xl cursor-pointer relative group transition-all duration-700 shadow-lg border-2 border-transparent hover:border-blue-100"
+            className="flex-1 min-h-[220px] md:min-h-0 overflow-hidden rounded-3xl cursor-pointer relative group transition-all duration-700 shadow-lg border-2 border-transparent hover:border-blue-100"
           >
             <img
               src={res}

@@ -49,7 +49,9 @@ const ChatWidget = ({ layout = "fixed" }) => {
         .get(`${backendUrl}/api/messages/${userId}`)
         .then(async (res) => {
           if (res.data.success) setChat(res.data.messages);
-          await axios.post(`${backendUrl}/api/messages/user/mark-read/${userId}`);
+          await axios.post(
+            `${backendUrl}/api/messages/user/mark-read/${userId}`,
+          );
           setUnreadCount(0);
         })
         .catch((err) => console.error("Lỗi fetch tin nhắn:", err));
@@ -157,8 +159,8 @@ const ChatWidget = ({ layout = "fixed" }) => {
 
       {/* Khung chat */}
       {isOpen && (
-        <div className="absolute bottom-20 right-0 w-80 h-[450px] bg-white shadow-2xl rounded-2xl flex flex-col border border-gray-300 overflow-hidden animate-in fade-in zoom-in duration-200">
-          <div className="bg-blue-600 p-4 text-white font-bold text-sm shadow-md flex justify-between items-center">
+        <div className="absolute bottom-20 right-0 w-[85vw] sm:w-80 max-h-[70vh] sm:max-h-[450px] bg-white shadow-2xl rounded-2xl flex flex-col border border-gray-300 overflow-hidden animate-in fade-in zoom-in duration-200">
+          <div className="bg-blue-600 p-3 sm:p-4 text-white font-bold text-xs sm:text-sm shadow-md flex justify-between items-center">
             <span>Hỗ trợ VN Travel</span>
             <div
               className="w-2 h-2 bg-green-400 rounded-full animate-pulse"
@@ -166,8 +168,8 @@ const ChatWidget = ({ layout = "fixed" }) => {
             ></div>
           </div>
 
-          <div className="flex-1 p-3 overflow-y-auto space-y-3 bg-gray-50 flex flex-col">
-            <div className="text-[10px] text-center text-gray-400 mb-2 uppercase tracking-widest">
+          <div className="flex-1 p-2 sm:p-3 overflow-y-auto space-y-2 sm:space-y-3 bg-gray-50 flex flex-col">
+            <div className="text-[9px] sm:text-[10px] text-center text-gray-400 mb-2 uppercase tracking-widest line-clamp-1">
               Đang chat: {userId}
             </div>
 
@@ -177,7 +179,7 @@ const ChatWidget = ({ layout = "fixed" }) => {
                 className={`flex ${msg.senderId === userId ? "justify-end" : "justify-start"}`}
               >
                 <div
-                  className={`max-w-[80%] p-2.5 rounded-2xl text-xs shadow-sm ${
+                  className={`max-w-[80%] p-2 sm:p-2.5 rounded-2xl text-xs shadow-sm ${
                     msg.senderId === userId
                       ? "bg-blue-600 text-white rounded-tr-none"
                       : "bg-white text-gray-800 border border-gray-200 rounded-tl-none"
@@ -190,9 +192,9 @@ const ChatWidget = ({ layout = "fixed" }) => {
             <div ref={scrollRef} />
           </div>
 
-          <div className="p-3 border-t bg-white flex gap-2 items-center">
+          <div className="p-2 sm:p-3 border-t bg-white flex gap-2 items-center">
             <input
-              className="flex-1 text-xs border border-gray-200 p-2.5 rounded-xl outline-none focus:border-blue-500 transition-all"
+              className="flex-1 text-xs border border-gray-200 p-2 sm:p-2.5 rounded-xl outline-none focus:border-blue-500 transition-all"
               placeholder="Nhập tin nhắn..."
               value={message}
               onChange={(e) => setMessage(e.target.value)}
@@ -200,9 +202,9 @@ const ChatWidget = ({ layout = "fixed" }) => {
             />
             <button
               onClick={sendMsg}
-              className="bg-blue-600 text-white p-2.5 rounded-xl hover:bg-blue-700 transition-colors shadow-md active:scale-95"
+              className="bg-blue-600 text-white p-2 sm:p-2.5 rounded-lg sm:rounded-xl hover:bg-blue-700 transition-colors shadow-md active:scale-95 flex-shrink-0"
             >
-              <Send size={16} />
+              <Send size={14} className="sm:w-4 sm:h-4" />
             </button>
           </div>
         </div>

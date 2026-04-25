@@ -111,19 +111,19 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-4 font-sans">
-      <h1 className="text-4xl md:text-5xl font-bold text-center mb-10">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-3 sm:p-4 font-sans">
+      <h1 className="text-2xl sm:text-3xl md:text-5xl font-bold text-center mb-6 sm:mb-10 text-gray-800">
         Welcome to <span className="text-blue-500">VietNam Travel</span>
       </h1>
 
-      <div className="bg-white/80 backdrop-blur-md p-8 rounded-2xl shadow-xl max-w-md w-full border border-white">
-        <h2 className="text-3xl font-semibold text-center text-gray-800">
+      <div className="bg-white/80 backdrop-blur-md rounded-2xl shadow-xl max-w-md w-full border border-white p-5 sm:p-8">
+        <h2 className="text-xl sm:text-2xl font-semibold text-center text-gray-800">
           {isLogin ? "Đăng Nhập" : "Đăng Ký"}
         </h2>
 
-        <form onSubmit={onSubmitHandler} className="space-y-4 mt-6">
+        <form onSubmit={onSubmitHandler} className="space-y-3 sm:space-y-4 mt-4 sm:mt-6">
           {!isLogin && (
-            <div className="p-3 bg-amber-50 border-l-4 border-amber-500 rounded mb-4">
+            <div className="p-2.5 sm:p-3 bg-amber-50 border-l-4 border-amber-500 rounded mb-3 sm:mb-4">
               <p className="text-amber-800 text-xs font-semibold mb-1">
                 ⚠️ Lưu ý quan trọng:
               </p>
@@ -140,7 +140,7 @@ const LoginPage = () => {
 
           {!isLogin && (
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                 Họ và tên
               </label>
               <input
@@ -148,7 +148,7 @@ const LoginPage = () => {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 disabled={isLoadingOtp}
-                className="w-full px-4 py-2 mt-1 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500 bg-white/50 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                className="w-full px-3 sm:px-4 py-2.5 sm:py-2 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/50 disabled:bg-gray-100 disabled:cursor-not-allowed"
                 placeholder="Nhập họ tên"
                 required
               />
@@ -157,7 +157,7 @@ const LoginPage = () => {
 
           {!isLogin && (
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                 Số điện thoại
               </label>
               <input
@@ -165,7 +165,7 @@ const LoginPage = () => {
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 disabled={isLoadingOtp}
-                className="w-full px-4 py-2 mt-1 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500 bg-white/50 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                className="w-full px-3 sm:px-4 py-2.5 sm:py-2 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/50 disabled:bg-gray-100 disabled:cursor-not-allowed"
                 placeholder="Ví dụ: 0912345678"
                 required
               />
@@ -173,7 +173,7 @@ const LoginPage = () => {
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">
+            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
               Email
             </label>
             <input
@@ -181,14 +181,14 @@ const LoginPage = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={isLoadingOtp && !isLogin}
-              className="w-full px-4 py-2 mt-1 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500 bg-white/50 disabled:bg-gray-100 disabled:cursor-not-allowed"
+              className="w-full px-3 sm:px-4 py-2.5 sm:py-2 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/50 disabled:bg-gray-100 disabled:cursor-not-allowed"
               placeholder="example@gmail.com"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">
+            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
               Mật khẩu
             </label>
             <input
@@ -196,7 +196,7 @@ const LoginPage = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={isLoadingOtp && !isLogin}
-              className="w-full px-4 py-2 mt-1 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500 bg-white/50 disabled:bg-gray-100 disabled:cursor-not-allowed"
+              className="w-full px-3 sm:px-4 py-2.5 sm:py-2 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/50 disabled:bg-gray-100 disabled:cursor-not-allowed"
               placeholder="Nhập mật khẩu"
               required
             />

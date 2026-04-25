@@ -63,7 +63,7 @@ const AdminLayout = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className={`p-8 ${isBookingsPage ? "max-w-none px-4 sm:px-6 lg:px-8" : ""}`}
+          className={`p-4 sm:p-6 md:p-8 ${isBookingsPage ? "max-w-none px-2 sm:px-4 md:px-6 lg:px-8" : ""}`}
         >
           <Outlet />
         </motion.main>

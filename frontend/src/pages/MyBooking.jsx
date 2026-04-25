@@ -138,7 +138,13 @@ const MyBooking = () => {
     };
 
     runAutoCancel();
-  }, [bookings, countdownNow, backendUrl, autoCancellingBookingIds, refetchBookings]);
+  }, [
+    bookings,
+    countdownNow,
+    backendUrl,
+    autoCancellingBookingIds,
+    refetchBookings,
+  ]);
 
   const handleCancelRequest = async (bookingId) => {
     if (
@@ -271,7 +277,9 @@ const MyBooking = () => {
         return;
       }
       toast.success("Đánh giá đã được gửi thành công");
-      setReviewedBookingIds((prev) => [...new Set([...prev, selectedBooking._id])]);
+      setReviewedBookingIds((prev) => [
+        ...new Set([...prev, selectedBooking._id]),
+      ]);
       notifyReviewUpdated?.();
       setShowReviewModal(false);
       setSelectedBooking(null);
@@ -283,53 +291,53 @@ const MyBooking = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 py-8 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 py-6 sm:py-8 px-3 sm:px-4">
       <div className="max-w-6xl mx-auto">
-        <div className="relative overflow-hidden rounded-[2rem] border border-blue-100 bg-white/85 backdrop-blur-sm px-6 py-10 md:px-10 mb-8 shadow-sm text-center">
+        <div className="relative overflow-hidden rounded-[1.5rem] sm:rounded-[2rem] border border-blue-100 bg-white/85 backdrop-blur-sm px-4 sm:px-6 md:px-10 py-6 sm:py-10 mb-6 sm:mb-8 shadow-sm text-center">
           <div className="absolute -top-10 -right-8 w-48 h-48 rounded-full bg-blue-100/70 blur-2xl" />
           <div className="absolute -bottom-16 -left-10 w-56 h-56 rounded-full bg-indigo-100/60 blur-2xl" />
           <div className="relative">
-          <div className="inline-block mb-4">
-            <span className="bg-blue-600 text-white px-6 py-2 rounded-full text-sm font-bold shadow-md">
-              Lịch sử du lịch của bạn
-            </span>
+            <div className="inline-block mb-3 sm:mb-4">
+              <span className="bg-blue-600 text-white px-4 sm:px-6 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-bold shadow-md">
+                Lịch sử du lịch của bạn
+              </span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-slate-800 mb-3 sm:mb-4">
+              Chuyến đi của{" "}
+              <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                Tôi
+              </span>
+            </h1>
+            <p className="text-xs sm:text-base md:text-lg text-slate-600 max-w-2xl mx-auto">
+              Theo dõi và quản lý tất cả lịch đặt chỗ du lịch của bạn tại một
+              nơi duy nhất
+            </p>
           </div>
-          <h1 className="text-4xl md:text-5xl font-black text-slate-800 mb-4">
-            Chuyến đi của{" "}
-            <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-              Tôi
-            </span>
-          </h1>
-          <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-            Theo dõi và quản lý tất cả lịch đặt chỗ du lịch của bạn tại một nơi
-            duy nhất
-          </p>
-        </div>
         </div>
 
         {/* Filter Section */}
         {bookings && bookings.length > 0 && (
-          <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 mb-8">
-            <div className="flex flex-col md:flex-row gap-4 items-center">
+          <div className="bg-white rounded-2xl sm:rounded-3xl border border-slate-100 shadow-sm p-4 sm:p-6 mb-6 sm:mb-8">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-center">
               <div className="flex-1 relative w-full">
                 <Search
                   className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400"
-                  size={20}
+                  size={18}
                 />
                 <input
                   type="text"
-                  placeholder="Tìm theo tên tour hoặc khách hàng..."
+                  placeholder="Tìm theo tên tour..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-slate-200 rounded-xl bg-slate-50/60 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all outline-none"
+                  className="w-full pl-10 pr-4 py-2.5 sm:py-3 text-sm border border-slate-200 rounded-lg sm:rounded-xl bg-slate-50/60 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all outline-none"
                 />
               </div>
-              <div className="flex items-center space-x-2 w-full md:w-auto">
-                <Filter size={20} className="text-slate-500" />
+              <div className="flex items-center space-x-2 w-full sm:w-auto">
+                <Filter size={18} className="text-slate-500 shrink-0" />
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="w-full md:w-auto px-4 py-3 border border-slate-200 rounded-xl bg-slate-50/60 focus:border-blue-500 outline-none font-semibold text-slate-700"
+                  className="flex-1 sm:flex-initial px-3 sm:px-4 py-2.5 sm:py-3 text-sm border border-slate-200 rounded-lg sm:rounded-xl bg-slate-50/60 focus:border-blue-500 outline-none font-semibold text-slate-700"
                 >
                   <option value="all">Tất cả trạng thái</option>
                   <option value="ongoing">Đang diễn ra</option>
@@ -341,15 +349,15 @@ const MyBooking = () => {
                 </select>
               </div>
             </div>
-            <div className="mt-4 pt-4 border-t border-slate-100">
-              <p className="text-slate-500 text-sm">
+            <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-slate-100">
+              <p className="text-xs sm:text-sm text-slate-500">
                 Đang hiển thị <b>{filteredBookings.length}</b> đơn đặt chỗ
               </p>
             </div>
           </div>
         )}
 
-        <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-2xl sm:rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
           {filteredBookings.length === 0 ? (
             <EmptyState />
           ) : (
@@ -362,8 +370,12 @@ const MyBooking = () => {
                   ? deadlineTimestamp - countdownNow
                   : null;
                 const isUrgentDeadline =
-                  remainingMs !== null && remainingMs > 0 && remainingMs <= 3600000;
-                const isAutoCancelling = autoCancellingBookingIds.includes(booking._id);
+                  remainingMs !== null &&
+                  remainingMs > 0 &&
+                  remainingMs <= 3600000;
+                const isAutoCancelling = autoCancellingBookingIds.includes(
+                  booking._id,
+                );
 
                 // Xác định travelStatus để chặn nút hủy nếu đang đi hoặc đã xong
                 const travelStatus = getTravelStatus(
@@ -427,8 +439,8 @@ const MyBooking = () => {
                                 className={`font-black tracking-wide ${isUrgentDeadline ? "text-red-600 animate-pulse" : "text-red-700"}`}
                               >
                                 {formatCountdown(remainingMs)}
-                              </span>
-                              {" "}để giữ mức giá ưu đãi này. Sau thời gian này, hệ
+                              </span>{" "}
+                              để giữ mức giá ưu đãi này. Sau thời gian này, hệ
                               thống sẽ tự động giải phóng chỗ.
                             </p>
                           </div>
@@ -526,7 +538,6 @@ const MyBooking = () => {
                               </span>
                             </div>
                           )}
-
                       </div>
 
                       <div className="flex flex-col gap-2.5 lg:min-w-[180px]">
@@ -547,19 +558,28 @@ const MyBooking = () => {
                             <XCircle size={18} /> Huỷ Tour
                           </button>
                         )}
-                        {isCompleted && booking.status?.toLowerCase() === "confirmed" && (
-                          <button
-                            onClick={() => isReviewed ? navigate(`/tours/${booking.tourId?._id || booking.tourId}`) : openReviewModal(booking)}
-                            className={`font-bold py-2.5 px-6 rounded-xl flex items-center justify-center gap-2 border transition ${
-                              isReviewed
-                                ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
-                                : "bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100"
-                            }`}
-                          >
-                            <MessageSquareText size={18} />
-                            {isReviewed ? "Xem đánh giá" : "Đánh giá chuyến đi"}
-                          </button>
-                        )}
+                        {isCompleted &&
+                          booking.status?.toLowerCase() === "confirmed" && (
+                            <button
+                              onClick={() =>
+                                isReviewed
+                                  ? navigate(
+                                      `/tours/${booking.tourId?._id || booking.tourId}`,
+                                    )
+                                  : openReviewModal(booking)
+                              }
+                              className={`font-bold py-2.5 px-6 rounded-xl flex items-center justify-center gap-2 border transition ${
+                                isReviewed
+                                  ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
+                                  : "bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100"
+                              }`}
+                            >
+                              <MessageSquareText size={18} />
+                              {isReviewed
+                                ? "Xem đánh giá"
+                                : "Đánh giá chuyến đi"}
+                            </button>
+                          )}
                       </div>
                     </div>
                   </div>

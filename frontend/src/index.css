@@ -23,3 +23,65 @@ body {
   height: auto;
   border-radius: 1rem;
 }
+
+/* ===== RESPONSIVE UTILITIES ===== */
+
+/* Hide scrollbar cho các container scroll ngang */
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Đảm bảo hình ảnh không bị tràn */
+img {
+  max-width: 100%;
+}
+
+/* Fix tap highlight trên mobile */
+button, a, input, select, textarea {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Touch action cho các element tương tác */
+.touch-manipulation {
+  touch-action: manipulation;
+}
+
+/* Responsive typography scale */
+@media (max-width: 640px) {
+  html {
+    font-size: 14px;
+  }
+}
+
+/* Safe area cho mobile (notch, home indicator) */
+@supports (padding: max(0px)) {
+  .safe-bottom {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+  .safe-top {
+    padding-top: max(1rem, env(safe-area-inset-top));
+  }
+}
+
+/* Animation cho shine effect */
+@keyframes shine {
+  100% {
+    left: 125%;
+  }
+}
+
+/* Fix table horizontal scroll */
+.table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Modal responsive max-width */
+.modal-responsive {
+  max-width: min(95vw, 32rem);
+  width: 100%;
+}

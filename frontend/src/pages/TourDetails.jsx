@@ -43,8 +43,7 @@ const TourDetails = () => {
   const tour = useMemo(
     () =>
       tours.find(
-        (item) =>
-          buildTourSlug(item) === slugParam || item._id === slugParam,
+        (item) => buildTourSlug(item) === slugParam || item._id === slugParam,
       ),
     [tours, slugParam],
   );
@@ -86,7 +85,10 @@ const TourDetails = () => {
 
         // Gọi API lấy lịch trình
         const target = tour?._id || tourKey;
-        const data = await getSchedulesByTour({ backendUrl: base, tourId: target });
+        const data = await getSchedulesByTour({
+          backendUrl: base,
+          tourId: target,
+        });
 
         if (data.success) {
           setSchedules(data.schedules);
@@ -123,11 +125,7 @@ const TourDetails = () => {
         const cityNorm = normWeatherCityKey(city);
         const mappedCandidates = WEATHER_CITY_QUERY_MAP[cityNorm] || [];
         const candidates = Array.from(
-          new Set([
-            ...mappedCandidates,
-            `${city}, VN`,
-            city,
-          ]),
+          new Set([...mappedCandidates, `${city}, VN`, city]),
         ).filter(Boolean);
 
         let foundCoord = null;
@@ -234,7 +232,10 @@ const TourDetails = () => {
     Array.isArray(images) && images.length > 0 ? images : image ? [image] : [];
 
   const reviewsPerPage = 5;
-  const totalReviewPages = Math.max(1, Math.ceil(allReviews.length / reviewsPerPage));
+  const totalReviewPages = Math.max(
+    1,
+    Math.ceil(allReviews.length / reviewsPerPage),
+  );
   const pagedReviews = allReviews.slice(
     (reviewPage - 1) * reviewsPerPage,
     reviewPage * reviewsPerPage,
@@ -302,8 +303,8 @@ const TourDetails = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#fcfcfd] py-10 px-4 sm:px-8 font-sans">
-      <div className="max-w-6xl mx-auto space-y-10">
+    <div className="min-h-screen bg-[#fcfcfd] py-6 sm:py-10 px-3 sm:px-4 md:px-8 font-sans">
+      <div className="max-w-6xl mx-auto space-y-8 sm:space-y-10">
         {/* Banner */}
         <div className="relative">
           <TourCardStackGallery
@@ -311,37 +312,44 @@ const TourDetails = () => {
             title={title}
             backendUrl={backendUrl}
           />
-          <div className="absolute bottom-6 left-6 md:bottom-10 md:left-10 text-white pr-24 md:pr-40">
-            <h1 className="text-4xl md:text-6xl font-black mb-4 uppercase drop-shadow-[0_2px_12px_rgba(0,0,0,0.45)]">
+          <div className="absolute bottom-4 left-4 md:bottom-10 md:left-10 text-white pr-12 sm:pr-24 md:pr-40">
+            <h1 className="text-xl sm:text-3xl md:text-5xl lg:text-6xl font-black mb-3 sm:mb-4 uppercase drop-shadow-[0_2px_12px_rgba(0,0,0,0.45)] leading-tight">
               {title}
             </h1>
-            <span className="flex items-center gap-2 bg-black/35 backdrop-blur-sm px-4 py-2 rounded-full border border-white/35 w-fit shadow-lg">
-              <MapPin size={20} className="text-orange-400" /> {city}
+            <span className="flex items-center gap-2 bg-black/35 backdrop-blur-sm px-3 sm:px-4 py-2 rounded-full border border-white/35 w-fit shadow-lg text-xs sm:text-sm">
+              <MapPin size={16} className="text-orange-400 shrink-0" />{" "}
+              <span className="truncate">{city}</span>
             </span>
           </div>
         </div>
 
-        <div className="grid md:grid-cols-12 gap-10">
-          <div className="md:col-span-8 space-y-8">
+        <div className="grid md:grid-cols-12 gap-6 sm:gap-8 lg:gap-10">
+          <div className="md:col-span-8 space-y-6 sm:space-y-8">
             {/* Giới thiệu */}
-            <div className="text-lg text-slate-600 leading-relaxed bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 relative">
-              <div className="absolute top-0 left-10 -translate-y-1/2 bg-[#1e3a8a] text-white px-6 py-1 rounded-full text-xs font-bold uppercase">
+            <div className="text-base sm:text-lg text-slate-600 leading-relaxed bg-white p-4 sm:p-6 md:p-8 rounded-[1.5rem] sm:rounded-[2rem] shadow-sm border border-slate-100 relative">
+              <div className="absolute top-0 left-6 sm:left-10 -translate-y-1/2 bg-[#1e3a8a] text-white px-3 sm:px-6 py-1 rounded-full text-xs font-bold uppercase">
                 Giới thiệu tour
               </div>
               {desc}
             </div>
 
             {/* Tiện ích */}
-            <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100">
-              <h3 className="text-2xl font-black text-slate-800 mb-6">Tiện ích</h3>
-              <div className="flex flex-col sm:flex-row sm:divide-x sm:divide-y-0 divide-y divide-slate-200 rounded-2xl border border-slate-200 bg-slate-50/40 overflow-hidden">
+            <div className="bg-white p-4 sm:p-6 md:p-8 rounded-[1.5rem] sm:rounded-[2rem] shadow-sm border border-slate-100">
+              <h3 className="text-lg sm:text-xl md:text-2xl font-black text-slate-800 mb-4 sm:mb-6">
+                Tiện ích
+              </h3>
+              <div className="flex flex-col sm:flex-row sm:divide-x sm:divide-y-0 divide-y divide-slate-200 rounded-xl sm:rounded-2xl border border-slate-200 bg-slate-50/40 overflow-hidden">
                 {TOUR_AMENITIES.map(({ Icon, label }) => (
                   <div
                     key={label}
-                    className="flex flex-1 flex-col items-center justify-center gap-3 py-8 px-4 text-slate-500"
+                    className="flex flex-1 flex-col items-center justify-center gap-2 sm:gap-3 py-5 sm:py-8 px-3 sm:px-4 text-slate-500"
                   >
-                    <Icon className="h-10 w-10 shrink-0" strokeWidth={1.35} aria-hidden />
-                    <span className="text-center text-sm font-semibold text-slate-600">
+                    <Icon
+                      className="h-8 sm:h-10 w-8 sm:w-10 shrink-0"
+                      strokeWidth={1.35}
+                      aria-hidden
+                    />
+                    <span className="text-center text-xs sm:text-sm font-semibold text-slate-600 line-clamp-2">
                       {label}
                     </span>
                   </div>
@@ -350,26 +358,33 @@ const TourDetails = () => {
             </div>
 
             {/* Bao gồm / Không bao gồm */}
-            <div className="grid gap-5 md:grid-cols-2">
-              <div className="relative overflow-hidden rounded-[1.75rem] border border-emerald-100 bg-white p-6 shadow-sm ring-1 ring-emerald-500/10">
+            <div className="grid gap-4 sm:gap-5 md:grid-cols-2">
+              <div className="relative overflow-hidden rounded-[1.5rem] sm:rounded-[1.75rem] border border-emerald-100 bg-white p-4 sm:p-6 shadow-sm ring-1 ring-emerald-500/10">
                 <div className="pointer-events-none absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-emerald-400 via-emerald-500 to-teal-500" />
                 <div className="pl-2">
-                  <h3 className="mb-4 flex items-center gap-2 text-xl font-black text-slate-800">
-                    <span className="text-lg leading-none" aria-hidden>
+                  <h3 className="mb-3 sm:mb-4 flex items-center gap-2 text-lg sm:text-xl font-black text-slate-800">
+                    <span
+                      className="text-base sm:text-lg leading-none"
+                      aria-hidden
+                    >
                       ✅
                     </span>
                     Bao gồm
                   </h3>
-                  <ul className="space-y-2.5">
+                  <ul className="space-y-2 sm:space-y-2.5">
                     {TOUR_INCLUSIONS.map(({ Icon, text }) => (
                       <li
                         key={text}
-                        className="flex gap-3 rounded-xl border border-emerald-50/80 bg-emerald-50/35 px-3 py-2.5"
+                        className="flex gap-2 sm:gap-3 rounded-xl border border-emerald-50/80 bg-emerald-50/35 px-2 sm:px-3 py-2"
                       >
-                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-emerald-600 shadow-sm ring-1 ring-emerald-100">
-                          <Icon className="h-4 w-4" strokeWidth={2} aria-hidden />
+                        <span className="flex h-8 sm:h-9 w-8 sm:w-9 shrink-0 items-center justify-center rounded-lg bg-white text-emerald-600 shadow-sm ring-1 ring-emerald-100">
+                          <Icon
+                            className="h-3.5 w-3.5 sm:h-4 sm:w-4"
+                            strokeWidth={2}
+                            aria-hidden
+                          />
                         </span>
-                        <span className="text-sm font-medium leading-snug text-slate-700">
+                        <span className="text-xs sm:text-sm font-medium leading-snug text-slate-700">
                           {text}
                         </span>
                       </li>
@@ -378,25 +393,32 @@ const TourDetails = () => {
                 </div>
               </div>
 
-              <div className="relative overflow-hidden rounded-[1.75rem] border border-rose-100 bg-white p-6 shadow-sm ring-1 ring-rose-500/10">
+              <div className="relative overflow-hidden rounded-[1.5rem] sm:rounded-[1.75rem] border border-rose-100 bg-white p-4 sm:p-6 shadow-sm ring-1 ring-rose-500/10">
                 <div className="pointer-events-none absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-rose-400 via-rose-500 to-orange-400" />
                 <div className="pl-2">
-                  <h3 className="mb-4 flex items-center gap-2 text-xl font-black text-slate-800">
-                    <span className="text-lg leading-none" aria-hidden>
+                  <h3 className="mb-3 sm:mb-4 flex items-center gap-2 text-lg sm:text-xl font-black text-slate-800">
+                    <span
+                      className="text-base sm:text-lg leading-none"
+                      aria-hidden
+                    >
                       ❌
                     </span>
                     Không bao gồm
                   </h3>
-                  <ul className="space-y-2.5">
+                  <ul className="space-y-2 sm:space-y-2.5">
                     {TOUR_EXCLUSIONS.map(({ Icon, text }) => (
                       <li
                         key={text}
-                        className="flex gap-3 rounded-xl border border-rose-50/90 bg-rose-50/40 px-3 py-2.5"
+                        className="flex gap-2 sm:gap-3 rounded-xl border border-rose-50/90 bg-rose-50/40 px-2 sm:px-3 py-2"
                       >
-                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-rose-500 shadow-sm ring-1 ring-rose-100">
-                          <Icon className="h-4 w-4" strokeWidth={2} aria-hidden />
+                        <span className="flex h-8 sm:h-9 w-8 sm:w-9 shrink-0 items-center justify-center rounded-lg bg-white text-rose-500 shadow-sm ring-1 ring-rose-100">
+                          <Icon
+                            className="h-3.5 w-3.5 sm:h-4 sm:w-4"
+                            strokeWidth={2}
+                            aria-hidden
+                          />
                         </span>
-                        <span className="text-sm font-medium leading-snug text-slate-700">
+                        <span className="text-xs sm:text-sm font-medium leading-snug text-slate-700">
                           {text}
                         </span>
                       </li>
@@ -439,7 +461,9 @@ const TourDetails = () => {
                             </span>
                             {item.dayTitle}
                           </span>
-                          <span className="text-slate-400">{isActive ? "−" : "+"}</span>
+                          <span className="text-slate-400">
+                            {isActive ? "−" : "+"}
+                          </span>
                         </button>
                         {isActive && (
                           <div className="px-4 py-4 bg-white text-sm text-slate-600 leading-7 whitespace-pre-line">
@@ -475,12 +499,12 @@ const TourDetails = () => {
                       <p className="text-sm">{advice.desc}</p>
                     </div>
                   </div>
-                  <div className="grid grid-cols-5 gap-3">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3">
                     {dailyForecasts.map((item, idx) => (
                       <div
                         key={idx}
                         onClick={() => setActiveWeatherIdx(idx)}
-                        className={`flex flex-col items-center p-4 rounded-[1.5rem] border cursor-pointer transition-all ${activeWeatherIdx === idx ? "bg-blue-600 text-white shadow-lg" : "bg-slate-50 hover:bg-slate-100"}`}
+                        className={`flex flex-col items-center p-3 sm:p-4 rounded-[1.5rem] border cursor-pointer transition-all text-xs sm:text-sm ${activeWeatherIdx === idx ? "bg-blue-600 text-white shadow-lg" : "bg-slate-50 hover:bg-slate-100"}`}
                       >
                         <span className="text-[10px] uppercase font-bold">
                           {new Date(item.dt * 1000).toLocaleDateString(
@@ -489,7 +513,9 @@ const TourDetails = () => {
                           )}
                         </span>
                         {(() => {
-                          const { Icon, className } = getWeatherIcon(item.weather[0].main);
+                          const { Icon, className } = getWeatherIcon(
+                            item.weather[0].main,
+                          );
                           return <Icon className={className} size={28} />;
                         })()}
                         <span className="text-xl font-black mt-2">
@@ -661,7 +687,8 @@ const TourDetails = () => {
                         Trẻ em × {children}
                         <span className="text-slate-400 font-normal">
                           {" "}
-                          (Giảm 40% · {priceChild.toLocaleString("vi-VN")} đ / em)
+                          (Giảm 40% · {priceChild.toLocaleString("vi-VN")} đ /
+                          em)
                         </span>
                       </span>
                       <span className="font-semibold text-slate-800 tabular-nums shrink-0">
@@ -675,7 +702,9 @@ const TourDetails = () => {
                   )}
                 </div>
                 <div className="flex justify-between items-baseline gap-4 pt-3 border-t border-slate-200">
-                  <span className="font-bold text-slate-800">Tổng tạm tính</span>
+                  <span className="font-bold text-slate-800">
+                    Tổng tạm tính
+                  </span>
                   <span className="text-xl font-black text-[#1e3a8a] tabular-nums">
                     {totalAmount.toLocaleString("vi-VN")} đ
                   </span>
@@ -691,10 +720,10 @@ const TourDetails = () => {
               {checkingDuplicate
                 ? "Đang kiểm tra đơn cũ..."
                 : !selectedSchedule
-                ? "Vui lòng chọn ngày"
-                : isFull
-                  ? "Ngày này đã đủ người"
-                  : "Xác nhận đặt tour"}
+                  ? "Vui lòng chọn ngày"
+                  : isFull
+                    ? "Ngày này đã đủ người"
+                    : "Xác nhận đặt tour"}
             </button>
           </div>
 
@@ -723,7 +752,8 @@ const TourDetails = () => {
                     { key: "food", label: "Ăn uống" },
                     { key: "schedule", label: "Lịch trình" },
                   ].map((item) => {
-                    const percent = reviewStats?.survey?.[item.key]?.satisfiedPercent || 0;
+                    const percent =
+                      reviewStats?.survey?.[item.key]?.satisfiedPercent || 0;
                     return (
                       <div key={item.key}>
                         <div className="flex justify-between text-[12px] font-semibold text-slate-600 mb-1">
@@ -753,25 +783,36 @@ const TourDetails = () => {
                           className="rounded-xl bg-slate-50 border border-slate-100 p-3"
                         >
                           <div className="flex justify-between items-center mb-1">
-                            <p className="text-sm font-bold text-slate-700">{review.userName}</p>
+                            <p className="text-sm font-bold text-slate-700">
+                              {review.userName}
+                            </p>
                             <span className="text-xs text-amber-500 font-bold">
                               {review.rating}★
                             </span>
                           </div>
                           <p className="text-xs text-slate-600 line-clamp-2">
-                            {review.comment || "Khách hàng hài lòng với chuyến đi."}
+                            {review.comment ||
+                              "Khách hàng hài lòng với chuyến đi."}
                           </p>
                           {review.images && review.images.length > 0 && (
                             <div className="flex gap-2 mt-2 overflow-x-auto pb-1 no-scrollbar">
                               {review.images.map((img, idx) => (
-                                <img key={idx} src={img} alt="review" className="w-12 h-12 object-cover rounded-lg border border-slate-200 shrink-0 cursor-pointer hover:opacity-80 transition-opacity" onClick={() => setZoomedImage(img)} />
+                                <img
+                                  key={idx}
+                                  src={img}
+                                  alt="review"
+                                  className="w-12 h-12 object-cover rounded-lg border border-slate-200 shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
+                                  onClick={() => setZoomedImage(img)}
+                                />
                               ))}
                             </div>
                           )}
                         </div>
                       ))
                     ) : (
-                      <p className="text-xs text-slate-400">Chưa có đánh giá nào.</p>
+                      <p className="text-xs text-slate-400">
+                        Chưa có đánh giá nào.
+                      </p>
                     )}
                   </div>
                   {allReviews.length > 0 && (
@@ -810,16 +851,27 @@ const TourDetails = () => {
                   className="p-4 rounded-2xl border border-slate-100 bg-slate-50"
                 >
                   <div className="flex justify-between items-center mb-1">
-                    <p className="font-bold text-slate-700">{review.userName}</p>
-                    <span className="text-sm font-bold text-amber-500">{review.rating}★</span>
+                    <p className="font-bold text-slate-700">
+                      {review.userName}
+                    </p>
+                    <span className="text-sm font-bold text-amber-500">
+                      {review.rating}★
+                    </span>
                   </div>
                   <p className="text-sm text-slate-600">
-                    {review.comment || "Khách hàng đánh giá tích cực về tour này."}
+                    {review.comment ||
+                      "Khách hàng đánh giá tích cực về tour này."}
                   </p>
                   {review.images && review.images.length > 0 && (
                     <div className="flex gap-2 mt-3 flex-wrap">
                       {review.images.map((img, idx) => (
-                        <img key={idx} src={img} alt="review" className="w-16 h-16 object-cover rounded-xl border border-slate-200 shrink-0 shadow-sm cursor-pointer hover:opacity-80 transition-opacity" onClick={() => setZoomedImage(img)} />
+                        <img
+                          key={idx}
+                          src={img}
+                          alt="review"
+                          className="w-16 h-16 object-cover rounded-xl border border-slate-200 shrink-0 shadow-sm cursor-pointer hover:opacity-80 transition-opacity"
+                          onClick={() => setZoomedImage(img)}
+                        />
                       ))}
                     </div>
                   )}
@@ -833,7 +885,9 @@ const TourDetails = () => {
               {allReviews.length > reviewsPerPage && (
                 <div className="pt-2 flex items-center justify-center gap-2">
                   <button
-                    onClick={() => setReviewPage((prev) => Math.max(1, prev - 1))}
+                    onClick={() =>
+                      setReviewPage((prev) => Math.max(1, prev - 1))
+                    }
                     disabled={reviewPage === 1}
                     className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 text-sm font-semibold disabled:opacity-40"
                   >
@@ -844,7 +898,9 @@ const TourDetails = () => {
                   </span>
                   <button
                     onClick={() =>
-                      setReviewPage((prev) => Math.min(totalReviewPages, prev + 1))
+                      setReviewPage((prev) =>
+                        Math.min(totalReviewPages, prev + 1),
+                      )
                     }
                     disabled={reviewPage === totalReviewPages}
                     className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 text-sm font-semibold disabled:opacity-40"
@@ -870,13 +926,15 @@ const TourDetails = () => {
               </p>
               <p>
                 Chúng tôi thấy bạn đã có một đơn giữ chỗ cho tour{" "}
-                <span className="font-bold">{tour?.title}</span>. Hãy kiểm tra lại
-                để tránh đặt trùng nhé!
+                <span className="font-bold">{tour?.title}</span>. Hãy kiểm tra
+                lại để tránh đặt trùng nhé!
               </p>
               <p>
                 Ngày khởi hành của đơn cũ:{" "}
                 <span className="font-bold text-blue-700">
-                  {new Date(duplicateBooking.bookAt).toLocaleDateString("vi-VN")}
+                  {new Date(duplicateBooking.bookAt).toLocaleDateString(
+                    "vi-VN",
+                  )}
                 </span>
               </p>
             </div>
@@ -906,16 +964,16 @@ const TourDetails = () => {
       )}
 
       {zoomedImage && (
-        <div 
+        <div
           className="fixed inset-0 z-[10000] bg-black/90 flex items-center justify-center p-4 cursor-zoom-out"
           onClick={() => setZoomedImage(null)}
         >
-          <img 
-            src={zoomedImage} 
-            alt="zoomed-review" 
+          <img
+            src={zoomedImage}
+            alt="zoomed-review"
             className="max-w-full max-h-full object-contain rounded-xl shadow-2xl"
           />
-          <button 
+          <button
             className="absolute top-6 right-6 text-white bg-black/50 p-2 rounded-full hover:bg-black/80 transition-colors"
             onClick={(e) => {
               e.stopPropagation();
