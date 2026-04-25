@@ -235,62 +235,26 @@ npm run dev
 
 ## 🔐 Cấu Hình Biến Môi Trường
 
-### Backend (.env)
+> ⚠️ **Lưu ý Bảo Mật**: Không bao giờ commit các file `.env` chứa thông tin nhạy cảm lên GitHub.
 
-```env
-# MongoDB
-MONGODB_URI=mongodb://localhost:27017/vietnamtravel
-# hoặc MongoDB Atlas
-MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/vietnamtravel
+Tham khảo các file `.env.example` có sẵn trong mỗi thư mục (`backend/.env.example`, `frontend/.env.example`, `admin/.env.example`) để biết danh sách các biến cần thiết.
 
-# Server
-PORT=5001
-NODE_ENV=development
+**Hướng dẫn cấu hình:**
 
-# JWT
-JWT_SECRET=your_jwt_secret_key_here
+1. Sao chép file `.env.example` thành `.env` ở từng thư mục
+2. Điền các giá trị cần thiết (API keys, database URIs, v.v.)
+3. Giữ bí mật và không share với bất kỳ ai
 
-# Cloudinary
-CLOUDINARY_API_KEY=your_cloudinary_api_key
-CLOUDINARY_API_SECRET=your_cloudinary_api_secret
-CLOUDINARY_NAME=your_cloudinary_name
+```bash
+# Backend
+cp backend/.env.example backend/.env
+nano backend/.env  # Điền các giá trị
 
-# Nodemailer (Gmail)
-EMAIL_USER=your_email@gmail.com
-EMAIL_PASS=your_app_password  # Gmail App Password
+# Frontend
+cp frontend/.env.example frontend/.env
 
-# Google Gemini API
-GEMINI_API_KEY=your_google_gemini_api_key
-
-# VNPay
-VNPAY_TMN_CODE=your_vnpay_merchant_code
-VNPAY_SECRET_KEY=your_vnpay_secret_key
-VNPAY_RETURN_URL=http://localhost:5173/payment-result
-
-# reCAPTCHA
-RECAPTCHA_SECRET_KEY=your_recaptcha_secret_key
-
-# Frontend URL (CORS)
-FRONTEND_URL=http://localhost:5173
-ADMIN_URL=http://localhost:5174
-
-# Enable Logging
-ENABLE_HTTP_REQUEST_LOG=true
-```
-
-### Frontend (.env)
-
-```env
-VITE_API_URL=http://localhost:5001/api
-VITE_SOCKET_URL=http://localhost:5001
-VITE_GOOGLE_MAPS_KEY=your_google_maps_api_key
-```
-
-### Admin (.env)
-
-```env
-VITE_API_URL=http://localhost:5001/api
-VITE_SOCKET_URL=http://localhost:5001
+# Admin
+cp admin/.env.example admin/.env
 ```
 
 ---
