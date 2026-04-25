@@ -17,6 +17,7 @@ const LoginPage = () => {
   const [captchaSvg, setCaptchaSvg] = useState("");
   const [serverCaptcha, setServerCaptcha] = useState("");
   const [userCaptchaInput, setUserCaptchaInput] = useState("");
+  const [isLoadingOtp, setIsLoadingOtp] = useState(false);
 
   const navigate = useNavigate();
 
@@ -75,10 +76,14 @@ const LoginPage = () => {
         }
       } else {
         // --- LUỒNG ĐĂNG KÝ ---
+        if (isLoadingOtp) return; // Ngăn gửi multiple OTP requests
+
         if (!name || !phone || !email || !password || !confirmPassword)
           return toast.error("Điền đủ thông tin!");
         if (!/^0\d{9,10}$/.test(phone.trim())) {
-          return toast.error("Số điện thoại không hợp lệ (10-11 số, bắt đầu bằng 0)");
+          return toast.error(
+            "Số điện thoại không hợp lệ (10-11 số, bắt đầu bằng 0)",
+          );
         }
         if (password.length < 6) {
           return toast.error("Mật khẩu phải có ít nhất 6 ký tự");
@@ -87,6 +92,7 @@ const LoginPage = () => {
           return toast.error("Mật khẩu nhập lại không khớp");
         }
 
+        setIsLoadingOtp(true);
         const response = await requestOtp({ backendUrl, email });
 
         if (response.success) {
@@ -94,11 +100,13 @@ const LoginPage = () => {
           navigate("/verify-otp", { state: { name, phone, email, password } });
         } else {
           toast.error(response.message);
+          setIsLoadingOtp(false);
         }
       }
     } catch (error) {
       toast.error(error.response?.data?.message || "Lỗi kết nối");
       fetchCaptcha();
+      if (!isLogin) setIsLoadingOtp(false);
     }
   };
 
@@ -115,6 +123,22 @@ const LoginPage = () => {
 
         <form onSubmit={onSubmitHandler} className="space-y-4 mt-6">
           {!isLogin && (
+            <div className="p-3 bg-amber-50 border-l-4 border-amber-500 rounded mb-4">
+              <p className="text-amber-800 text-xs font-semibold mb-1">
+                ⚠️ Lưu ý quan trọng:
+              </p>
+              <ul className="text-amber-700 text-xs space-y-0.5 list-disc list-inside">
+                <li>
+                  Vui lòng nhấn nút{" "}
+                  <span className="font-bold">1 lần duy nhất</span>
+                </li>
+                <li>Chờ hệ thống gửi mã xác thực (OTP)</li>
+                <li>Tránh nhấn nhiều lần để không nhận mã hàng loạt</li>
+              </ul>
+            </div>
+          )}
+
+          {!isLogin && (
             <div>
               <label className="block text-sm font-medium text-gray-700">
                 Họ và tên
@@ -123,7 +147,8 @@ const LoginPage = () => {
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full px-4 py-2 mt-1 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500 bg-white/50"
+                disabled={isLoadingOtp}
+                className="w-full px-4 py-2 mt-1 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500 bg-white/50 disabled:bg-gray-100 disabled:cursor-not-allowed"
                 placeholder="Nhập họ tên"
                 required
               />
@@ -139,7 +164,8 @@ const LoginPage = () => {
                 type="tel"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                className="w-full px-4 py-2 mt-1 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500 bg-white/50"
+                disabled={isLoadingOtp}
+                className="w-full px-4 py-2 mt-1 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500 bg-white/50 disabled:bg-gray-100 disabled:cursor-not-allowed"
                 placeholder="Ví dụ: 0912345678"
                 required
               />
@@ -154,7 +180,8 @@ const LoginPage = () => {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-2 mt-1 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500 bg-white/50"
+              disabled={isLoadingOtp && !isLogin}
+              className="w-full px-4 py-2 mt-1 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500 bg-white/50 disabled:bg-gray-100 disabled:cursor-not-allowed"
               placeholder="example@gmail.com"
               required
             />
@@ -168,7 +195,8 @@ const LoginPage = () => {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-2 mt-1 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500 bg-white/50"
+              disabled={isLoadingOtp && !isLogin}
+              className="w-full px-4 py-2 mt-1 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500 bg-white/50 disabled:bg-gray-100 disabled:cursor-not-allowed"
               placeholder="Nhập mật khẩu"
               required
             />
@@ -183,7 +211,8 @@ const LoginPage = () => {
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full px-4 py-2 mt-1 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500 bg-white/50"
+                disabled={isLoadingOtp}
+                className="w-full px-4 py-2 mt-1 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500 bg-white/50 disabled:bg-gray-100 disabled:cursor-not-allowed"
                 placeholder="Nhập lại mật khẩu"
                 required
               />
@@ -218,9 +247,18 @@ const LoginPage = () => {
 
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition shadow-lg active:scale-95 duration-200"
+            disabled={isLoadingOtp && !isLogin}
+            className={`w-full py-3 rounded-lg font-semibold transition shadow-lg active:scale-95 duration-200 ${
+              isLoadingOtp && !isLogin
+                ? "bg-gray-400 text-white cursor-not-allowed"
+                : "bg-blue-600 text-white hover:bg-blue-700"
+            }`}
           >
-            {isLogin ? "Đăng nhập" : "Gửi mã xác thực OTP"}
+            {isLoadingOtp && !isLogin
+              ? "Đang gửi mã..."
+              : isLogin
+                ? "Đăng nhập"
+                : "Gửi mã xác thực OTP"}
           </button>
         </form>
 
