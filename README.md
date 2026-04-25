@@ -497,7 +497,7 @@ Dự án này được cấp phép theo giấy phép MIT. Xem file [LICENSE](LIC
 
 ## 📧 Liên Hệ & Hỗ Trợ
 
-- 📧 **Email**: support@vietnamtravel.com
+- 📧 **Email**: phamquocphu431027@gmail.com
 - 💬 **Chat**: Sử dụng tính năng chat trong ứng dụng
 - 🐛 **Report Bug**: Tạo Issue trên GitHub
 
