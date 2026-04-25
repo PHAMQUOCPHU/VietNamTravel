@@ -7,6 +7,7 @@ import { Menu } from "lucide-react";
 
 const AdminLayout = () => {
   const location = useLocation();
+  const isBookingsPage = location.pathname === "/admin/bookings";
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
