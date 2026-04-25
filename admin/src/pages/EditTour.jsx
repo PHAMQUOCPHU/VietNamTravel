@@ -35,7 +35,17 @@ const EditTour = () => {
 
   const [loading, setLoading] = useState(true);
   const [newImages, setNewImages] = useState([null, null, null]);
+  const [newImagePreviews, setNewImagePreviews] = useState([null, null, null]);
   const [oldImages, setOldImages] = useState(["", "", ""]);
+
+  // Cleanup image preview URLs to prevent memory leak
+  useEffect(() => {
+    return () => {
+      newImagePreviews.forEach((url) => {
+        if (url) URL.revokeObjectURL(url);
+      });
+    };
+  }, []);
 
   const [title, setTitle] = useState("");
   const [city, setCity] = useState("");
@@ -168,7 +178,15 @@ const EditTour = () => {
 
   const handleImageChange = (index, file) => {
     if (!file) return;
-    setNewImages((prev) => prev.map((item, idx) => (idx === index ? file : item)));
+    setNewImages((prev) =>
+      prev.map((item, idx) => (idx === index ? file : item)),
+    );
+    setNewImagePreviews((prev) => {
+      const newPreviews = [...prev];
+      if (newPreviews[index]) URL.revokeObjectURL(newPreviews[index]);
+      newPreviews[index] = URL.createObjectURL(file);
+      return newPreviews;
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -259,7 +277,10 @@ const EditTour = () => {
 
   const addItineraryDay = () => {
     const next = itinerary.length + 1;
-    setItinerary((prev) => [...prev, { dayTitle: `Ngày ${next} - `, content: "" }]);
+    setItinerary((prev) => [
+      ...prev,
+      { dayTitle: `Ngày ${next} - `, content: "" },
+    ]);
   };
 
   const removeItineraryDay = (index) => {
@@ -314,8 +335,8 @@ const EditTour = () => {
             </p>
             <div className="grid grid-cols-3 gap-3">
               {[0, 1, 2].map((index) => {
-                const previewSrc = newImages[index]
-                  ? URL.createObjectURL(newImages[index])
+                const previewSrc = newImagePreviews[index]
+                  ? newImagePreviews[index]
                   : oldImages[index]
                     ? oldImages[index].startsWith("http")
                       ? oldImages[index]
@@ -348,7 +369,9 @@ const EditTour = () => {
                       id={`tour-image-${index}`}
                       hidden
                       accept="image/*"
-                      onChange={(e) => handleImageChange(index, e.target.files?.[0])}
+                      onChange={(e) =>
+                        handleImageChange(index, e.target.files?.[0])
+                      }
                     />
                   </label>
                 );
@@ -531,8 +554,8 @@ const EditTour = () => {
                     </button>
                   </div>
                   <p className="text-[10px] text-slate-500">
-                    Khi bấm Lưu, giờ trong ô bên trên áp dụng cho tất cả các ngày
-                    đã thêm (cùng một giờ khởi hành).
+                    Khi bấm Lưu, giờ trong ô bên trên áp dụng cho tất cả các
+                    ngày đã thêm (cùng một giờ khởi hành).
                   </p>
                   <div className="flex flex-wrap gap-2">
                     {availableDates.map((slot) => (

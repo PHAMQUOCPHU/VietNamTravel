@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import ReactQuill from "react-quill-new";
 import "react-quill-new/dist/quill.snow.css";
 import {
@@ -23,6 +23,7 @@ const AddBlog = () => {
   const [excerpt, setExcerpt] = useState("");
   const [category, setCategory] = useState("destination");
   const [image, setImage] = useState(false);
+  const [imagePreview, setImagePreview] = useState(null);
   const [content, setContent] = useState("");
   const [isFeatured, setIsFeatured] = useState(false);
   const [isHidden, setIsHidden] = useState(false);
@@ -35,6 +36,15 @@ const AddBlog = () => {
     if (typeof window === "undefined") return false;
     return window.localStorage.getItem("aiOfflineMode") === "true";
   });
+
+  // Cleanup image preview URL to prevent memory leak
+  useEffect(() => {
+    return () => {
+      if (imagePreview) {
+        URL.revokeObjectURL(imagePreview);
+      }
+    };
+  }, [imagePreview]);
 
   const modules = {
     toolbar: [
@@ -68,7 +78,7 @@ const AddBlog = () => {
       const { data } = await axios.post(
         backendUrl + "/api/blog/add-blog",
         formData,
-        { headers: { aToken } },
+        { headers: { atoken: aToken } },
       );
 
       if (data.success) {
@@ -102,7 +112,7 @@ const AddBlog = () => {
           length: "vua",
           offlineMode: aiOfflineMode,
         },
-        { headers: { aToken } },
+        { headers: { atoken: aToken } },
       );
 
       if (data.success) {
@@ -156,10 +166,10 @@ const AddBlog = () => {
         </div>
         <div className="mb-4 flex items-center justify-between rounded-2xl border border-blue-100 bg-blue-50/60 px-4 py-3">
           <div>
-            <p className="text-sm font-bold text-slate-800">Offline demo mode</p>
-            <p className="text-xs text-slate-600">
-              Offline
+            <p className="text-sm font-bold text-slate-800">
+              Offline demo mode
             </p>
+            <p className="text-xs text-slate-600">Offline</p>
           </div>
           <label className="relative inline-block w-12 h-6 transition duration-200 ease-in-out">
             <input
@@ -263,9 +273,9 @@ const AddBlog = () => {
             </label>
             <label htmlFor="blog-image" className="cursor-pointer block">
               <div className="border-2 border-dashed border-gray-200 rounded-3xl h-52 flex flex-col items-center justify-center hover:bg-gray-50 transition-all overflow-hidden bg-gray-50/50">
-                {image ? (
+                {imagePreview ? (
                   <img
-                    src={URL.createObjectURL(image)}
+                    src={imagePreview}
                     alt="Preview"
                     className="w-full h-full object-cover"
                   />
@@ -284,7 +294,12 @@ const AddBlog = () => {
                 type="file"
                 id="blog-image"
                 hidden
-                onChange={(e) => setImage(e.target.files[0])}
+                onChange={(e) => {
+                  const file = e.target.files[0];
+                  setImage(file);
+                  if (imagePreview) URL.revokeObjectURL(imagePreview);
+                  setImagePreview(file ? URL.createObjectURL(file) : null);
+                }}
               />
             </label>
           </div>
@@ -357,7 +372,9 @@ const AddBlog = () => {
                 >
                   <EyeOff size={18} />
                 </div>
-                <span className="text-sm font-bold text-gray-700">Ẩn bài viết</span>
+                <span className="text-sm font-bold text-gray-700">
+                  Ẩn bài viết
+                </span>
               </div>
               <div className="relative inline-block w-12 h-6 transition duration-200 ease-in-out">
                 <input

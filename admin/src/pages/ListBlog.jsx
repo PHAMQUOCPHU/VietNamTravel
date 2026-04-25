@@ -123,7 +123,7 @@ const ListBlog = () => {
                       <div className="flex justify-center gap-2 relative z-50">
                         {/* Nút Xem */}
                         <a
-                          href={`http://localhost:5174/blog/${item._id}`}
+                          href={`${import.meta.env.VITE_FRONTEND_URL || window.location.origin}/blog/${item._id}`}
                           target="_blank"
                           rel="noreferrer"
                           className="p-2.5 text-gray-400 hover:text-blue-600"

@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import { AdminContext } from "../context/AdminContext";
 import { toast } from "react-toastify";
 import { addTourApi } from "../api/tourApi";
@@ -26,6 +26,7 @@ const AddTour = () => {
   const { aToken, backendUrl } = useContext(AdminContext);
 
   const [images, setImages] = useState([null, null, null]);
+  const [imagePreviews, setImagePreviews] = useState([null, null, null]);
   const [title, setTitle] = useState("");
   const [city, setCity] = useState("");
   const [price, setPrice] = useState("");
@@ -44,6 +45,15 @@ const AddTour = () => {
   const [dateInput, setDateInput] = useState("");
   const [timeInput, setTimeInput] = useState("07:00");
   const [availableDates, setAvailableDates] = useState([]);
+
+  // Cleanup image preview URLs to prevent memory leak
+  useEffect(() => {
+    return () => {
+      imagePreviews.forEach((url) => {
+        if (url) URL.revokeObjectURL(url);
+      });
+    };
+  }, []);
 
   const [autoSchedule, setAutoSchedule] = useState({
     startDate: "",
@@ -99,6 +109,12 @@ const AddTour = () => {
   const handleImageChange = (index, file) => {
     if (!file) return;
     setImages((prev) => prev.map((item, idx) => (idx === index ? file : item)));
+    setImagePreviews((prev) => {
+      const newPreviews = [...prev];
+      if (newPreviews[index]) URL.revokeObjectURL(newPreviews[index]);
+      newPreviews[index] = URL.createObjectURL(file);
+      return newPreviews;
+    });
   };
 
   const onSubmitHandler = async (e) => {
@@ -175,7 +191,8 @@ const AddTour = () => {
       }
     } catch (error) {
       toast.update(toastId, {
-        render: error?.response?.data?.message || error?.message || "Lỗi hệ thống!",
+        render:
+          error?.response?.data?.message || error?.message || "Lỗi hệ thống!",
         type: "error",
         isLoading: false,
         autoClose: 3000,
@@ -191,7 +208,10 @@ const AddTour = () => {
 
   const addItineraryDay = () => {
     const next = itinerary.length + 1;
-    setItinerary((prev) => [...prev, { dayTitle: `Ngày ${next} - `, content: "" }]);
+    setItinerary((prev) => [
+      ...prev,
+      { dayTitle: `Ngày ${next} - `, content: "" },
+    ]);
   };
 
   const removeItineraryDay = (index) => {
@@ -233,11 +253,11 @@ const AddTour = () => {
                   htmlFor={`tour-image-${index}`}
                   className="group cursor-pointer block relative"
                 >
-                  {img ? (
+                  {imagePreviews[index] ? (
                     <div className="relative">
                       <img
                         className="w-full h-28 object-cover rounded-2xl shadow-md border border-slate-100"
-                        src={URL.createObjectURL(img)}
+                        src={imagePreviews[index]}
                         alt={`tour-${index + 1}`}
                       />
                       <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 rounded-2xl flex items-center justify-center transition-all">
@@ -259,7 +279,9 @@ const AddTour = () => {
                     id={`tour-image-${index}`}
                     hidden
                     accept="image/*"
-                    onChange={(e) => handleImageChange(index, e.target.files?.[0])}
+                    onChange={(e) =>
+                      handleImageChange(index, e.target.files?.[0])
+                    }
                   />
                 </label>
               ))}

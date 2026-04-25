@@ -32,10 +32,20 @@ const EditBlog = () => {
   const [category, setCategory] = useState("Điểm đến");
   const [content, setContent] = useState("");
   const [image, setImage] = useState(false);
+  const [imagePreview, setImagePreview] = useState(null);
   const [oldImage, setOldImage] = useState("");
   const [isFeatured, setIsFeatured] = useState(false);
   const [isHidden, setIsHidden] = useState(false);
   const [publishDate, setPublishDate] = useState("");
+
+  // Cleanup image preview URL to prevent memory leak
+  useEffect(() => {
+    return () => {
+      if (imagePreview) {
+        URL.revokeObjectURL(imagePreview);
+      }
+    };
+  }, [imagePreview]);
 
   const modules = {
     toolbar: [
@@ -206,9 +216,9 @@ const EditBlog = () => {
             </label>
             <label htmlFor="blog-image" className="cursor-pointer block">
               <div className="border-2 border-dashed border-gray-200 rounded-3xl h-52 flex flex-col items-center justify-center hover:bg-gray-50 transition-all overflow-hidden bg-gray-50/50">
-                {image ? (
+                {imagePreview ? (
                   <img
-                    src={URL.createObjectURL(image)}
+                    src={imagePreview}
                     alt="New"
                     className="w-full h-full object-cover"
                   />
@@ -226,7 +236,12 @@ const EditBlog = () => {
                 type="file"
                 id="blog-image"
                 hidden
-                onChange={(e) => setImage(e.target.files[0])}
+                onChange={(e) => {
+                  const file = e.target.files[0];
+                  setImage(file);
+                  if (imagePreview) URL.revokeObjectURL(imagePreview);
+                  setImagePreview(file ? URL.createObjectURL(file) : null);
+                }}
               />
             </label>
           </div>
@@ -299,7 +314,9 @@ const EditBlog = () => {
                 >
                   <EyeOff size={18} />
                 </div>
-                <span className="text-sm font-bold text-gray-700">Ẩn bài viết</span>
+                <span className="text-sm font-bold text-gray-700">
+                  Ẩn bài viết
+                </span>
               </div>
               <div className="relative inline-block w-12 h-6">
                 <input

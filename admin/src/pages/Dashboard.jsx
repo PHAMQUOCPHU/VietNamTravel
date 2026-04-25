@@ -58,6 +58,7 @@ const Dashboard = () => {
   });
 
   useEffect(() => {
+    const controller = new AbortController();
     const fetchStats = async () => {
       if (!aToken) return;
       try {
@@ -66,16 +67,19 @@ const Dashboard = () => {
             startDate: startDate || undefined,
             endDate: endDate || undefined,
           },
-          headers: { token: aToken }, // Gửi đúng header 'token'
+          headers: { atoken: aToken },
+          signal: controller.signal,
         });
         if (res.data.success) {
           setStats(res.data.stats);
         }
       } catch (error) {
+        if (axios.isCancel(error)) return;
         console.error("Dashboard Error:", error);
       }
     };
     fetchStats();
+    return () => controller.abort();
   }, [aToken, backendUrl, startDate, endDate]);
 
   const monthlyRevenueData = {
@@ -238,7 +242,6 @@ const Dashboard = () => {
               options={{ responsive: true, maintainAspectRatio: false }}
             />
           </div>
-        </div>
 
         <div className="bg-white p-6 rounded-3xl shadow-xl border border-gray-100">
           <h3 className="font-black text-gray-800 text-lg mb-1 flex items-center gap-2">
@@ -254,7 +257,6 @@ const Dashboard = () => {
               options={{ responsive: true, maintainAspectRatio: false }}
             />
           </div>
-        </div>
 
         <div className="bg-white p-6 rounded-3xl shadow-xl border border-gray-100">
           <h3 className="font-black text-gray-800 text-lg mb-1 flex items-center gap-2">
@@ -270,7 +272,6 @@ const Dashboard = () => {
               options={{ responsive: true, maintainAspectRatio: false }}
             />
           </div>
-        </div>
 
         <div className="bg-white p-6 rounded-3xl shadow-xl border border-gray-100">
           <h3 className="font-black text-gray-800 text-lg mb-1 flex items-center gap-2">
@@ -286,9 +287,7 @@ const Dashboard = () => {
               options={{ responsive: true, maintainAspectRatio: false }}
             />
           </div>
-        </div>
       </div>
-    </div>
   );
 };
 
