@@ -16,7 +16,7 @@ const AdminContextProvider = (props) => {
   const getAllUsers = useCallback(async () => {
     try {
       const { data } = await axios.get(`${backendUrl}/api/user/admin/users`, {
-        headers: { token: aToken },
+        headers: { atoken: aToken },
       });
       if (data.success) {
         setUsers(data.users);
@@ -38,7 +38,7 @@ const AdminContextProvider = (props) => {
             `${backendUrl}/api/user/admin/delete-user`,
             { id },
             {
-              headers: { token: aToken },
+              headers: { atoken: aToken },
             },
           );
           if (data.success) {
@@ -48,9 +48,7 @@ const AdminContextProvider = (props) => {
             toast.error(data.message || "Không xóa được");
           }
         } catch (err) {
-          toast.error(
-            err.response?.data?.message || "Lỗi khi xóa người dùng",
-          );
+          toast.error(err.response?.data?.message || "Lỗi khi xóa người dùng");
         }
       }
     },
@@ -63,7 +61,7 @@ const AdminContextProvider = (props) => {
         const { data } = await axios.post(
           `${backendUrl}/api/user/admin/users/update`,
           { userId, ...payload },
-          { headers: { token: aToken } },
+          { headers: { atoken: aToken } },
         );
         if (data.success) {
           toast.success(data.message || "Đã cập nhật");

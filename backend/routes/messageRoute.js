@@ -12,8 +12,8 @@ messageRouter.get("/get-messages/:userId", async (req, res) => {
     const messages = await messageModel
       .find({
         $or: [
-          { senderId: userId, receiverId: "ADMIN_ID_FIXED" },
-          { senderId: "ADMIN_ID_FIXED", receiverId: userId },
+          { senderId: userId, receiverId: "ADMIN" },
+          { senderId: "ADMIN", receiverId: userId },
         ],
       })
       .sort({ createdAt: 1 }); // Sắp xếp theo thời gian tăng dần

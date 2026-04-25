@@ -13,7 +13,11 @@ export const addTourApi = async (formData, token, backendUrl) => {
 };
 
 // API Lấy danh sách Tour
-export const listToursApi = async (token, backendUrl, includeInactive = false) => {
+export const listToursApi = async (
+  token,
+  backendUrl,
+  includeInactive = false,
+) => {
   const { data } = await axios.get(`${backendUrl.trim()}/api/tour/list`, {
     params: { includeInactive: includeInactive ? "true" : undefined },
     // SỬA: token -> atoken
@@ -35,14 +39,16 @@ export const removeTourApi = async (id, token, backendUrl) => {
 
 // Hàm lấy 1 tour duy nhất (Không cần token vì là view công khai)
 export const getSingleTourApi = async (id, backendUrl) => {
-  const response = await axios.get(`${backendUrl}/api/tour/single/${id}`);
+  const response = await axios.get(
+    `${backendUrl.trim()}/api/tour/single/${id}`,
+  );
   return response.data;
 };
 
 // Hàm gửi dữ liệu cập nhật lên server
 export const updateTourApi = async (id, formData, token, backendUrl) => {
   const response = await axios.post(
-    `${backendUrl}/api/tour/update/${id}`,
+    `${backendUrl.trim()}/api/tour/update/${id}`,
     formData,
     {
       // SỬA: token -> atoken

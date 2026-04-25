@@ -1,21 +1,22 @@
 import express from "express";
-import { 
-    getAllVouchers, 
-    getPublicVouchers, 
-    createVoucher, 
-    updateVoucher, 
-    deleteVoucher, 
-    applyVoucher 
+import {
+  getAllVouchers,
+  getPublicVouchers,
+  createVoucher,
+  updateVoucher,
+  deleteVoucher,
+  applyVoucher,
 } from "../controllers/voucherController.js";
 import authUser from "../middlewares/auth.js";
+import adminAuth from "../middlewares/adminAuth.js";
 
 const voucherRouter = express.Router();
 
-// Routes cho Admin (có thể thêm adminMiddleware nếu có)
-voucherRouter.get("/admin", getAllVouchers);
-voucherRouter.post("/admin", createVoucher);
-voucherRouter.put("/admin/:id", updateVoucher);
-voucherRouter.delete("/admin/:id", deleteVoucher);
+// Routes cho Admin
+voucherRouter.get("/admin", adminAuth, getAllVouchers);
+voucherRouter.post("/admin", adminAuth, createVoucher);
+voucherRouter.put("/admin/:id", adminAuth, updateVoucher);
+voucherRouter.delete("/admin/:id", adminAuth, deleteVoucher);
 
 // Routes cho Frontend
 voucherRouter.get("/public", getPublicVouchers);

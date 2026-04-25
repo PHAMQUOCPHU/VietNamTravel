@@ -338,9 +338,13 @@ export const updateBookingStatus = async (req, res) => {
             const voucher = await voucherModel.findOne({
               code: updated.voucherCode,
             });
-            if (voucher && !voucher.usedBy.includes(updated.userId)) {
+            const userIdStr = String(updated.userId?._id || updated.userId);
+            const alreadyUsed = voucher?.usedBy.some(
+              (id) => String(id) === userIdStr,
+            );
+            if (voucher && !alreadyUsed) {
               voucher.usedCount += 1;
-              voucher.usedBy.push(updated.userId);
+              voucher.usedBy.push(userIdStr);
 
               if (voucher.usedCount >= voucher.usageLimit) {
                 voucher.status = "exhausted";
@@ -592,9 +596,9 @@ export const getUserCollection = async (req, res) => {
   try {
     const userId = req.userId || req.body.userId;
 
-    // Lấy những đơn đã xác nhận hoặc đã chuyển sang completed
+    // Lấy những đơn đã xác nhận (confirmed)
     const bookings = await bookingModel
-      .find({ userId, status: { $in: ["confirmed", "completed"] } })
+      .find({ userId, status: "confirmed" })
       .populate("tourId", "city duration");
 
     const now = new Date();

@@ -17,16 +17,18 @@ export const submitReviewApi = async ({
     formData.append("rating", rating);
     formData.append("comment", comment);
     formData.append("survey", JSON.stringify(survey));
-    
+
     images.forEach((image) => {
       formData.append("images", image);
     });
-    
-    const { data } = await client.post(
-      "/api/reviews",
-      formData,
-      withTokenHeader(token),
-    );
+
+    const { data } = await client.post("/api/reviews", formData, {
+      ...withTokenHeader(token),
+      headers: {
+        ...withTokenHeader(token).headers,
+        "Content-Type": "multipart/form-data",
+      },
+    });
     return data;
   }
 
