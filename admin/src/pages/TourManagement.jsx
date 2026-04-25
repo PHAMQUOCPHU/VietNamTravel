@@ -1,6 +1,10 @@
 import React, { useEffect, useState, useContext, useCallback } from "react";
 import { AdminContext } from "../context/AdminContext";
-import { listToursApi, removeTourApi, toggleTourStatusApi } from "../api/tourApi";
+import {
+  listToursApi,
+  removeTourApi,
+  toggleTourStatusApi,
+} from "../api/tourApi";
 import { toast } from "react-toastify";
 import {
   Trash2,
@@ -182,122 +186,213 @@ const TourManagement = () => {
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[980px] text-left border-collapse">
-              <thead className="bg-slate-50/50 border-b border-slate-100">
-                <tr>
-                  <th className="p-4 text-[11px] font-extrabold uppercase text-slate-400">
-                    Ảnh
-                  </th>
-                  <th className="p-4 text-[11px] font-extrabold uppercase text-slate-400">
-                    Thông tin Tour
-                  </th>
-                  <th className="p-4 text-[11px] font-extrabold uppercase text-slate-400 text-center">
-                    Giá vé
-                  </th>
-                  <th className="p-4 text-[11px] font-extrabold uppercase text-slate-400 text-center">
-                    Trang thai
-                  </th>
-                  <th className="p-4 text-[11px] font-extrabold uppercase text-slate-400 text-center">
-                    Hành động
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-50">
-                {currentTours.map((item) => (
-                  <tr
-                    key={item._id}
-                    className={`transition-all group ${
-                      item.isActive === false
-                        ? "bg-rose-50/70 hover:bg-rose-100/70"
-                        : "hover:bg-blue-50/30"
-                    }`}
-                  >
-                    <td className="p-4">
-                      <div className="relative">
-                        <img
-                          src={normalizeImageUrl(item.images?.[0] || item.image)}
-                          className="w-20 h-14 object-cover rounded-lg shadow-sm group-hover:scale-105 transition-transform"
-                          alt=""
-                          onError={(e) => (e.target.src = normalizeImageUrl(""))}
-                        />
-                        {item.isActive === false && (
-                          <span className="absolute inset-0 rounded-lg bg-slate-900/60 text-white text-[9px] font-black flex items-center justify-center">
-                            NGUNG KD
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="p-4">
-                      <p className="font-bold text-slate-800 text-base">
+          <>
+            <div className="md:hidden space-y-4 p-4">
+              {currentTours.map((item) => (
+                <div
+                  key={item._id}
+                  className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-sm"
+                >
+                  <div className="flex gap-4 p-4">
+                    <div className="relative h-20 w-28 overflow-hidden rounded-3xl bg-slate-100">
+                      <img
+                        src={normalizeImageUrl(item.images?.[0] || item.image)}
+                        className="h-full w-full object-cover"
+                        alt=""
+                        onError={(e) => (e.target.src = normalizeImageUrl(""))}
+                      />
+                      {item.isActive === false && (
+                        <span className="absolute inset-0 rounded-3xl bg-slate-900/60 text-white text-[10px] font-black flex items-center justify-center">
+                          NGUNG KD
+                        </span>
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-bold text-slate-900 text-sm truncate">
                         {item.title}
                       </p>
-                      <div className="flex items-center gap-1.5 text-slate-400 text-xs mt-1">
-                        <MapPin size={12} className="text-blue-500" />{" "}
-                        {item.city}
+                      <div className="mt-2 flex items-center gap-2 text-xs text-slate-500">
+                        <MapPin size={12} className="text-blue-500" />
+                        <span className="truncate">{item.city}</span>
                       </div>
-                    </td>
-                    <td className="p-4 text-center">
-                      <p className="font-extrabold text-blue-600 inline-flex items-center gap-1">
-                        <CircleDollarSign size={13} />
+                      <p className="mt-3 inline-flex items-center gap-1 text-sm font-extrabold text-blue-600">
+                        <CircleDollarSign size={14} />
                         {item.price?.toLocaleString()}đ
                       </p>
-                    </td>
-                    <td className="p-4 text-center">
                       <span
-                        className={`inline-flex px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider ${
+                        className={`mt-3 inline-flex rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.15em] ${
                           item.isActive === false
                             ? "bg-rose-100 text-rose-700"
                             : "bg-emerald-100 text-emerald-700"
                         }`}
                       >
-                        {item.isActive === false
-                          ? "Ngung kinh doanh"
-                          : "Dang hoat dong"}
+                        {item.isActive === false ? "NGUNG KD" : "HOAT DONG"}
                       </span>
-                    </td>
-                    <td className="p-4">
-                      <div className="flex justify-center gap-2">
-                        <button
-                          onClick={() =>
-                            navigate(`/admin/edit-tour/${buildTourSlug(item)}`)
-                          }
-                          className="p-2.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition-all shadow-sm"
-                        >
-                          <Pencil size={16} />
-                        </button>
-                        <button
-                          onClick={() => removeTour(item._id)}
-                          className="p-2.5 bg-red-50 text-red-500 rounded-lg hover:bg-red-500 hover:text-white transition-all shadow-sm"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                        <button
-                          onClick={() => toggleTourStatus(item)}
-                          className={`p-2.5 rounded-lg transition-all shadow-sm ${
-                            item.isActive === false
-                              ? "bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white"
-                              : "bg-slate-100 text-slate-600 hover:bg-slate-700 hover:text-white"
-                          }`}
-                          title={
-                            item.isActive === false
-                              ? "Mo lai kinh doanh"
-                              : "Chuyen sang ngung kinh doanh"
-                          }
-                        >
-                          {item.isActive === false ? (
-                            <Eye size={16} />
-                          ) : (
-                            <EyeOff size={16} />
-                          )}
-                        </button>
-                      </div>
-                    </td>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2 border-t border-slate-100 px-4 pb-4 pt-3">
+                    <button
+                      onClick={() =>
+                        navigate(`/admin/edit-tour/${buildTourSlug(item)}`)
+                      }
+                      className="inline-flex items-center justify-center rounded-2xl bg-blue-50 px-3 py-2 text-blue-600 transition hover:bg-blue-600 hover:text-white"
+                    >
+                      <Pencil size={16} />
+                    </button>
+                    <button
+                      onClick={() => removeTour(item._id)}
+                      className="inline-flex items-center justify-center rounded-2xl bg-red-50 px-3 py-2 text-red-500 transition hover:bg-red-500 hover:text-white"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                    <button
+                      onClick={() => toggleTourStatus(item)}
+                      className={`inline-flex items-center justify-center rounded-2xl px-3 py-2 text-sm font-semibold transition ${
+                        item.isActive === false
+                          ? "bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white"
+                          : "bg-slate-100 text-slate-600 hover:bg-slate-700 hover:text-white"
+                      }`}
+                      title={
+                        item.isActive === false
+                          ? "Mo lai kinh doanh"
+                          : "Chuyen sang ngung kinh doanh"
+                      }
+                    >
+                      {item.isActive === false ? (
+                        <Eye size={16} />
+                      ) : (
+                        <EyeOff size={16} />
+                      )}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full min-w-[980px] text-left border-collapse">
+                <thead className="bg-slate-50/50 border-b border-slate-100">
+                  <tr>
+                    <th className="p-4 text-[11px] font-extrabold uppercase text-slate-400">
+                      Ảnh
+                    </th>
+                    <th className="p-4 text-[11px] font-extrabold uppercase text-slate-400">
+                      Thông tin Tour
+                    </th>
+                    <th className="p-4 text-[11px] font-extrabold uppercase text-slate-400 text-center">
+                      Giá vé
+                    </th>
+                    <th className="p-4 text-[11px] font-extrabold uppercase text-slate-400 text-center">
+                      Trang thai
+                    </th>
+                    <th className="p-4 text-[11px] font-extrabold uppercase text-slate-400 text-center">
+                      Hành động
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-slate-50">
+                  {currentTours.map((item) => (
+                    <tr
+                      key={item._id}
+                      className={`transition-all group ${
+                        item.isActive === false
+                          ? "bg-rose-50/70 hover:bg-rose-100/70"
+                          : "hover:bg-blue-50/30"
+                      }`}
+                    >
+                      <td className="p-4">
+                        <div className="relative">
+                          <img
+                            src={normalizeImageUrl(
+                              item.images?.[0] || item.image,
+                            )}
+                            className="w-20 h-14 object-cover rounded-lg shadow-sm group-hover:scale-105 transition-transform"
+                            alt=""
+                            onError={(e) =>
+                              (e.target.src = normalizeImageUrl(""))
+                            }
+                          />
+                          {item.isActive === false && (
+                            <span className="absolute inset-0 rounded-lg bg-slate-900/60 text-white text-[9px] font-black flex items-center justify-center">
+                              NGUNG KD
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <p className="font-bold text-slate-800 text-base">
+                          {item.title}
+                        </p>
+                        <div className="flex items-center gap-1.5 text-slate-400 text-xs mt-1">
+                          <MapPin size={12} className="text-blue-500" />{" "}
+                          {item.city}
+                        </div>
+                      </td>
+                      <td className="p-4 text-center">
+                        <p className="font-extrabold text-blue-600 inline-flex items-center gap-1">
+                          <CircleDollarSign size={13} />
+                          {item.price?.toLocaleString()}đ
+                        </p>
+                      </td>
+                      <td className="p-4 text-center">
+                        <span
+                          className={`inline-flex px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider ${
+                            item.isActive === false
+                              ? "bg-rose-100 text-rose-700"
+                              : "bg-emerald-100 text-emerald-700"
+                          }`}
+                        >
+                          {item.isActive === false
+                            ? "Ngung kinh doanh"
+                            : "Dang hoat dong"}
+                        </span>
+                      </td>
+                      <td className="p-4">
+                        <div className="flex justify-center gap-2">
+                          <button
+                            onClick={() =>
+                              navigate(
+                                `/admin/edit-tour/${buildTourSlug(item)}`,
+                              )
+                            }
+                            className="p-2.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition-all shadow-sm"
+                          >
+                            <Pencil size={16} />
+                          </button>
+                          <button
+                            onClick={() => removeTour(item._id)}
+                            className="p-2.5 bg-red-50 text-red-500 rounded-lg hover:bg-red-500 hover:text-white transition-all shadow-sm"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                          <button
+                            onClick={() => toggleTourStatus(item)}
+                            className={`p-2.5 rounded-lg transition-all shadow-sm ${
+                              item.isActive === false
+                                ? "bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white"
+                                : "bg-slate-100 text-slate-600 hover:bg-slate-700 hover:text-white"
+                            }`}
+                            title={
+                              item.isActive === false
+                                ? "Mo lai kinh doanh"
+                                : "Chuyen sang ngung kinh doanh"
+                            }
+                          >
+                            {item.isActive === false ? (
+                              <Eye size={16} />
+                            ) : (
+                              <EyeOff size={16} />
+                            )}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
 

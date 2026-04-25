@@ -46,9 +46,12 @@ const AdminHeader = () => {
   const fetchUnread = async () => {
     if (!aToken) return;
     try {
-      const { data } = await axios.get(`${backendUrl}/api/admin/notifications/unread-count`, {
-        headers: { token: aToken },
-      });
+      const { data } = await axios.get(
+        `${backendUrl}/api/admin/notifications/unread-count`,
+        {
+          headers: { token: aToken },
+        },
+      );
       if (data.success) setUnreadCount(data.unreadCount || 0);
     } catch {
       setUnreadCount(0);
@@ -58,9 +61,12 @@ const AdminHeader = () => {
   const fetchList = async () => {
     if (!aToken) return;
     try {
-      const { data } = await axios.get(`${backendUrl}/api/admin/notifications`, {
-        headers: { token: aToken },
-      });
+      const { data } = await axios.get(
+        `${backendUrl}/api/admin/notifications`,
+        {
+          headers: { token: aToken },
+        },
+      );
       if (data.success) setNotifications(data.notifications || []);
     } catch {
       setNotifications([]);
@@ -104,7 +110,11 @@ const AdminHeader = () => {
 
   useEffect(() => {
     const close = (e) => {
-      if (notifOpen && panelRef.current && !panelRef.current.contains(e.target)) {
+      if (
+        notifOpen &&
+        panelRef.current &&
+        !panelRef.current.contains(e.target)
+      ) {
         setNotifOpen(false);
       }
     };
@@ -123,17 +133,19 @@ const AdminHeader = () => {
   };
 
   return (
-    <header className="h-24 bg-white/80 backdrop-blur-md border-b border-gray-100 flex items-center justify-between px-8 sticky top-0 z-10">
+    <header className="h-16 sm:h-20 md:h-24 bg-white/80 backdrop-blur-md border-b border-gray-100 flex items-center justify-between px-3 sm:px-4 md:px-8 sticky top-0 z-10">
       <div>
-        <div className="flex items-center gap-3">
-          <h2 className="text-xl font-bold text-gray-800">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+          <h2 className="text-sm sm:text-lg md:text-xl font-bold text-gray-800 truncate">
             {getGreeting()}, <span className="text-blue-600">Admin!</span>
           </h2>
-          <span className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm font-mono font-bold shadow-sm">
+          <span className="hidden sm:inline-block bg-blue-50 text-blue-700 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-mono font-bold shadow-sm whitespace-nowrap">
             {timeString}
           </span>
         </div>
-        <p className="text-xs text-gray-400 mt-1 font-medium italic">{dateString}</p>
+        <p className="hidden sm:block text-xs text-gray-400 mt-1 font-medium italic">
+          {dateString}
+        </p>
       </div>
 
       {aToken ? (
@@ -142,10 +154,10 @@ const AdminHeader = () => {
             <button
               type="button"
               onClick={togglePanel}
-              className="relative p-3 rounded-2xl border border-gray-200 bg-white text-slate-700 hover:bg-slate-50 transition shadow-sm"
+              className="relative p-2 sm:p-3 rounded-lg sm:rounded-2xl border border-gray-200 bg-white text-slate-700 hover:bg-slate-50 transition shadow-sm"
               title="Thông báo hệ thống"
             >
-              <Bell className="w-5 h-5 text-blue-600" />
+              <Bell className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
               {unreadCount > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-0.5 rounded-full bg-red-500 text-white text-[10px] font-black flex items-center justify-center border-2 border-white">
                   {unreadCount > 99 ? "99+" : unreadCount}
@@ -169,13 +181,17 @@ const AdminHeader = () => {
                 </div>
                 <div className="p-2 space-y-1">
                   {notifications.length === 0 ? (
-                    <p className="text-xs text-slate-400 text-center py-8 italic">Chưa có thông báo</p>
+                    <p className="text-xs text-slate-400 text-center py-8 italic">
+                      Chưa có thông báo
+                    </p>
                   ) : (
                     notifications.slice(0, 12).map((n) => (
                       <div
                         key={n._id}
                         className={`rounded-xl px-3 py-2.5 text-xs leading-snug ${
-                          n.read ? "bg-slate-50 text-slate-600" : "bg-blue-50/90 text-slate-800"
+                          n.read
+                            ? "bg-slate-50 text-slate-600"
+                            : "bg-blue-50/90 text-slate-800"
                         }`}
                       >
                         <p className="font-bold text-[10px] uppercase text-blue-600 mb-0.5">

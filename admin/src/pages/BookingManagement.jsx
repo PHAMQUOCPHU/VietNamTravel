@@ -88,8 +88,8 @@ function StatusBadge({ booking }) {
     if (travelStatus === "COMPLETED") {
       return (
         <span className="inline-flex items-center justify-center px-2.5 py-1 rounded-full border text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-500 border-slate-200 whitespace-nowrap">
-            Đã kết thúc
-          </span>
+          Đã kết thúc
+        </span>
       );
     }
     return (
@@ -204,7 +204,9 @@ const BookingCalendar = memo(function BookingCalendar({
               {count > 0 && (
                 <span
                   className={`text-[9px] font-black leading-none px-1 rounded-full min-w-[1rem] ${
-                    isSelected ? "bg-white/25 text-white" : "bg-blue-500 text-white"
+                    isSelected
+                      ? "bg-white/25 text-white"
+                      : "bg-blue-500 text-white"
                   }`}
                 >
                   {count > 99 ? "99+" : count}
@@ -705,9 +707,10 @@ const BookingManagement = () => {
       ];
     });
     const escape = (cell) => `"${String(cell).replaceAll('"', '""')}"`;
-    const csv = [headers.join(","), ...rows.map((r) => r.map(escape).join(","))].join(
-      "\n",
-    );
+    const csv = [
+      headers.join(","),
+      ...rows.map((r) => r.map(escape).join(",")),
+    ].join("\n");
     const blob = new Blob(["\uFEFF" + csv], {
       type: "text/csv;charset=utf-8;",
     });
@@ -742,7 +745,9 @@ const BookingManagement = () => {
           onAfterSuccess?.();
           fetchAllBookings({ silent: true });
         } else {
-          toast.error(response.data?.message || "Không cập nhật được trạng thái");
+          toast.error(
+            response.data?.message || "Không cập nhật được trạng thái",
+          );
         }
       } catch (error) {
         toast.error(error.response?.data?.message || "Lỗi cập nhật");
@@ -862,9 +867,7 @@ const BookingManagement = () => {
             </p>
           </div>
           <div className="rounded-2xl border border-amber-100 bg-gradient-to-br from-amber-50/80 to-white p-4 shadow-sm">
-            <p className="text-xs font-medium text-amber-800/90">
-              Cần xử lý
-            </p>
+            <p className="text-xs font-medium text-amber-800/90">Cần xử lý</p>
             <p className="mt-1 text-2xl font-bold tabular-nums text-amber-950">
               {tabCounts.needsAction.toLocaleString("vi-VN")}
             </p>
@@ -873,9 +876,7 @@ const BookingManagement = () => {
             </p>
           </div>
           <div className="rounded-2xl border border-sky-100 bg-gradient-to-br from-sky-50/80 to-white p-4 shadow-sm">
-            <p className="text-xs font-medium text-sky-800/90">
-              Đang diễn ra
-            </p>
+            <p className="text-xs font-medium text-sky-800/90">Đang diễn ra</p>
             <p className="mt-1 text-2xl font-bold tabular-nums text-sky-950">
               {tabCounts.ongoing.toLocaleString("vi-VN")}
             </p>
@@ -896,7 +897,7 @@ const BookingManagement = () => {
           </div>
         </div>
 
-        <div className="flex flex-col gap-6 xl:flex-row xl:items-start">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
           <div className="min-w-0 flex-1 space-y-4">
             <div className="-mx-1 overflow-x-auto pb-1 [scrollbar-width:thin]">
               <div
@@ -1040,7 +1041,7 @@ const BookingManagement = () => {
             </div>
           </div>
 
-          <aside className="mx-auto w-full max-w-md shrink-0 space-y-3 xl:mx-0 xl:w-[300px]">
+          <aside className="mx-auto w-full max-w-md shrink-0 space-y-3 lg:mx-0 lg:w-[300px]">
             <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
               <div className="flex items-center gap-2 text-sm font-bold text-slate-900">
                 <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-sky-100 text-sky-700">
@@ -1049,8 +1050,8 @@ const BookingManagement = () => {
                 Lịch khởi hành
               </div>
               <p className="mt-2 text-xs leading-relaxed text-slate-500">
-                Số trên từng ngày là số đơn có ngày khởi hành trùng ngày đó. Chọn
-                ngày để lọc danh sách bên trái.
+                Số trên từng ngày là số đơn có ngày khởi hành trùng ngày đó.
+                Chọn ngày để lọc danh sách bên trái.
               </p>
             </div>
             <BookingCalendar

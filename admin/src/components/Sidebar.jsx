@@ -90,7 +90,12 @@ const Sidebar = ({ onNavigate }) => {
       icon: <MessageSquare size={20} />,
       label: "Bài viết",
       path: "/admin/posts",
-      matchPaths: ["/admin/posts", "/admin/add-blog", "/admin/edit-blog/", "/admin/blog-list"],
+      matchPaths: [
+        "/admin/posts",
+        "/admin/add-blog",
+        "/admin/edit-blog/",
+        "/admin/blog-list",
+      ],
     },
     {
       icon: <Handshake size={20} />,
@@ -112,10 +117,10 @@ const Sidebar = ({ onNavigate }) => {
   };
 
   return (
-    <div className="h-screen w-64 bg-white border-r border-gray-100 flex flex-col py-6 sticky top-0">
+    <div className="h-screen w-64 bg-white border-r border-gray-100 flex flex-col py-4 sm:py-6 sticky top-0 overflow-y-auto">
       {/* Phần Logo & Thương hiệu */}
-      <div className="px-6 mb-10 flex items-center gap-3">
-        <div className="w-12 h-10 rounded-lg overflow-hidden flex items-center justify-center shadow-md border border-gray-100 bg-gray-50">
+      <div className="px-4 sm:px-6 mb-6 sm:mb-10 flex items-center gap-2 sm:gap-3">
+        <div className="w-10 h-8 sm:w-12 sm:h-10 rounded-lg overflow-hidden flex items-center justify-center shadow-md border border-gray-100 bg-gray-50 shrink-0">
           <img
             src={logo}
             alt="VN Travel Logo"
@@ -144,11 +149,7 @@ const Sidebar = ({ onNavigate }) => {
             : location.pathname === item.path;
 
           return (
-            <Link
-              key={index}
-              to={item.path}
-              onClick={() => onNavigate?.()}
-            >
+            <Link key={index} to={item.path} onClick={() => onNavigate?.()}>
               <motion.div
                 whileHover={{ x: 4 }}
                 whileTap={{ scale: 0.98 }}

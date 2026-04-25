@@ -141,7 +141,9 @@ const Dashboard = () => {
   const totalPaymentCount =
     (stats.paymentBreakdown?.cash || 0) + (stats.paymentBreakdown?.online || 0);
   const onlinePaymentPercent = totalPaymentCount
-    ? Math.round(((stats.paymentBreakdown?.online || 0) / totalPaymentCount) * 100)
+    ? Math.round(
+        ((stats.paymentBreakdown?.online || 0) / totalPaymentCount) * 100,
+      )
     : 0;
 
   return (
@@ -149,9 +151,12 @@ const Dashboard = () => {
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#1d4ed8] via-[#2563eb] to-[#3b82f6] p-6 md:p-8 text-white shadow-xl">
         <div className="pointer-events-none absolute -top-14 -right-10 h-44 w-44 rounded-full bg-white/15 blur-2xl"></div>
         <div className="pointer-events-none absolute -bottom-16 left-16 h-40 w-40 rounded-full bg-white/10 blur-2xl"></div>
-        <h2 className="text-2xl md:text-3xl font-black">Tong quan kinh doanh</h2>
+        <h2 className="text-2xl md:text-3xl font-black">
+          Tong quan kinh doanh
+        </h2>
         <p className="text-blue-100 mt-2 font-medium">
-          Theo dõi doanh thu, hành vi thanh toán và xu hướng đặt tour theo khu vực.
+          Theo dõi doanh thu, hành vi thanh toán và xu hướng đặt tour theo khu
+          vực.
         </p>
 
         <div className="mt-6 grid grid-cols-1 md:grid-cols-[1fr,1fr,auto] gap-3">
@@ -181,7 +186,8 @@ const Dashboard = () => {
         {(startDate || endDate) && (
           <div className="mt-4 rounded-2xl bg-white/10 border border-white/20 px-4 py-3">
             <p className="text-sm font-bold">
-              Doanh thu trong khoang chon: {stats.rangeRevenue.toLocaleString()}đ
+              Doanh thu trong khoang chon: {stats.rangeRevenue.toLocaleString()}
+              đ
             </p>
             <p className="text-xs text-blue-100 mt-1">
               Tong don da thanh toan: {stats.rangeBookingCount}
@@ -226,7 +232,7 @@ const Dashboard = () => {
           <p className="text-xs text-gray-500 mb-4">
             Biểu đồ đường tổng quan doanh thu theo tháng.
           </p>
-          <div className="h-72 w-full">
+          <div className="h-64 md:h-72 w-full">
             <Line
               data={monthlyRevenueData}
               options={{ responsive: true, maintainAspectRatio: false }}
@@ -242,7 +248,7 @@ const Dashboard = () => {
           <p className="text-xs text-gray-500 mb-4">
             Biểu đồ cột doanh thu theo từng ngày trong tuần.
           </p>
-          <div className="h-72 w-full">
+          <div className="h-64 md:h-72 w-full">
             <Bar
               data={weeklyRevenueData}
               options={{ responsive: true, maintainAspectRatio: false }}
@@ -258,7 +264,7 @@ const Dashboard = () => {
           <p className="text-xs text-gray-500 mb-4">
             Tỉ lệ phương thức thanh toán của các đơn đã thanh toán.
           </p>
-          <div className="h-72 w-full flex items-center justify-center">
+          <div className="h-64 md:h-72 w-full flex items-center justify-center">
             <Pie
               data={paymentPieData}
               options={{ responsive: true, maintainAspectRatio: false }}
@@ -274,7 +280,7 @@ const Dashboard = () => {
           <p className="text-xs text-gray-500 mb-4">
             Tỷ trọng đặt tour theo 3 miền Bắc - Trung - Nam.
           </p>
-          <div className="h-72 w-full flex items-center justify-center">
+          <div className="h-64 md:h-72 w-full flex items-center justify-center">
             <Pie
               data={regionPieData}
               options={{ responsive: true, maintainAspectRatio: false }}
