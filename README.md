@@ -532,7 +532,7 @@ Cảm ơn bạn đã quan tâm đến VietNamTravel! Nếu có thích, vui lòng
 
 ## Contributing
 
-We welcome contributions to enhance the functionality of TripGo! If you'd like to contribute:
+We welcome contributions to enhance the functionality of VietNamTravel! If you'd like to contribute:
 
 1. Fork the repository.
 2. Create a new branch
