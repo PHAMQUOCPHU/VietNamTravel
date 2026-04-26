@@ -242,6 +242,7 @@ const Dashboard = () => {
               options={{ responsive: true, maintainAspectRatio: false }}
             />
           </div>
+        </div>
 
         <div className="bg-white p-6 rounded-3xl shadow-xl border border-gray-100">
           <h3 className="font-black text-gray-800 text-lg mb-1 flex items-center gap-2">
@@ -257,6 +258,7 @@ const Dashboard = () => {
               options={{ responsive: true, maintainAspectRatio: false }}
             />
           </div>
+        </div>
 
         <div className="bg-white p-6 rounded-3xl shadow-xl border border-gray-100">
           <h3 className="font-black text-gray-800 text-lg mb-1 flex items-center gap-2">
@@ -272,6 +274,7 @@ const Dashboard = () => {
               options={{ responsive: true, maintainAspectRatio: false }}
             />
           </div>
+        </div>
 
         <div className="bg-white p-6 rounded-3xl shadow-xl border border-gray-100">
           <h3 className="font-black text-gray-800 text-lg mb-1 flex items-center gap-2">
@@ -287,7 +290,9 @@ const Dashboard = () => {
               options={{ responsive: true, maintainAspectRatio: false }}
             />
           </div>
+        </div>
       </div>
+    </div>
   );
 };
 

@@ -18,6 +18,8 @@ export function normKey(str) {
 export const CITY_TO_PROVINCE_NORM = {
   "da lat": "Lâm Đồng",
   dalat: "Lâm Đồng",
+  "cuc phuong": "Ninh Bình",
+  "vuon quoc gia cuc phuong": "Ninh Bình",
   "nha trang": "Khánh Hòa",
   nhatrang: "Khánh Hòa",
   "phan thiet": "Bình Thuận",
@@ -79,9 +81,7 @@ export const VISIT_PALETTE = [
  * Màu lưu theo normKey(tên tỉnh) để khớp chắc chắn với path trên bản đồ.
  */
 export function resolveVisitedProvinces(citiesFromApi, allProvinceNames) {
-  const byNorm = new Map(
-    allProvinceNames.map((n) => [normKey(n), n]),
-  );
+  const byNorm = new Map(allProvinceNames.map((n) => [normKey(n), n]));
 
   const provinces = [];
   const seen = new Set();
@@ -107,10 +107,7 @@ export function resolveVisitedProvinces(citiesFromApi, allProvinceNames) {
 
   const fillByNormKey = new Map();
   provinces.forEach((p, i) => {
-    fillByNormKey.set(
-      normKey(p),
-      VISIT_PALETTE[i % VISIT_PALETTE.length],
-    );
+    fillByNormKey.set(normKey(p), VISIT_PALETTE[i % VISIT_PALETTE.length]);
   });
 
   return { provinces, fillByNormKey };

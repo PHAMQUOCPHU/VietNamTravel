@@ -1,6 +1,14 @@
 import React, { useState, useContext, useRef } from "react";
 import { motion } from "framer-motion";
-import { X, UploadCloud, MapPin, Star, Loader2, Image as ImageIcon } from "lucide-react";
+import {
+  X,
+  UploadCloud,
+  MapPin,
+  Star,
+  Loader2,
+  Image as ImageIcon,
+  BookImage,
+} from "lucide-react";
 import { AppContext } from "../context/AppContext";
 import axios from "axios";
 import { toast } from "react-toastify";
@@ -17,7 +25,13 @@ const DiaryEditorModal = ({ booking, onClose, onSuccess }) => {
   const [imagePreviews, setImagePreviews] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  const emotions = ["Tuyệt vời", "Vui vẻ", "Ấn tượng", "Bình thường", "Thất vọng"];
+  const emotions = [
+    "Tuyệt vời",
+    "Vui vẻ",
+    "Ấn tượng",
+    "Bình thường",
+    "Thất vọng",
+  ];
 
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
@@ -29,7 +43,7 @@ const DiaryEditorModal = ({ booking, onClose, onSuccess }) => {
     const newImages = [...images, ...files].slice(0, 5);
     setImages(newImages);
 
-    const newPreviews = newImages.map(file => URL.createObjectURL(file));
+    const newPreviews = newImages.map((file) => URL.createObjectURL(file));
     setImagePreviews(newPreviews);
   };
 
@@ -55,15 +69,15 @@ const DiaryEditorModal = ({ booking, onClose, onSuccess }) => {
       const formData = new FormData();
       formData.append("userId", user._id);
       formData.append("bookingId", booking._id);
-      formData.append("tourId", booking.tourId);
+      formData.append("tourId", booking.tourId?._id || booking.tourId);
       formData.append("tourTitle", booking.tourTitle);
       formData.append("title", title);
       formData.append("content", content);
       formData.append("rating", rating);
       formData.append("emotion", emotion);
-      
+
       // Lấy địa điểm ngẫu nhiên từ title (hoặc bạn có thể thêm field cho khách tự nhập)
-      const location = booking.tourTitle.split('-')[0] || "Việt Nam";
+      const location = booking.tourTitle.split("-")[0] || "Việt Nam";
       formData.append("location", location);
       formData.append("travelDate", booking.bookAt);
 
@@ -71,12 +85,16 @@ const DiaryEditorModal = ({ booking, onClose, onSuccess }) => {
         formData.append("images", img);
       });
 
-      const { data } = await axios.post(`${backendUrl}/api/diaries/create`, formData, {
-        headers: {
-          token: localStorage.getItem("token"),
-          "Content-Type": "multipart/form-data",
+      const { data } = await axios.post(
+        `${backendUrl}/api/diaries/create`,
+        formData,
+        {
+          headers: {
+            token: localStorage.getItem("token"),
+            "Content-Type": "multipart/form-data",
+          },
         },
-      });
+      );
 
       if (data.success) {
         toast.success(data.message);
@@ -110,9 +128,14 @@ const DiaryEditorModal = ({ booking, onClose, onSuccess }) => {
         <div className="sticky top-0 bg-white/90 backdrop-blur-md px-6 py-4 border-b border-gray-100 flex justify-between items-center z-20">
           <div>
             <h2 className="text-xl font-bold text-gray-800">Viết Nhật Ký</h2>
-            <p className="text-xs text-blue-600 font-semibold mt-1 line-clamp-1">{booking.tourTitle}</p>
+            <p className="text-xs text-blue-600 font-semibold mt-1 line-clamp-1">
+              {booking.tourTitle}
+            </p>
           </div>
-          <button onClick={onClose} className="p-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-full transition-colors">
+          <button
+            onClick={onClose}
+            className="p-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-full transition-colors"
+          >
             <X size={20} />
           </button>
         </div>
@@ -121,27 +144,31 @@ const DiaryEditorModal = ({ booking, onClose, onSuccess }) => {
           {/* Cảm xúc & Đánh giá */}
           <div className="flex flex-wrap gap-6 bg-slate-50 p-4 rounded-2xl border border-slate-100">
             <div>
-              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Đánh giá chung</label>
+              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">
+                Đánh giá chung
+              </label>
               <div className="flex gap-2">
                 {[1, 2, 3, 4, 5].map((star) => (
-                  <Star 
-                    key={star} 
-                    size={28} 
+                  <Star
+                    key={star}
+                    size={28}
                     onClick={() => setRating(star)}
-                    className={`cursor-pointer transition-colors ${rating >= star ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300 hover:text-yellow-200'}`} 
+                    className={`cursor-pointer transition-colors ${rating >= star ? "text-yellow-400 fill-yellow-400" : "text-gray-300 hover:text-yellow-200"}`}
                   />
                 ))}
               </div>
             </div>
             <div className="flex-1 min-w-[200px]">
-              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Cảm xúc</label>
+              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">
+                Cảm xúc
+              </label>
               <div className="flex flex-wrap gap-2">
-                {emotions.map(emo => (
+                {emotions.map((emo) => (
                   <button
                     type="button"
                     key={emo}
                     onClick={() => setEmotion(emo)}
-                    className={`px-3 py-1.5 text-sm font-semibold rounded-full border transition-all ${emotion === emo ? 'bg-blue-100 border-blue-200 text-blue-700' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'}`}
+                    className={`px-3 py-1.5 text-sm font-semibold rounded-full border transition-all ${emotion === emo ? "bg-blue-100 border-blue-200 text-blue-700" : "bg-white border-gray-200 text-gray-500 hover:bg-gray-50"}`}
                   >
                     {emo}
                   </button>
@@ -152,7 +179,9 @@ const DiaryEditorModal = ({ booking, onClose, onSuccess }) => {
 
           {/* Tiêu đề */}
           <div>
-            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Tiêu đề kỷ niệm</label>
+            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">
+              Tiêu đề kỷ niệm
+            </label>
             <input
               type="text"
               value={title}
@@ -164,7 +193,9 @@ const DiaryEditorModal = ({ booking, onClose, onSuccess }) => {
 
           {/* Nội dung */}
           <div>
-            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Tâm sự chuyến đi</label>
+            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">
+              Tâm sự chuyến đi
+            </label>
             <textarea
               value={content}
               onChange={(e) => setContent(e.target.value)}
@@ -179,13 +210,20 @@ const DiaryEditorModal = ({ booking, onClose, onSuccess }) => {
             <label className="flex items-center justify-between text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">
               <span>Hình ảnh kỷ niệm ({images.length}/5)</span>
             </label>
-            
+
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
               {imagePreviews.map((preview, index) => (
-                <div key={index} className="relative aspect-square rounded-xl overflow-hidden group border border-gray-200 shadow-sm">
-                  <img src={preview} alt="preview" className="w-full h-full object-cover" />
-                  <button 
-                    type="button" 
+                <div
+                  key={index}
+                  className="relative aspect-square rounded-xl overflow-hidden group border border-gray-200 shadow-sm"
+                >
+                  <img
+                    src={preview}
+                    alt="preview"
+                    className="w-full h-full object-cover"
+                  />
+                  <button
+                    type="button"
                     onClick={() => removeImage(index)}
                     className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
                   >
@@ -193,7 +231,7 @@ const DiaryEditorModal = ({ booking, onClose, onSuccess }) => {
                   </button>
                 </div>
               ))}
-              
+
               {images.length < 5 && (
                 <button
                   type="button"
@@ -205,13 +243,13 @@ const DiaryEditorModal = ({ booking, onClose, onSuccess }) => {
                 </button>
               )}
             </div>
-            <input 
-              type="file" 
-              ref={fileInputRef} 
-              onChange={handleImageChange} 
-              multiple 
-              accept="image/*" 
-              className="hidden" 
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleImageChange}
+              multiple
+              accept="image/*"
+              className="hidden"
             />
           </div>
 
@@ -222,7 +260,11 @@ const DiaryEditorModal = ({ booking, onClose, onSuccess }) => {
               disabled={loading}
               className="w-full py-4 rounded-xl text-base font-bold text-white bg-gradient-to-r from-blue-600 to-cyan-500 shadow-lg hover:shadow-xl transition-all active:scale-95 flex justify-center items-center gap-2"
             >
-              {loading ? <Loader2 className="animate-spin" size={20} /> : <BookImage size={20} />}
+              {loading ? (
+                <Loader2 className="animate-spin" size={20} />
+              ) : (
+                <BookImage size={20} />
+              )}
               {loading ? "Đang lưu nhật ký..." : "Lưu vào kho kỷ niệm"}
             </button>
           </div>

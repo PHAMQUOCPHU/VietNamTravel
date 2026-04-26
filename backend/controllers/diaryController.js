@@ -24,7 +24,6 @@ const uploadMultipleImages = async (files) => {
 export const createDiary = async (req, res) => {
   try {
     const {
-      userId,
       bookingId,
       tourId,
       tourTitle,
@@ -36,15 +35,15 @@ export const createDiary = async (req, res) => {
       travelDate,
     } = req.body;
 
+    const userId = req.userId || req.body.userId;
+
     // Check if a diary already exists for this booking
     const existingDiary = await diaryModel.findOne({ bookingId });
     if (existingDiary) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "Bạn đã viết nhật ký cho chuyến đi này rồi.",
-        });
+      return res.status(400).json({
+        success: false,
+        message: "Bạn đã viết nhật ký cho chuyến đi này rồi.",
+      });
     }
 
     let imageUrls = [];
@@ -79,7 +78,7 @@ export const createDiary = async (req, res) => {
 
 export const getUserDiaries = async (req, res) => {
   try {
-    const { userId } = req.body;
+    const userId = req.userId || req.body.userId;
     const diaries = await diaryModel.find({ userId }).sort({ createdAt: -1 });
     res.json({ success: true, diaries });
   } catch (error) {
@@ -90,10 +89,10 @@ export const getUserDiaries = async (req, res) => {
 
 export const getEligibleBookings = async (req, res) => {
   try {
-    const { userId } = req.body;
+    const userId = req.userId || req.body.userId;
     // Lấy các booking đã confirmed (tour đã hoàn thành = bookAt + duration đã qua)
     const confirmedBookings = await bookingModel
-      .find({ userId, status: "confirmed" })
+      .find({ userId, status: { $in: ["confirmed", "Đã xác nhận"] } })
       .populate("tourId", "duration")
       .sort({ createdAt: -1 });
 

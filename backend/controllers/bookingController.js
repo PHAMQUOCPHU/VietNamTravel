@@ -596,9 +596,9 @@ export const getUserCollection = async (req, res) => {
   try {
     const userId = req.userId || req.body.userId;
 
-    // Lấy những đơn đã xác nhận (confirmed)
+    // Lấy những đơn đã xác nhận (confirmed hoặc Đã xác nhận) để hỗ trợ dữ liệu cũ và cả đơn hoàn thành
     const bookings = await bookingModel
-      .find({ userId, status: "confirmed" })
+      .find({ userId, status: { $in: ["confirmed", "Đã xác nhận"] } })
       .populate("tourId", "city duration");
 
     const now = new Date();
