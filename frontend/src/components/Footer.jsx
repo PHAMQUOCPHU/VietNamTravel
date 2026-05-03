@@ -73,6 +73,11 @@ const Footer = () => {
                   Đơn đặt của tôi
                 </Link>
               </li>
+              <li>
+                <Link to="/terms" className="hover:text-blue-600 transition">
+                  Điều khoản dịch vụ
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -119,6 +124,13 @@ const Footer = () => {
 
         <div className="mt-8 sm:mt-10 pt-4 sm:pt-6 border-t border-blue-100 dark:border-slate-800 text-center text-xs sm:text-sm text-slate-500 dark:text-slate-400 px-2">
           © {new Date().getFullYear()} VietNam Travel. All rights reserved.
+          <span className="mx-1 sm:mx-2">•</span>
+          <Link
+            to="/terms"
+            className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition"
+          >
+            Điều khoản dịch vụ
+          </Link>
           <span className="mx-1 sm:mx-2">•</span>
           Designed by{" "}
           <a

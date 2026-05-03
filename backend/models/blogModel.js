@@ -27,5 +27,8 @@ const blogSchema = new mongoose.Schema(
   { minimize: false },
 );
 
+blogSchema.index({ isHidden: 1, date: -1 });
+blogSchema.index({ category: 1, isHidden: 1, date: -1 });
+
 const blogModel = mongoose.models.blog || mongoose.model("blog", blogSchema);
 export default blogModel;

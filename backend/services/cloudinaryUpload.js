@@ -6,6 +6,9 @@ export const CLOUDINARY_FOLDERS = {
   blogs: "vietnam-travel/blogs",
   avatars: "vietnam-travel/avatars",
   reviews: "vietnam-travel/reviews",
+  diaries: "vietnam-travel/diaries",
+  cvs: "vietnam-travel/cvs",
+  chat: "vietnam-travel/chat",
 };
 
 export const uploadBufferToCloudinary = async (
@@ -30,3 +33,31 @@ export const uploadBufferToCloudinary = async (
     stream.end(file.buffer);
   });
 };
+
+// Default export for general file uploads (e.g., CV, documents)
+export const uploadFileToCloudinary = async (
+  fileBuffer,
+  publicId,
+  resourceType = "raw",
+) => {
+  if (!fileBuffer) {
+    throw new Error("FILE_BUFFER_NOT_FOUND");
+  }
+
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        resource_type: resourceType,
+        public_id: publicId,
+        folder: CLOUDINARY_FOLDERS.cvs,
+      },
+      (error, result) => {
+        if (error) reject(error);
+        else resolve(result);
+      },
+    );
+    stream.end(fileBuffer);
+  });
+};
+
+export default uploadFileToCloudinary;

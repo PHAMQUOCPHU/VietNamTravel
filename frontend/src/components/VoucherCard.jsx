@@ -8,8 +8,12 @@ const VoucherCard = ({ voucher, isSidebar = false, onUseNow }) => {
   const { user } = useContext(AppContext);
   const [copied, setCopied] = React.useState(false);
 
-  const isExhausted = voucher.usedCount >= voucher.usageLimit;
-  const isUsedByUser = user && voucher.usedBy?.includes(user._id);
+  const limit = Math.max(1, Number(voucher.usageLimit) || 1);
+  const isExhausted = (Number(voucher.usedCount) || 0) >= limit;
+  const isUsedByUser =
+    Boolean(voucher.usedByMe) ||
+    !!(user?._id &&
+      voucher.usedBy?.some((id) => String(id) === String(user._id)));
   const isDisabled = isExhausted || isUsedByUser || new Date(voucher.expiryDate) < new Date();
 
   const handleCopy = () => {
@@ -53,11 +57,11 @@ const VoucherCard = ({ voucher, isSidebar = false, onUseNow }) => {
           
           {isSidebar && !isDisabled && (
              <div className="w-full bg-gray-200 h-1.5 rounded-full mt-2 overflow-hidden">
-               <div className="bg-blue-500 h-full transition-all duration-500" style={{ width: `${Math.min((voucher.usedCount / voucher.usageLimit) * 100, 100)}%` }}></div>
+               <div className="bg-blue-500 h-full transition-all duration-500" style={{ width: `${Math.min(((Number(voucher.usedCount) || 0) / limit) * 100, 100)}%` }}></div>
              </div>
           )}
           {isSidebar && !isDisabled && (
-            <p className="text-[9px] text-gray-400 mt-1 text-right font-medium tracking-wider">ĐÃ DÙNG {voucher.usedCount}/{voucher.usageLimit}</p>
+            <p className="text-[9px] text-gray-400 mt-1 text-right font-medium tracking-wider">ĐÃ DÙNG {voucher.usedCount}/{limit}</p>
           )}
         </div>
         
@@ -99,4 +103,4 @@ const VoucherCard = ({ voucher, isSidebar = false, onUseNow }) => {
   );
 };
 
-export default VoucherCard;
+export default React.memo(VoucherCard);

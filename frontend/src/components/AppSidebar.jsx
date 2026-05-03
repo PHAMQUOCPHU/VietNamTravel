@@ -6,13 +6,13 @@ import {
   ChevronRight,
   Home,
   Map,
-  Compass,
   ArrowLeft,
   Heart,
   User,
   DollarSign,
   BookImage,
   AlertTriangle,
+  Briefcase,
 } from "lucide-react";
 import axios from "axios";
 import VoucherCard from "./VoucherCard";
@@ -20,7 +20,7 @@ import { AppContext } from "../context/AppContext";
 import { useNavigate, useLocation } from "react-router-dom";
 
 const AppSidebar = ({ isOpen, onClose }) => {
-  const { backendUrl, user } = useContext(AppContext);
+  const { backendUrl, user, token } = useContext(AppContext);
   const [vouchers, setVouchers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [view, setView] = useState("menu"); // 'menu' | 'vouchers' | 'exchange'
@@ -42,25 +42,32 @@ const AppSidebar = ({ isOpen, onClose }) => {
   const location = useLocation();
 
   useEffect(() => {
-    if (isOpen) {
-      fetchVouchers();
-      setView("menu"); // reset view on open
-    }
-  }, [isOpen]);
-
-  const fetchVouchers = async () => {
-    setLoading(true);
-    try {
-      const { data } = await axios.get(`${backendUrl}/api/vouchers/public`);
-      if (data.success) {
-        setVouchers(data.vouchers);
+    if (!isOpen) return;
+    setView("menu");
+    const ac = new AbortController();
+    const load = async () => {
+      setLoading(true);
+      try {
+        const { data } = await axios.get(`${backendUrl}/api/vouchers/public`, {
+          signal: ac.signal,
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        if (!ac.signal.aborted && data.success) {
+          setVouchers(data.vouchers);
+        }
+      } catch (error) {
+        if (error.code !== "ERR_CANCELED" && error.name !== "CanceledError") {
+          console.error(error);
+        }
+      } finally {
+        if (!ac.signal.aborted) {
+          setLoading(false);
+        }
       }
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
+    load();
+    return () => ac.abort();
+  }, [isOpen, backendUrl, token]);
 
   const handleUseNow = (code) => {
     navigator.clipboard.writeText(code);
@@ -74,8 +81,11 @@ const AppSidebar = ({ isOpen, onClose }) => {
   };
 
   const validVouchersCount = vouchers.filter((v) => {
-    const isExhausted = v.usedCount >= v.usageLimit;
-    const isUsedByUser = user && v.usedBy?.includes(user._id);
+    const limit = Math.max(1, Number(v.usageLimit) || 1);
+    const isExhausted = (Number(v.usedCount) || 0) >= limit;
+    const isUsedByUser =
+      Boolean(v.usedByMe) ||
+      !!(user?._id && v.usedBy?.some((id) => String(id) === String(user._id)));
     const isExpired = new Date(v.expiryDate) < new Date();
     return !isExhausted && !isUsedByUser && !isExpired;
   }).length;
@@ -110,10 +120,19 @@ const AppSidebar = ({ isOpen, onClose }) => {
                   exit={{ x: -20, opacity: 0 }}
                   className="flex flex-col h-full"
                 >
-                  <div className="bg-white px-5 py-5 flex items-center justify-between border-b border-gray-100 shadow-sm z-10">
-                    <h2 className="text-xl font-extrabold bg-gradient-to-r from-sky-600 to-blue-600 bg-clip-text text-transparent">
-                      VietNam Travel
-                    </h2>
+                  <div className="bg-white px-5 py-5 flex items-center justify-between border-b border-gray-100 shadow-sm z-10 gap-3">
+                    <div className="flex min-w-0 items-center gap-2.5">
+                      <img
+                        src="/logo.png"
+                        alt=""
+                        width={36}
+                        height={36}
+                        className="h-9 w-9 shrink-0 rounded-lg object-cover ring-1 ring-gray-100"
+                      />
+                      <h2 className="truncate text-xl font-extrabold bg-gradient-to-r from-sky-600 to-blue-600 bg-clip-text text-transparent">
+                        VietNam Travel
+                      </h2>
+                    </div>
                     <button
                       onClick={onClose}
                       className="p-2 bg-gray-50 text-gray-400 hover:bg-gray-100 hover:text-gray-600 rounded-full transition-colors"
@@ -205,6 +224,24 @@ const AppSidebar = ({ isOpen, onClose }) => {
                       <ChevronRight
                         size={18}
                         className="text-gray-400 group-hover:text-emerald-500"
+                      />
+                    </button>
+
+                    <button
+                      onClick={() => handleNavigation("/careers")}
+                      className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-sky-50 transition-colors group"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-sky-100 text-sky-600 rounded-lg group-hover:bg-sky-200 transition-colors">
+                          <Briefcase size={20} />
+                        </div>
+                        <span className="font-bold text-gray-800">
+                          Tuyển dụng
+                        </span>
+                      </div>
+                      <ChevronRight
+                        size={18}
+                        className="text-gray-400 group-hover:text-sky-500"
                       />
                     </button>
                   </div>

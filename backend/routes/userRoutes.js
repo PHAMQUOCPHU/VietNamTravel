@@ -14,6 +14,7 @@ import {
   updateUserAdmin,
   getUserDetailAdmin,
   toggleFavorite,
+  toggleSavedJob,
   getUserBookings, // 1. Thêm hàm này vào danh sách import
 } from "../controllers/userController.js";
 import authMiddleware from "../middlewares/auth.js";
@@ -39,6 +40,8 @@ userRouter.get("/bookings", authMiddleware, getUserBookings);
 
 // Route xử lý yêu thích tour
 userRouter.post("/toggle-favorite", authMiddleware, toggleFavorite);
+
+userRouter.post("/toggle-saved-job", authMiddleware, toggleSavedJob);
 
 userRouter.post("/change-password", authMiddleware, changePassword);
 

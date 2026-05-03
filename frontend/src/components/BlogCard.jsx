@@ -1,11 +1,8 @@
 import React from "react";
 import { Calendar, Eye, MessageCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { BACKEND_URL } from "../config/env";
-
 const BlogCard = ({ blog }) => {
   const navigate = useNavigate();
-  const backendUrl = BACKEND_URL;
   const imageUrl =
     blog?.image && String(blog.image).startsWith("http")
       ? blog.image
@@ -69,7 +66,8 @@ const BlogCard = ({ blog }) => {
               <Eye size={14} /> {blog.views || 0}
             </span>
             <span className="inline-flex items-center gap-1">
-              <MessageCircle size={14} /> {blog.comments?.length || 0}
+              <MessageCircle size={14} />{" "}
+              {blog.commentCount ?? blog.comments?.length ?? 0}
             </span>
           </div>
           <span className="text-blue-600 font-black text-sm flex items-center gap-1 group-hover:gap-3 transition-all">
@@ -81,4 +79,4 @@ const BlogCard = ({ blog }) => {
   );
 };
 
-export default BlogCard;
+export default React.memo(BlogCard);

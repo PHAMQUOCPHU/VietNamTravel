@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { MessageCircle, X, Send } from "lucide-react";
+import { MessageCircle, X, Send, ImagePlus, Loader2 } from "lucide-react";
 import axios from "axios";
 import { getSocket } from "../lib/socketClient";
 import { BACKEND_URL } from "../config/env";
@@ -10,17 +10,19 @@ const ChatWidget = ({ layout = "fixed" }) => {
   const [chat, setChat] = useState([]);
   const [userId, setUserId] = useState(null);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [pendingImageUrl, setPendingImageUrl] = useState("");
+  const [uploadingImage, setUploadingImage] = useState(false);
   const scrollRef = useRef();
+  const fileInputRef = useRef(null);
   const backendUrl = BACKEND_URL;
 
-  // 1. Logic kiểm tra Login/Logout liên tục
   useEffect(() => {
     const checkUser = () => {
       const stored = localStorage.getItem("user");
       if (stored) {
         try {
           const parsed = JSON.parse(stored);
-          const id = parsed._id || parsed.id || parsed.name; // Ưu tiên ID thực tế
+          const id = parsed._id || parsed.id || parsed.name;
           if (id && id !== userId) {
             setUserId(id);
           }
@@ -28,7 +30,6 @@ const ChatWidget = ({ layout = "fixed" }) => {
           setUserId(null);
         }
       } else {
-        // NẾU KHÔNG THẤY TRONG STORAGE THÌ RESET NGAY
         if (userId !== null) {
           setUserId(null);
           setIsOpen(false);
@@ -38,26 +39,30 @@ const ChatWidget = ({ layout = "fixed" }) => {
     };
 
     checkUser();
-    const interval = setInterval(checkUser, 1000); // Quét mỗi giây để dọn dẹp sau khi Logout
+    const interval = setInterval(checkUser, 3500);
     return () => clearInterval(interval);
   }, [userId]);
 
-  // 2. Lấy lại tin nhắn cũ khi mở khung chat
   useEffect(() => {
-    if (isOpen && userId) {
-      axios
-        .get(`${backendUrl}/api/messages/${userId}`)
-        .then(async (res) => {
-          if (res.data.success) setChat(res.data.messages);
-          await axios.post(
-            `${backendUrl}/api/messages/user/mark-read/${userId}`,
-          );
-          setUnreadCount(0);
-        })
-        .catch((err) => console.error("Lỗi fetch tin nhắn:", err));
+    if (!isOpen || !userId) return undefined;
+    const token = localStorage.getItem("token");
+    const authHeaders = token ? { token } : {};
 
-      getSocket(backendUrl).emit("join_room", userId);
-    }
+    axios
+      .get(`${backendUrl}/api/messages/${userId}`, { headers: authHeaders })
+      .then(async (res) => {
+        if (res.data.success) setChat(res.data.messages);
+        await axios.post(
+          `${backendUrl}/api/messages/user/mark-read/${userId}`,
+          {},
+          { headers: authHeaders },
+        );
+        setUnreadCount(0);
+      })
+      .catch((err) => console.error("Lỗi fetch tin nhắn:", err));
+
+    getSocket(backendUrl).emit("join_room", userId);
+    return undefined;
   }, [isOpen, userId, backendUrl]);
 
   useEffect(() => {
@@ -65,9 +70,15 @@ const ChatWidget = ({ layout = "fixed" }) => {
     let mounted = true;
 
     const fetchUnreadCount = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        if (mounted) setUnreadCount(0);
+        return;
+      }
       try {
         const { data } = await axios.get(
           `${backendUrl}/api/messages/user/unread-count/${userId}`,
+          { headers: { token } },
         );
         if (mounted && data.success) {
           setUnreadCount(data.unreadCount || 0);
@@ -85,20 +96,26 @@ const ChatWidget = ({ layout = "fixed" }) => {
     };
   }, [userId, backendUrl]);
 
-  // 3. Lắng nghe tin nhắn mới từ Socket
   useEffect(() => {
     if (!userId) return;
 
     const socket = getSocket(backendUrl);
 
     const handleReceiveMessage = (data) => {
-      // Chỉ nhận tin nhắn nếu liên quan đến User hiện tại
       if (data.senderId === userId || data.receiverId === userId) {
-        setChat((prev) => [...prev, data]);
+        setChat((prev) => {
+          if (data._id && prev.some((m) => m._id === data._id)) return prev;
+          return [...prev, data];
+        });
         if (data.senderId === "ADMIN" && data.receiverId === userId) {
           if (isOpen) {
+            const token = localStorage.getItem("token");
             axios
-              .post(`${backendUrl}/api/messages/user/mark-read/${userId}`)
+              .post(
+                `${backendUrl}/api/messages/user/mark-read/${userId}`,
+                {},
+                { headers: token ? { token } : {} },
+              )
               .then(() => setUnreadCount(0))
               .catch(() => {});
           } else {
@@ -112,28 +129,59 @@ const ChatWidget = ({ layout = "fixed" }) => {
     return () => socket.off("receive_message", handleReceiveMessage);
   }, [userId, isOpen, backendUrl]);
 
-  // Tự động cuộn xuống tin nhắn mới nhất
   useEffect(() => {
-    scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+    scrollRef.current?.scrollIntoView({ behavior: "auto", block: "end" });
   }, [chat]);
 
-  // 4. Hàm gửi tin nhắn
-  const sendMsg = () => {
-    if (message.trim() && userId) {
-      const data = {
-        senderId: userId,
-        receiverId: "ADMIN",
-        message: message.trim(),
-        createdAt: new Date(),
-      };
+  const handlePickImage = () => fileInputRef.current?.click();
 
-      getSocket(backendUrl).emit("send_message", data);
-      // setChat((prev) => [...prev, data]); // Hiển thị ngay phía User
-      setMessage("");
+  const handleImageFile = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file || !userId) return;
+    const token = localStorage.getItem("token");
+    if (!token) return;
+    setUploadingImage(true);
+    try {
+      const fd = new FormData();
+      fd.append("image", file);
+      const { data } = await axios.post(
+        `${backendUrl}/api/messages/chat-image/user`,
+        fd,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            token,
+          },
+        },
+      );
+      if (data.success && data.imageUrl) {
+        setPendingImageUrl(data.imageUrl);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setUploadingImage(false);
     }
   };
 
-  // Nếu chưa đăng nhập (không có userId) thì ẩn hoàn toàn
+  const sendMsg = () => {
+    const text = message.trim();
+    const img = pendingImageUrl.trim();
+    if ((!text && !img) || !userId) return;
+    const data = {
+      senderId: userId,
+      receiverId: "ADMIN",
+      message: text,
+      imageUrl: img,
+      createdAt: new Date(),
+    };
+
+    getSocket(backendUrl).emit("send_message", data);
+    setMessage("");
+    setPendingImageUrl("");
+  };
+
   if (!userId) return null;
 
   const containerClass =
@@ -143,7 +191,6 @@ const ChatWidget = ({ layout = "fixed" }) => {
 
   return (
     <div className={containerClass}>
-      {/* Nút bấm tròn */}
       <button
         id="chat-button"
         onClick={() => setIsOpen(!isOpen)}
@@ -157,7 +204,6 @@ const ChatWidget = ({ layout = "fixed" }) => {
         </span>
       )}
 
-      {/* Khung chat */}
       {isOpen && (
         <div className="absolute bottom-20 right-0 w-[85vw] sm:w-80 max-h-[70vh] sm:max-h-[450px] bg-white shadow-2xl rounded-2xl flex flex-col border border-gray-300 overflow-hidden animate-in fade-in zoom-in duration-200">
           <div className="bg-blue-600 p-3 sm:p-4 text-white font-bold text-xs sm:text-sm shadow-md flex justify-between items-center">
@@ -173,9 +219,9 @@ const ChatWidget = ({ layout = "fixed" }) => {
               Đang chat: {userId}
             </div>
 
-            {chat.map((msg, index) => (
+            {chat.map((msg) => (
               <div
-                key={index}
+                key={msg._id || `${msg.createdAt}-${msg.senderId}`}
                 className={`flex ${msg.senderId === userId ? "justify-end" : "justify-start"}`}
               >
                 <div
@@ -185,27 +231,94 @@ const ChatWidget = ({ layout = "fixed" }) => {
                       : "bg-white text-gray-800 border border-gray-200 rounded-tl-none"
                   }`}
                 >
-                  {msg.message}
+                  {msg.imageUrl ? (
+                    <a
+                      href={msg.imageUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={
+                        msg.senderId === userId ? "text-blue-100" : ""
+                      }
+                    >
+                      <img
+                        src={msg.imageUrl}
+                        alt=""
+                        className="max-h-40 w-full rounded-lg object-contain bg-black/10"
+                      />
+                    </a>
+                  ) : null}
+                  {msg.message ? (
+                    <div className={msg.imageUrl ? "mt-1.5" : ""}>
+                      {msg.message}
+                    </div>
+                  ) : null}
                 </div>
               </div>
             ))}
             <div ref={scrollRef} />
           </div>
 
-          <div className="p-2 sm:p-3 border-t bg-white flex gap-2 items-center">
-            <input
-              className="flex-1 text-xs border border-gray-200 p-2 sm:p-2.5 rounded-xl outline-none focus:border-blue-500 transition-all"
-              placeholder="Nhập tin nhắn..."
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && sendMsg()}
-            />
-            <button
-              onClick={sendMsg}
-              className="bg-blue-600 text-white p-2 sm:p-2.5 rounded-lg sm:rounded-xl hover:bg-blue-700 transition-colors shadow-md active:scale-95 flex-shrink-0"
-            >
-              <Send size={14} className="sm:w-4 sm:h-4" />
-            </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleImageFile}
+          />
+
+          <div className="p-2 sm:p-3 border-t bg-white flex flex-col gap-2">
+            {pendingImageUrl ? (
+              <div className="flex items-center gap-2 rounded-lg border border-blue-100 bg-blue-50/60 p-1.5 pr-2">
+                <img
+                  src={pendingImageUrl}
+                  alt=""
+                  className="h-12 w-12 rounded object-cover"
+                />
+                <span className="flex-1 text-[10px] text-blue-900 truncate">
+                  Ảnh sẵn sàng gửi
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setPendingImageUrl("")}
+                  className="shrink-0 rounded p-1 text-blue-800 hover:bg-blue-100"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            ) : null}
+            <div className="flex gap-2 items-center">
+              <input
+                className="flex-1 text-xs border border-gray-200 p-2 sm:p-2.5 rounded-xl outline-none focus:border-blue-500 transition-all"
+                placeholder="Nhập tin nhắn…"
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && sendMsg()}
+              />
+              <button
+                type="button"
+                onClick={handlePickImage}
+                disabled={uploadingImage}
+                title="Đính ảnh"
+                className="border border-gray-200 bg-gray-50 p-2 sm:p-2.5 rounded-lg text-gray-700 hover:bg-blue-50 hover:border-blue-200 disabled:opacity-50"
+              >
+                {uploadingImage ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <ImagePlus size={14} className="sm:w-4 sm:h-4" />
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={sendMsg}
+                disabled={
+                  (!message.trim() && !pendingImageUrl.trim()) ||
+                  uploadingImage
+                }
+                className="bg-blue-600 text-white p-2 sm:p-2.5 rounded-lg sm:rounded-xl hover:bg-blue-700 disabled:opacity-50 transition-colors shadow-md active:scale-95 flex-shrink-0"
+              >
+                <Send size={14} className="sm:w-4 sm:h-4" />
+              </button>
+            </div>
           </div>
         </div>
       )}

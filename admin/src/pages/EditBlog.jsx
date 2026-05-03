@@ -61,36 +61,39 @@ const EditBlog = () => {
   const fetchBlogData = useCallback(async () => {
     try {
       setLoading(true);
-      const { data } = await axios.get(`${backendUrl}/api/blog/list-blogs`);
-      if (data.success) {
-        const blog = data.blogs.find((item) => item._id === id);
-        if (blog) {
-          setTitle(blog.title || "");
-          setExcerpt(blog.excerpt || "");
+      const { data } = await axios.get(
+        `${backendUrl}/api/blog/admin/detail/${id}`,
+        { headers: { aToken } },
+      );
+      if (data.success && data.blog) {
+        const blog = data.blog;
+        setTitle(blog.title || "");
+        setExcerpt(blog.excerpt || "");
 
-          const catMap = {
-            destination: "Điểm đến",
-            food: "Ẩm thực",
-            guide: "Cẩm nang",
-            itinerary: "Lịch trình",
-            saving: "Tiết kiệm",
-            review: "Review",
-          };
-          setCategory(catMap[blog.category] || blog.category);
+        const catMap = {
+          destination: "Điểm đến",
+          food: "Ẩm thực",
+          guide: "Cẩm nang",
+          itinerary: "Lịch trình",
+          saving: "Tiết kiệm",
+          review: "Review",
+        };
+        setCategory(catMap[blog.category] || blog.category);
 
-          setContent(blog.content || "");
-          setOldImage(blog.image || "");
-          setIsFeatured(blog.isFeatured || false);
-          setIsHidden(blog.isHidden || false);
-          setPublishDate(new Date(blog.date).toISOString().split("T")[0]);
-        }
+        setContent(blog.content || "");
+        setOldImage(blog.image || "");
+        setIsFeatured(blog.isFeatured || false);
+        setIsHidden(blog.isHidden || false);
+        setPublishDate(new Date(blog.date).toISOString().split("T")[0]);
+      } else {
+        toast.error(data.message || "Không tìm thấy bài viết");
       }
     } catch {
       toast.error("Lỗi tải dữ liệu");
     } finally {
       setLoading(false);
     }
-  }, [id, backendUrl]);
+  }, [id, backendUrl, aToken]);
 
   useEffect(() => {
     if (id) fetchBlogData();

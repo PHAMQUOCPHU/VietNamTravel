@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useLocation, Outlet } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import AdminHeader from "./AdminHeader";
@@ -60,7 +60,19 @@ const AdminLayout = () => {
           transition={{ duration: 0.5 }}
           className={`p-4 sm:p-6 md:p-8 ${isBookingsPage ? "max-w-none px-2 sm:px-4 md:px-6 lg:px-8" : ""}`}
         >
-          <Outlet />
+          <Suspense
+            fallback={
+              <div
+                role="status"
+                aria-live="polite"
+                className="flex min-h-[320px] items-center justify-center text-sm text-slate-400"
+              >
+                Đang tải…
+              </div>
+            }
+          >
+            <Outlet />
+          </Suspense>
         </motion.main>
       </div>
     </div>

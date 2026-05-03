@@ -17,6 +17,7 @@ import {
   X,
 } from "lucide-react";
 import { toast } from "react-toastify";
+import { adminHeaders } from "../lib/adminHeaders";
 
 const RANKS = ["Bạc", "Vàng", "Kim cương"];
 
@@ -121,7 +122,7 @@ function RankBadge({ rank }) {
 }
 
 const UserManagement = () => {
-  const { aToken, users, getAllUsers, deleteUser, updateUserAdmin } =
+  const { aToken, backendUrl, users, getAllUsers, deleteUser, updateUserAdmin } =
     useContext(AdminContext);
   const [searchTerm, setSearchTerm] = useState("");
   const [rankFilter, setRankFilter] = useState("all");
@@ -216,11 +217,17 @@ const UserManagement = () => {
   };
 
   const openUserDetail = async (userId) => {
+    const id = userId != null ? String(userId).trim() : "";
+    if (!id || !aToken) {
+      toast.error("Thiếu phiên đăng nhập hoặc không xác định được người dùng.");
+      return;
+    }
     try {
       setDetailLoading(true);
+      const base = backendUrl.replace(/\/+$/, "");
       const { data } = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL || "http://localhost:5001"}/api/user/admin/users/${userId}/detail`,
-        { headers: { token: aToken } },
+        `${base}/api/user/admin/users/${encodeURIComponent(id)}/detail`,
+        { headers: adminHeaders(aToken), timeout: 30000 },
       );
       if (!data.success) {
         toast.error(data.message || "Không tải được chi tiết người dùng");
@@ -229,9 +236,23 @@ const UserManagement = () => {
       setDetailUser(data.user);
       setBookingStats(data.bookingStats || { totalBookings: 0, confirmedBookings: 0 });
     } catch (error) {
-      toast.error(
-        error.response?.data?.message || "Không tải được chi tiết người dùng",
-      );
+      const status = error.response?.status;
+      const serverMsg = error.response?.data?.message;
+      if (status === 401 || status === 403) {
+        toast.error(serverMsg || "Phiên admin hết hạn — đăng nhập lại.");
+      } else if (status === 404) {
+        toast.error(
+          serverMsg ||
+            "Không gọi được API chi tiết. Kiểm tra backend đã chạy và VITE_BACKEND_URL (đừng thêm …/api ở cuối URL).",
+        );
+      } else {
+        toast.error(
+          serverMsg ||
+            error.message ||
+            "Không tải được chi tiết người dùng (mạng hoặc server lỗi).",
+        );
+      }
+      console.error("openUserDetail:", error.response?.status, error.response?.data || error.message);
     } finally {
       setDetailLoading(false);
     }

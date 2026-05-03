@@ -16,6 +16,16 @@ export const toggleFavoriteTourApi = async ({ backendUrl, token, tourId }) => {
   return data;
 };
 
+export const toggleSavedJobApi = async ({ backendUrl, token, jobId }) => {
+  const client = buildHttpClient(backendUrl);
+  const { data } = await client.post(
+    "/api/user/toggle-saved-job",
+    { jobId },
+    withTokenHeader(token),
+  );
+  return data;
+};
+
 export const getCaptchaApi = async ({ backendUrl }) => {
   const client = buildHttpClient(backendUrl);
   const { data } = await client.get("/api/user/captcha");

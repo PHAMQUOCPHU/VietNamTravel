@@ -12,6 +12,7 @@ import {
   getUserProfile,
   readAllNotifications,
   toggleFavoriteTour,
+  toggleSavedJob as toggleSavedJobRequest,
 } from "../../services";
 
 export const AppContext = createContext();
@@ -135,6 +136,36 @@ const AppContextProvider = (props) => {
     [token, backendUrl, navigate, loadUserProfileData],
   );
 
+  const toggleSavedJob = useCallback(
+    async (jobId) => {
+      if (!token) {
+        toast.info("Vui lòng đăng nhập để lưu vị trí tuyển dụng!");
+        navigate("/login");
+        return;
+      }
+      try {
+        const data = await toggleSavedJobRequest({
+          backendUrl,
+          token,
+          jobId,
+        });
+        if (data.success) {
+          setUser((prev) =>
+            prev ? { ...prev, savedJobs: data.savedJobs } : prev,
+          );
+          await loadUserProfileData();
+          toast.success(data.message);
+        } else if (data.message) {
+          toast.error(data.message);
+        }
+      } catch (error) {
+        console.error("Toggle saved job error:", error);
+        toast.error("Không thể cập nhật vị trí đã lưu");
+      }
+    },
+    [token, backendUrl, navigate, loadUserProfileData],
+  );
+
   useEffect(() => {
     getToursData();
   }, [getToursData]);
@@ -252,6 +283,7 @@ const AppContextProvider = (props) => {
     notifyReviewUpdated,
     logout,
     toggleFavorite,
+    toggleSavedJob,
     notificationUnreadCount,
     notifications,
     fetchNotifications,

@@ -254,7 +254,7 @@ const SORT_OPTIONS = [
 ];
 
 const Tour = () => {
-  const { tours, backendUrl } = useContext(AppContext);
+  const { tours, backendUrl, token } = useContext(AppContext);
   const [selectedCategory, setSelectedCategory] = useState("");
   const [sortBy, setSortBy] = useState("default");
   const [priceMin, setPriceMin] = useState(0);
@@ -265,18 +265,28 @@ const Tour = () => {
   const [vouchers, setVouchers] = useState([]);
 
   useEffect(() => {
-    const fetchVouchers = async () => {
+    if (!backendUrl) return;
+    const ac = new AbortController();
+    (async () => {
       try {
-        const { data } = await axios.get(`${backendUrl}/api/vouchers/public`);
-        if (data.success) {
+        const { data } = await axios.get(`${backendUrl}/api/vouchers/public`, {
+          signal: ac.signal,
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        if (!ac.signal.aborted && data.success) {
           setVouchers(data.vouchers);
         }
       } catch (error) {
-        console.error("Error fetching vouchers:", error);
+        if (
+          error.code !== "ERR_CANCELED" &&
+          error.name !== "CanceledError"
+        ) {
+          console.error("Error fetching vouchers:", error);
+        }
       }
-    };
-    if (backendUrl) fetchVouchers();
-  }, [backendUrl]);
+    })();
+    return () => ac.abort();
+  }, [backendUrl, token]);
 
   const toursByCategory = useMemo(() => {
     if (!Array.isArray(tours)) return [];

@@ -5,6 +5,7 @@ import {
   loginUserApi,
   requestOtpApi,
   toggleFavoriteTourApi,
+  toggleSavedJobApi,
 } from "../api";
 
 export const getUserProfile = async ({ backendUrl, token }) => {
@@ -13,6 +14,10 @@ export const getUserProfile = async ({ backendUrl, token }) => {
 
 export const toggleFavoriteTour = async ({ backendUrl, token, tourId }) => {
   return toggleFavoriteTourApi({ backendUrl, token, tourId });
+};
+
+export const toggleSavedJob = async ({ backendUrl, token, jobId }) => {
+  return toggleSavedJobApi({ backendUrl, token, jobId });
 };
 
 export const getCaptcha = async ({ backendUrl }) => {

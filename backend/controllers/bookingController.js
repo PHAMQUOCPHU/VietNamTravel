@@ -3,6 +3,7 @@ import tourModel from "../models/TourModel.js";
 import userModel from "../models/userModel.js";
 import scheduleModel from "../models/scheduleModel.js";
 import voucherModel from "../models/voucherModel.js";
+import { voucherWasUsedBy } from "../utils/voucherHelpers.js";
 import {
   notifyBookingCancelled,
   notifyBookingConfirmedByAdmin,
@@ -137,14 +138,15 @@ export const createBooking = async (req, res) => {
 
     // Apply Voucher if provided
     if (req.body.voucherCode) {
+      const codeNorm = String(req.body.voucherCode).trim().toUpperCase();
       const voucher = await voucherModel.findOne({
-        code: req.body.voucherCode,
+        code: codeNorm,
         isActive: true,
       });
       if (
         voucher &&
         voucher.status === "active" &&
-        !voucher.usedBy.includes(userId) &&
+        !voucherWasUsedBy(voucher.usedBy, userId) &&
         new Date() <= new Date(voucher.expiryDate) &&
         finalTotalPrice >= voucher.minOrderValue &&
         voucher.usedCount < voucher.usageLimit
@@ -335,8 +337,9 @@ export const updateBookingStatus = async (req, res) => {
         if (status === "confirmed" && previousStatus !== "confirmed") {
           // Xử lý xác nhận Voucher (Nếu có)
           if (updated.voucherCode) {
+            const codeNorm = String(updated.voucherCode).trim().toUpperCase();
             const voucher = await voucherModel.findOne({
-              code: updated.voucherCode,
+              code: codeNorm,
             });
             const userIdStr = String(updated.userId?._id || updated.userId);
             const alreadyUsed = voucher?.usedBy.some(
@@ -596,9 +599,12 @@ export const getUserCollection = async (req, res) => {
   try {
     const userId = req.userId || req.body.userId;
 
-    // Lấy những đơn đã xác nhận (confirmed hoặc Đã xác nhận) để hỗ trợ dữ liệu cũ và cả đơn hoàn thành
+    // Lấy tất cả booking (trừ cancelled) để kiểm tra tour đã kết thúc dựa trên ngày, không phải status
     const bookings = await bookingModel
-      .find({ userId, status: { $in: ["confirmed", "Đã xác nhận"] } })
+      .find({
+        userId,
+        status: { $ne: "cancelled" }, // Loại trừ booking đã hủy
+      })
       .populate("tourId", "city duration");
 
     const now = new Date();
@@ -614,7 +620,7 @@ export const getUserCollection = async (req, res) => {
         endDate.setDate(startDate.getDate() + (duration - 1));
         endDate.setHours(23, 59, 59, 999);
 
-        // Nếu ngày hiện tại đã qua ngày kết thúc tour
+        // Nếu ngày hiện tại đã qua ngày kết thúc tour => đã hoàn thành
         if (now > endDate) {
           // Lấy tên thành phố/tỉnh (Chuẩn hóa chữ hoa/thường để tránh trùng)
           const cityName = booking.tourId.city.trim();

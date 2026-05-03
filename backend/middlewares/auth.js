@@ -1,5 +1,25 @@
 import jwt from "jsonwebtoken";
 
+/**
+ * Giải JWT nếu có (Bearer / token header), không 401 — dùng cho API public có thêm quyền khi đã đăng nhập.
+ */
+export const optionalDecodeUser = (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization;
+    const token =
+      (authHeader && authHeader.startsWith("Bearer ")
+        ? authHeader.split(" ")[1]
+        : null) || req.headers.token;
+    if (token && process.env.JWT_SECRET) {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      req.userId = decoded.id;
+    }
+  } catch {
+    // ẩn danh hoặc token hết hạn: không gán userId
+  }
+  next();
+};
+
 const authMiddleware = async (req, res, next) => {
   try {
     // Lấy token từ header 'token' hoặc 'Authorization' (Bearer...)

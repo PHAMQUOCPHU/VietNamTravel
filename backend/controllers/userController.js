@@ -3,8 +3,10 @@ import transporter from "../config/nodemailer.js";
 import cryptoRandomString from "crypto-random-string";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
 import userModel from "../models/userModel.js";
 import bookingModel from "../models/bookingModel.js"; // NHỚ KIỂM TRA ĐƯỜNG DẪN NÀY
+import jobModel from "../models/jobModel.js";
 import { uploadBufferToCloudinary, CLOUDINARY_FOLDERS } from "../services/cloudinaryUpload.js";
 
 // Hàm tạo Token
@@ -52,6 +54,7 @@ export const registerUser = async (req, res) => {
       phone: phone.trim(),
       role: "user",
       favorites: [],
+      savedJobs: [],
     });
 
     const user = await newUser.save();
@@ -64,6 +67,7 @@ export const registerUser = async (req, res) => {
         name: user.name,
         role: user.role,
         favorites: user.favorites,
+        savedJobs: user.savedJobs || [],
       },
     });
   } catch (error) {
@@ -363,6 +367,15 @@ export const updateUserAdmin = async (req, res) => {
           message: "Không thể tự hạ quyền quản trị của chính bạn.",
         });
       }
+      if (role === "user" && target.role === "admin") {
+        const adminCount = await userModel.countDocuments({ role: "admin" });
+        if (adminCount <= 1) {
+          return res.json({
+            success: false,
+            message: "Phải giữ ít nhất một tài khoản quản trị trên hệ thống.",
+          });
+        }
+      }
       update.role = role;
     }
 
@@ -408,6 +421,13 @@ export const updateUserAdmin = async (req, res) => {
 export const getUserDetailAdmin = async (req, res) => {
   try {
     const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.json({
+        success: false,
+        message: "ID người dùng không hợp lệ",
+      });
+    }
+
     const user = await userModel.findById(id).select("-password").lean();
 
     if (!user) {
@@ -466,6 +486,51 @@ export const toggleFavorite = async (req, res) => {
       success: true,
       message: isFavorite ? "Đã xóa khỏi yêu thích" : "Đã thêm vào yêu thích",
       favorites: user.favorites,
+    });
+  } catch (error) {
+    res.json({ success: false, message: error.message });
+  }
+};
+
+// 12b. Lưu / bỏ lưu vị trí tuyển dụng (Careers)
+export const toggleSavedJob = async (req, res) => {
+  try {
+    const userId = req.userId;
+    const { jobId } = req.body;
+
+    if (!jobId || !mongoose.Types.ObjectId.isValid(jobId)) {
+      return res.json({ success: false, message: "ID vị trí không hợp lệ" });
+    }
+
+    const jobExists = await jobModel.exists({ _id: jobId });
+    if (!jobExists) {
+      return res.json({
+        success: false,
+        message: "Không tìm thấy vị trí tuyển dụng",
+      });
+    }
+
+    const user = await userModel.findById(userId);
+    if (!user) {
+      return res.json({ success: false, message: "Không tìm thấy người dùng" });
+    }
+
+    const list = Array.isArray(user.savedJobs) ? user.savedJobs : [];
+    const sid = String(jobId);
+    const isSaved = list.some((id) => String(id) === sid);
+
+    if (isSaved) {
+      user.savedJobs = list.filter((id) => String(id) !== sid);
+    } else {
+      user.savedJobs = [...list, jobId];
+    }
+
+    await user.save();
+
+    res.json({
+      success: true,
+      message: isSaved ? "Đã bỏ lưu vị trí" : "Đã lưu vị trí",
+      savedJobs: user.savedJobs,
     });
   } catch (error) {
     res.json({ success: false, message: error.message });

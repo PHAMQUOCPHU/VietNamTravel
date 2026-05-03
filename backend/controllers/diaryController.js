@@ -1,23 +1,15 @@
 import diaryModel from "../models/diaryModel.js";
 import bookingModel from "../models/bookingModel.js";
-import { v2 as cloudinary } from "cloudinary";
+import {
+  uploadBufferToCloudinary,
+  CLOUDINARY_FOLDERS,
+} from "../services/cloudinaryUpload.js";
 
 // Helper function to upload multiple files
 const uploadMultipleImages = async (files) => {
-  const uploadPromises = files.map((file) => {
-    return new Promise((resolve, reject) => {
-      const b64 = Buffer.from(file.buffer).toString("base64");
-      let dataURI = "data:" + file.mimetype + ";base64," + b64;
-      cloudinary.uploader.upload(
-        dataURI,
-        { resource_type: "auto" },
-        (error, result) => {
-          if (error) reject(error);
-          else resolve(result.secure_url);
-        },
-      );
-    });
-  });
+  const uploadPromises = files.map((file) =>
+    uploadBufferToCloudinary(file, CLOUDINARY_FOLDERS.diaries),
+  );
   return Promise.all(uploadPromises);
 };
 

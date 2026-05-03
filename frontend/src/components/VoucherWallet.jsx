@@ -6,25 +6,37 @@ import axios from "axios";
 import { AppContext } from "../context/AppContext";
 
 const VoucherWallet = () => {
-  const { backendUrl } = useContext(AppContext);
+  const { backendUrl, token } = useContext(AppContext);
   const [vouchers, setVouchers] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchVouchers = async () => {
+    if (!backendUrl) return;
+    const ac = new AbortController();
+    (async () => {
       try {
-        const { data } = await axios.get(`${backendUrl}/api/vouchers/public`);
-        if (data.success) {
+        const { data } = await axios.get(`${backendUrl}/api/vouchers/public`, {
+          signal: ac.signal,
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        if (!ac.signal.aborted && data.success) {
           setVouchers(data.vouchers);
         }
       } catch (error) {
-        console.error("Lỗi lấy danh sách voucher", error);
+        if (
+          error.code !== "ERR_CANCELED" &&
+          error.name !== "CanceledError"
+        ) {
+          console.error("Lỗi lấy danh sách voucher", error);
+        }
       } finally {
-        setLoading(false);
+        if (!ac.signal.aborted) {
+          setLoading(false);
+        }
       }
-    };
-    fetchVouchers();
-  }, [backendUrl]);
+    })();
+    return () => ac.abort();
+  }, [backendUrl, token]);
 
   return (
     <div className="space-y-6">
@@ -65,7 +77,11 @@ const VoucherItem = ({ voucher }) => {
   };
 
   const daysLeft = Math.ceil((new Date(voucher.expiryDate) - new Date()) / (1000 * 60 * 60 * 24));
-  const usagePercent = Math.min((voucher.usedCount / voucher.usageLimit) * 100, 100);
+  const limit = Math.max(1, Number(voucher.usageLimit) || 1);
+  const usagePercent = Math.min(
+    ((Number(voucher.usedCount) || 0) / limit) * 100,
+    100,
+  );
 
   return (
     <motion.div
@@ -102,7 +118,7 @@ const VoucherItem = ({ voucher }) => {
           {/* Progress Bar Lượt dùng */}
           <div>
             <div className="flex justify-between text-[10px] font-bold text-gray-400 mb-1">
-              <span>Đã dùng {voucher.usedCount}/{voucher.usageLimit}</span>
+              <span>Đã dùng {voucher.usedCount}/{limit}</span>
               <span>{usagePercent.toFixed(0)}%</span>
             </div>
             <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">

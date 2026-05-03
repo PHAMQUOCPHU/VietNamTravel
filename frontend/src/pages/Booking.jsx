@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Calendar,
   User,
@@ -38,6 +38,7 @@ const Booking = () => {
   const displayDate = typeof rawDate === "object" ? rawDate?.date : rawDate;
 
   const [paymentMethod, setPaymentMethod] = useState("COD");
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
   // Hooks phải gọi trước mọi return (Rules of Hooks)
   const {
@@ -146,7 +147,16 @@ const Booking = () => {
           <div className="lg:col-span-2">
             <div className="bg-white rounded-[1.5rem] sm:rounded-[2rem] shadow-xl p-4 sm:p-6 md:p-8 border border-white">
               <form
-                onSubmit={(e) => handleSubmit(e, appliedVoucherCode)}
+                onSubmit={(e) => {
+                  if (!termsAccepted) {
+                    e.preventDefault();
+                    toast.warning(
+                      "Vui lòng đồng ý với Điều khoản dịch vụ của VietNam Travel trước khi thanh toán.",
+                    );
+                    return;
+                  }
+                  handleSubmit(e, appliedVoucherCode);
+                }}
                 className="space-y-5 sm:space-y-6"
               >
                 {/* Thông tin ngày khởi hành - Sửa lỗi Invalid Date */}
@@ -262,10 +272,36 @@ const Booking = () => {
                   onChange={setPaymentMethod}
                 />
 
+                <label className="flex items-start gap-3 cursor-pointer rounded-xl border border-slate-200 bg-slate-50/80 p-3 sm:p-4">
+                  <input
+                    type="checkbox"
+                    checked={termsAccepted}
+                    onChange={(e) => setTermsAccepted(e.target.checked)}
+                    className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 text-[#1e3a8a] focus:ring-2 focus:ring-blue-500"
+                  />
+                  <span className="text-xs sm:text-sm text-slate-600 leading-snug text-left">
+                    Tôi đồng ý với{" "}
+                    <Link
+                      to="/terms"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-bold text-[#1e3a8a] underline underline-offset-2 hover:text-blue-800"
+                    >
+                      Điều khoản dịch vụ
+                    </Link>{" "}
+                    của <span className="font-semibold text-slate-800">VietNam Travel</span>{" "}
+                    trước khi xác nhận đặt chỗ và thanh toán.
+                  </span>
+                </label>
+
                 <button
                   type="submit"
-                  disabled={isSubmitting}
-                  className="w-full py-4 sm:py-5 bg-[#1e3a8a] text-white rounded-lg sm:rounded-[1.5rem] font-black text-base sm:text-xl hover:bg-blue-700 hover:shadow-2xl transition-all active:scale-95 disabled:bg-gray-400"
+                  disabled={isSubmitting || !termsAccepted}
+                  className={`w-full py-4 sm:py-5 rounded-lg sm:rounded-[1.5rem] font-black text-base sm:text-xl transition-all active:scale-95 ${
+                    isSubmitting || !termsAccepted
+                      ? "bg-gray-400 text-white cursor-not-allowed"
+                      : "bg-[#1e3a8a] text-white hover:bg-blue-700 hover:shadow-2xl"
+                  }`}
                 >
                   {isSubmitting ? "Đang xử lý..." : "Xác Nhận Đặt Ngay"}
                 </button>

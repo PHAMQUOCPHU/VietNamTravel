@@ -1,5 +1,5 @@
 import React, { useState, useContext } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { AlertTriangle, CreditCard } from "lucide-react";
 import { toast } from "react-toastify";
 import axios from "axios";
@@ -11,6 +11,7 @@ const PaymentPage = () => {
   const { backendUrl } = useContext(AppContext);
   const { booking } = state || {};
   const [isProcessing, setIsProcessing] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
   if (!booking) {
     return (
@@ -29,6 +30,12 @@ const PaymentPage = () => {
 
   const handleVnpayPayment = async () => {
     if (isProcessing) return; // Chặn bấm liên tiếp
+    if (!termsAccepted) {
+      toast.warning(
+        "Vui lòng đồng ý với Điều khoản dịch vụ của VietNam Travel trước khi thanh toán.",
+      );
+      return;
+    }
     setIsProcessing(true);
 
     try {
@@ -95,11 +102,33 @@ const PaymentPage = () => {
           </div>
         </div>
 
+        <label className="flex items-start gap-3 mb-6 text-left cursor-pointer rounded-2xl border border-slate-100 bg-slate-50/90 p-3 sm:p-4">
+          <input
+            type="checkbox"
+            checked={termsAccepted}
+            onChange={(e) => setTermsAccepted(e.target.checked)}
+            className="mt-1 h-4 w-4 shrink-0 rounded border-slate-300 text-[#005baa] focus:ring-2 focus:ring-blue-500"
+          />
+          <span className="text-xs sm:text-sm text-slate-600 leading-snug">
+            Tôi đồng ý với{" "}
+            <Link
+              to="/terms"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-bold text-[#005baa] underline underline-offset-2 hover:text-[#004a8a]"
+            >
+              Điều khoản dịch vụ
+            </Link>{" "}
+            của <span className="font-semibold text-slate-800">VietNam Travel</span>{" "}
+            trước khi thanh toán.
+          </span>
+        </label>
+
         <button
           onClick={handleVnpayPayment}
-          disabled={isProcessing}
+          disabled={isProcessing || !termsAccepted}
           className={`w-full py-5 text-white rounded-2xl font-black text-lg flex items-center justify-center gap-3 transition-all shadow-lg ${
-            isProcessing
+            isProcessing || !termsAccepted
               ? "bg-gray-400 cursor-not-allowed"
               : "bg-[#005baa] hover:bg-[#004a8a] active:scale-95 shadow-blue-100"
           }`}

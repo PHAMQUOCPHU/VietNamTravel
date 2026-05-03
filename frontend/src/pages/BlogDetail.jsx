@@ -1,4 +1,5 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
+import DOMPurify from "dompurify";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Calendar, ArrowLeft, Loader2, User, Eye, MessageCircle } from "lucide-react";
@@ -22,6 +23,14 @@ const BlogDetail = () => {
     return "https://via.placeholder.com/1200x700?text=Blog";
   };
 
+  const safeArticleHtml = useMemo(
+    () =>
+      DOMPurify.sanitize(blogData?.content || "", {
+        USE_PROFILES: { html: true },
+      }),
+    [blogData?.content],
+  );
+
   const getViewerId = () => {
     const storedId = localStorage.getItem("blog_viewer_id");
     if (storedId) return storedId;
@@ -30,28 +39,40 @@ const BlogDetail = () => {
     return newId;
   };
 
-  const fetchBlogDetail = useCallback(async () => {
-    try {
-      setLoading(true);
-      const viewerId = getViewerId();
-      const { data } = await axios.get(`${backendUrl}/api/blog/${id}`, {
-        params: { incrementView: true },
-        headers: { "x-viewer-id": viewerId },
-      });
-      if (data.success) setBlogData(data.blog);
-    } catch (error) {
-      console.error("Lỗi fetch blog:", error);
-      toast.error("Khong the tai bai viet");
-    } finally {
-      setLoading(false);
-    }
-  }, [id, backendUrl]);
+  const fetchBlogDetail = useCallback(
+    async ({ signal } = {}) => {
+      try {
+        setLoading(true);
+        const viewerId = getViewerId();
+        const { data } = await axios.get(`${backendUrl}/api/blog/${id}`, {
+          params: { incrementView: true },
+          headers: { "x-viewer-id": viewerId },
+          signal,
+        });
+        if (data.success) setBlogData(data.blog);
+      } catch (error) {
+        if (
+          error.code !== "ERR_CANCELED" &&
+          error.name !== "CanceledError"
+        ) {
+          console.error("Lỗi fetch blog:", error);
+          toast.error("Khong the tai bai viet");
+        }
+      } finally {
+        if (!signal?.aborted) {
+          setLoading(false);
+        }
+      }
+    },
+    [id, backendUrl],
+  );
 
   useEffect(() => {
-    if (id) {
-      fetchBlogDetail();
-      window.scrollTo(0, 0);
-    }
+    if (!id) return undefined;
+    const ac = new AbortController();
+    fetchBlogDetail({ signal: ac.signal });
+    window.scrollTo(0, 0);
+    return () => ac.abort();
   }, [id, fetchBlogDetail]);
 
   const handleSubmitComment = async (e) => {
@@ -153,7 +174,7 @@ const BlogDetail = () => {
 
         <article
           className="prose prose-blue max-w-none prose-h2:text-xl md:prose-h2:text-3xl prose-h2:font-black prose-h2:text-gray-900 prose-h2:mt-12 prose-h2:mb-6 prose-h2:break-words prose-h3:text-lg md:prose-h3:text-2xl prose-h3:font-bold prose-h3:text-gray-800 prose-h3:mt-8 prose-p:text-gray-600 prose-p:leading-relaxed prose-p:text-base md:prose-p:text-lg prose-p:break-words prose-img:rounded-2xl prose-img:w-full prose-img:mx-auto prose-strong:text-blue-600 prose-li:text-gray-600"
-          dangerouslySetInnerHTML={{ __html: blogData.content }}
+          dangerouslySetInnerHTML={{ __html: safeArticleHtml }}
         />
 
         <div className="mt-20 pt-10 border-t border-gray-100 space-y-8">
@@ -162,6 +183,7 @@ const BlogDetail = () => {
           <form onSubmit={handleSubmitComment} className="space-y-4">
             <textarea
               rows={4}
+              maxLength={1000}
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               placeholder={

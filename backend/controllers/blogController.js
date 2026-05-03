@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import blogModel from "../models/blogModel.js";
 import userModel from "../models/userModel.js";
 import axios from "axios";
@@ -8,6 +9,16 @@ import {
 
 const recentViewTracker = new Map();
 const VIEW_THROTTLE_MS = 1500;
+const VIEW_TRACKER_MAX_KEYS = 5000;
+
+/** Giảm rò rỉ bộ nhớ khi tracker phình to (in-memory per process). */
+const pruneViewTracker = () => {
+  while (recentViewTracker.size > VIEW_TRACKER_MAX_KEYS) {
+    const firstKey = recentViewTracker.keys().next().value;
+    if (firstKey === undefined) break;
+    recentViewTracker.delete(firstKey);
+  }
+};
 
 const buildDateRange = (date) => {
   if (!date) return null;
@@ -19,15 +30,72 @@ const buildDateRange = (date) => {
   return { start: start.getTime(), end: end.getTime() };
 };
 
-const getViewerId = (req) => {
-  const headerViewer = req.headers["x-viewer-id"];
-  const forwardedFor = req.headers["x-forwarded-for"];
-  return (
-    headerViewer ||
-    (Array.isArray(forwardedFor) ? forwardedFor[0] : forwardedFor) ||
-    req.ip ||
-    "anonymous"
-  );
+const buildListBlogQuery = (req, { publicOnly }) => {
+  const { category, date, startDate, endDate, search } = req.query;
+  const query = {};
+  if (publicOnly) {
+    query.isHidden = false;
+  }
+  if (category && category !== "all") query.category = category;
+  if (search != null && String(search).trim()) {
+    const escaped = String(search).trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    query.title = { $regex: escaped, $options: "i" };
+  }
+  if (date) {
+    const range = buildDateRange(date);
+    if (range) query.date = { $gte: range.start, $lt: range.end };
+  } else if (startDate || endDate) {
+    query.date = {};
+    if (startDate) {
+      const range = buildDateRange(startDate);
+      if (range) query.date.$gte = range.start;
+    }
+    if (endDate) {
+      const range = buildDateRange(endDate);
+      if (range) query.date.$lt = range.end;
+    }
+    if (!Object.keys(query.date).length) delete query.date;
+  }
+  return query;
+};
+
+/** Danh sách blog không phân trang (tối đa MAX_BLOG_LIST trả về). */
+const MAX_BLOG_LIST = 3000;
+
+const runBlogListAggregation = async (req, res, { publicOnly }) => {
+  try {
+    const query = buildListBlogQuery(req, { publicOnly });
+    const totalItems = await blogModel.countDocuments(query);
+
+    const pipeline = [
+      { $match: query },
+      { $sort: { date: -1 } },
+      { $limit: MAX_BLOG_LIST },
+      {
+        $project: {
+          title: 1,
+          excerpt: 1,
+          image: 1,
+          category: 1,
+          author: 1,
+          date: 1,
+          views: 1,
+          isFeatured: 1,
+          isHidden: 1,
+          commentCount: { $size: { $ifNull: ["$comments", []] } },
+        },
+      },
+    ];
+    const blogs = await blogModel.aggregate(pipeline);
+    res.json({
+      success: true,
+      blogs,
+      totalItems,
+    });
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: error.message });
+  }
 };
 
 const addBlog = async (req, res) => {
@@ -76,32 +144,37 @@ const addBlog = async (req, res) => {
   }
 };
 
-const listBlogs = async (req, res) => {
+/** Cho site public — chỉ bài không ẩn, không kèm content/html comment rười. */
+const listPublicBlogs = async (req, res) =>
+  runBlogListAggregation(req, res, { publicOnly: true });
+
+/** Cho admin — bao gồm bài đã ẩn nháp / ẩn hiển thị. */
+const listAdminBlogs = async (req, res) =>
+  runBlogListAggregation(req, res, { publicOnly: false });
+
+const getViewerId = (req) => {
+  const headerViewer = req.headers["x-viewer-id"];
+  const forwardedFor = req.headers["x-forwarded-for"];
+  return (
+    headerViewer ||
+    (Array.isArray(forwardedFor) ? forwardedFor[0] : forwardedFor) ||
+    req.ip ||
+    "anonymous"
+  );
+};
+
+/** Admin chỉnh sửa — trả đủ fields, không tăng lượt xem, cho phép đọc cả bài isHidden */
+const getAdminBlogById = async (req, res) => {
   try {
-    const { category, date, startDate, endDate, includeHidden } = req.query;
-    const query = {};
-
-    if (category && category !== "all") query.category = category;
-    if (includeHidden !== "true") query.isHidden = false;
-
-    if (date) {
-      const range = buildDateRange(date);
-      if (range) query.date = { $gte: range.start, $lt: range.end };
-    } else if (startDate || endDate) {
-      query.date = {};
-      if (startDate) {
-        const range = buildDateRange(startDate);
-        if (range) query.date.$gte = range.start;
-      }
-      if (endDate) {
-        const range = buildDateRange(endDate);
-        if (range) query.date.$lt = range.end;
-      }
-      if (!Object.keys(query.date).length) delete query.date;
+    const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.json({ success: false, message: "Không tìm thấy bài viết" });
     }
-
-    const blogs = await blogModel.find(query).sort({ date: -1 });
-    res.json({ success: true, blogs });
+    const blog = await blogModel.findById(id).lean();
+    if (!blog) {
+      return res.json({ success: false, message: "Không tìm thấy bài viết" });
+    }
+    res.json({ success: true, blog });
   } catch (error) {
     console.log(error);
     res.json({ success: false, message: error.message });
@@ -113,22 +186,31 @@ const getBlogById = async (req, res) => {
     const { id } = req.params;
     const { incrementView = "true" } = req.query;
 
-    const blog = await blogModel.findById(id);
-    if (!blog || blog.isHidden) {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.json({ success: false, message: "Không tìm thấy bài viết" });
     }
 
-    if (incrementView === "true") {
+    const shouldIncrement = incrementView === "true";
+
+    if (shouldIncrement) {
       const viewerId = getViewerId(req);
       const viewKey = `${id}:${viewerId}`;
       const now = Date.now();
       const lastViewedAt = recentViewTracker.get(viewKey) || 0;
 
       if (now - lastViewedAt > VIEW_THROTTLE_MS) {
-        blog.views += 1;
-        await blog.save();
+        await blogModel.updateOne(
+          { _id: id, isHidden: false },
+          { $inc: { views: 1 } },
+        );
         recentViewTracker.set(viewKey, now);
+        pruneViewTracker();
       }
+    }
+
+    const blog = await blogModel.findById(id).lean();
+    if (!blog || blog.isHidden) {
+      return res.json({ success: false, message: "Không tìm thấy bài viết" });
     }
 
     res.json({ success: true, blog });
@@ -138,14 +220,18 @@ const getBlogById = async (req, res) => {
   }
 };
 
+const COMMENT_MAX_LENGTH = 1000;
+
 const addBlogComment = async (req, res) => {
   try {
     const { id } = req.params;
-    const { content } = req.body;
+    let { content } = req.body;
 
     if (!content || !content.trim()) {
       return res.json({ success: false, message: "Nội dung bình luận không hợp lệ" });
     }
+
+    content = content.trim().slice(0, COMMENT_MAX_LENGTH);
 
     const user = await userModel.findById(req.userId).select("name");
     if (!user) {
@@ -160,7 +246,7 @@ const addBlogComment = async (req, res) => {
     blog.comments.unshift({
       userId: req.userId,
       userName: user.name || "Người dùng",
-      content: content.trim(),
+      content,
     });
     await blog.save();
 
@@ -174,13 +260,14 @@ const addBlogComment = async (req, res) => {
 const deleteBlog = async (req, res) => {
   try {
     const { id } = req.body;
-
-    const blog = await blogModel.findById(id);
-    if (!blog) {
-      return res.json({ success: false, message: "Không tìm thấy bài viết" });
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+      return res.json({ success: false, message: "Id bài viết không hợp lệ" });
     }
 
-    await blogModel.findByIdAndDelete(id);
+    const deleted = await blogModel.findByIdAndDelete(id);
+    if (!deleted) {
+      return res.json({ success: false, message: "Không tìm thấy bài viết" });
+    }
 
     res.json({ success: true, message: "Đã xóa bài viết thành công" });
   } catch (error) {
@@ -192,6 +279,9 @@ const deleteBlog = async (req, res) => {
 const updateBlog = async (req, res) => {
   try {
     const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.json({ success: false, message: "Id bài viết không hợp lệ" });
+    }
     const {
       title,
       excerpt,
@@ -237,6 +327,9 @@ const updateBlog = async (req, res) => {
 const toggleBlogVisibility = async (req, res) => {
   try {
     const { id, isHidden } = req.body;
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+      return res.json({ success: false, message: "Id bài viết không hợp lệ" });
+    }
     const blog = await blogModel.findByIdAndUpdate(
       id,
       { isHidden: Boolean(isHidden) },
@@ -442,7 +535,9 @@ Yeu cau:
 
 export {
   addBlog,
-  listBlogs,
+  listPublicBlogs,
+  listAdminBlogs,
+  getAdminBlogById,
   getBlogById,
   addBlogComment,
   deleteBlog,

@@ -1,126 +1,210 @@
-import React, { useState, useEffect, useRef } from "react";
-import io from "socket.io-client";
+import React, { useState, useEffect, useRef, useContext, useCallback } from "react";
 import axios from "axios";
-import { User as UserIcon, Send, Search } from "lucide-react"; // Thêm icon Search
-import { useContext } from "react";
+import {
+  User as UserIcon,
+  Send,
+  Search,
+  ImagePlus,
+  Loader2,
+  X,
+} from "lucide-react";
 import { AdminContext } from "../context/AdminContext";
+import { toast } from "react-toastify";
+import { getSocket } from "../lib/socketClient";
+import { adminHeaders } from "../lib/adminHeaders";
 
-const socket = io(import.meta.env.VITE_BACKEND_URL || "http://localhost:5001", {
-  transports: ["websocket", "polling"],
-  withCredentials: true,
-});
+const REFRESH_USERS_MS = 450;
 
 const Messages = () => {
-  const { backendUrl } = useContext(AdminContext);
+  const { backendUrl, aToken, refreshAdminChatUnread } = useContext(AdminContext);
   const [users, setUsers] = useState([]);
-  const [searchTerm, setSearchTerm] = useState(""); // State cho ô tìm kiếm
+  const [searchTerm, setSearchTerm] = useState("");
   const [selectedUser, setSelectedUser] = useState(null);
   const [messages, setMessages] = useState([]);
+  const [loadingThread, setLoadingThread] = useState(false);
   const [input, setInput] = useState("");
+  const [pendingImageUrl, setPendingImageUrl] = useState("");
+  const [uploadingImage, setUploadingImage] = useState(false);
   const scrollRef = useRef();
+  const fileInputRef = useRef(null);
+  const refreshTimerRef = useRef(null);
 
-  // 1. Lấy danh sách khách hàng
-  const fetchUsers = async () => {
+  const apiBase = backendUrl?.replace(/\/+$/, "") || "";
+
+  const fetchUsers = useCallback(async () => {
+    if (!apiBase || !aToken) return;
     try {
-      const res = await axios.get(`${backendUrl}/api/messages/admin/users`);
+      const res = await axios.get(`${apiBase}/api/messages/admin/users`, {
+        headers: adminHeaders(aToken),
+      });
       if (res.data.success) {
         setUsers(res.data.users);
       }
     } catch (err) {
-      console.error("Lỗi lấy danh sách khách:", err);
-    }
-  };
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const res = await axios.get(
-          `${backendUrl}/api/messages/admin/users`,
-        );
-        if (cancelled) return;
-        if (res.data.success) {
-          setUsers(res.data.users);
-        }
-      } catch (err) {
+      if (err.response?.status === 401) {
+        toast.error("Phiên admin hết hạn — đăng nhập lại.");
+      } else {
         console.error("Lỗi lấy danh sách khách:", err);
       }
-    })();
-    socket.on("receive_message", fetchUsers);
-    return () => {
-      cancelled = true;
-      socket.off("receive_message", fetchUsers);
-    };
-  }, [backendUrl]);
-
-  // 2. Load lịch sử chat
-  useEffect(() => {
-    if (selectedUser) {
-      const fetchChatHistory = async () => {
-        try {
-          const res = await axios.get(
-            `${backendUrl}/api/messages/${selectedUser._id}`,
-          );
-          if (res.data.success) setMessages(res.data.messages);
-          await axios.post(
-            `${backendUrl}/api/messages/admin/mark-read/${selectedUser._id}`,
-          );
-          await fetchUsers();
-        } catch (err) {
-          console.error("Lỗi load lịch sử:", err);
-        }
-      };
-      fetchChatHistory();
-      socket.emit("join_room", selectedUser._id);
     }
-  }, [selectedUser, backendUrl]);
+  }, [apiBase, aToken]);
 
-  // 3. Nhận tin nhắn mới (FIX LỖI LẶP TIN)
+  const scheduleRefreshUsers = useCallback(() => {
+    if (!aToken) return;
+    if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
+    refreshTimerRef.current = setTimeout(() => {
+      refreshTimerRef.current = null;
+      fetchUsers();
+    }, REFRESH_USERS_MS);
+  }, [aToken, fetchUsers]);
+
   useEffect(() => {
+    if (!apiBase || !aToken) return undefined;
+    const socket = getSocket(apiBase);
+    fetchUsers();
+
+    const onSocketMessage = () => scheduleRefreshUsers();
+    socket.on("receive_message", onSocketMessage);
+
+    return () => {
+      socket.off("receive_message", onSocketMessage);
+      if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
+    };
+  }, [apiBase, aToken, fetchUsers, scheduleRefreshUsers]);
+
+  useEffect(() => {
+    if (!selectedUser || !apiBase || !aToken) {
+      setMessages([]);
+      setLoadingThread(false);
+      return undefined;
+    }
+
+    const socket = getSocket(apiBase);
+    const uid = selectedUser._id;
+    const ac = new AbortController();
+
+    setMessages([]);
+    setLoadingThread(true);
+
+    socket.emit("join_room", uid);
+
+    (async () => {
+      try {
+        const res = await axios.get(`${apiBase}/api/messages/${uid}`, {
+          headers: adminHeaders(aToken),
+          signal: ac.signal,
+        });
+        if (ac.signal.aborted) return;
+        if (res.data.success) setMessages(res.data.messages);
+        await axios.post(
+          `${apiBase}/api/messages/admin/mark-read/${uid}`,
+          {},
+          { headers: adminHeaders(aToken) },
+        );
+        if (ac.signal.aborted) return;
+        setUsers((prev) =>
+          prev.map((u) =>
+            u._id === uid ? { ...u, unreadCount: 0 } : u,
+          ),
+        );
+        refreshAdminChatUnread();
+      } catch (err) {
+        if (err.code === "ERR_CANCELED" || err.name === "CanceledError") return;
+        console.error("Lỗi load lịch sử:", err);
+        toast.error("Không tải được lịch sử chat");
+      } finally {
+        if (!ac.signal.aborted) setLoadingThread(false);
+      }
+    })();
+
+    return () => {
+      ac.abort();
+      socket.emit("leave_room", uid);
+    };
+  }, [selectedUser, apiBase, aToken, refreshAdminChatUnread]);
+
+  useEffect(() => {
+    if (!apiBase) return undefined;
+    const socket = getSocket(apiBase);
     const handleNewMessage = (data) => {
       if (
         data.senderId === selectedUser?._id ||
         data.receiverId === selectedUser?._id
       ) {
         setMessages((prev) => {
-          // Kiểm tra xem tin nhắn có ID này đã tồn tại chưa để tránh lặp
-          const isExisted = prev.find(
-            (m) => m._id === data._id && data._id !== undefined,
-          );
-          if (isExisted) return prev;
+          if (data._id && prev.some((m) => m._id === data._id)) return prev;
           return [...prev, data];
         });
       }
     };
     socket.on("receive_message", handleNewMessage);
     return () => socket.off("receive_message", handleNewMessage);
-  }, [selectedUser]);
+  }, [selectedUser, apiBase]);
 
   useEffect(() => {
-    scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+    scrollRef.current?.scrollIntoView({ behavior: "auto", block: "end" });
   }, [messages]);
 
-  // 4. Gửi tin nhắn (Bỏ setMessages thủ công để tránh lặp)
-  const handleSend = () => {
-    if (input.trim() && selectedUser) {
-      const msgData = {
-        senderId: "ADMIN",
-        receiverId: selectedUser._id,
-        message: input.trim(),
-        createdAt: new Date(),
-      };
-      socket.emit("send_message", msgData);
-      // setMessages((prev) => [...prev, msgData]); // DÒNG NÀY GÂY LẶP - ĐÃ XÓA
-      setInput("");
+  const handlePickImage = () => fileInputRef.current?.click();
+
+  const handleImageFile = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file || !selectedUser) return;
+    if (!aToken) {
+      toast.error("Phiên admin hết hạn, đăng nhập lại.");
+      return;
+    }
+    setUploadingImage(true);
+    try {
+      const fd = new FormData();
+      fd.append("image", file);
+      const { data } = await axios.post(
+        `${apiBase}/api/messages/chat-image/admin`,
+        fd,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            atoken: aToken,
+          },
+        },
+      );
+      if (data.success && data.imageUrl) {
+        setPendingImageUrl(data.imageUrl);
+        toast.success("Đã tải ảnh lên — bấm Gửi để gửi tin nhắn");
+      } else {
+        toast.error(data.message || "Upload thất bại");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error(err.response?.data?.message || "Không upload được ảnh");
+    } finally {
+      setUploadingImage(false);
     }
   };
 
-  // 5. Logic lọc khách hàng theo tên hoặc email
-  const filteredUsers = users.filter(
-    (user) =>
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase()),
-  );
+  const handleSend = () => {
+    const text = input.trim();
+    const img = pendingImageUrl.trim();
+    if ((!text && !img) || !selectedUser || !apiBase) return;
+    const msgData = {
+      senderId: "ADMIN",
+      receiverId: selectedUser._id,
+      message: text,
+      imageUrl: img,
+      createdAt: new Date(),
+    };
+    getSocket(apiBase).emit("send_message", msgData);
+    setInput("");
+    setPendingImageUrl("");
+  };
+
+  const q = searchTerm.trim().toLowerCase();
+  const filteredUsers = users.filter((user) => {
+    const name = String(user.name || "").toLowerCase();
+    const email = String(user.email || "").toLowerCase();
+    return !q || name.includes(q) || email.includes(q);
+  });
 
   const totalUnread = users.reduce(
     (sum, user) => sum + (user.unreadCount || 0),
@@ -129,7 +213,6 @@ const Messages = () => {
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen flex gap-4 font-sans text-sm">
-      {/* Sidebar: Danh sách khách hàng */}
       <div className="w-1/4 bg-white rounded-2xl shadow-sm border flex flex-col h-[85vh] overflow-hidden">
         <div className="p-4 border-b bg-gray-50/10">
           <div className="font-bold text-gray-700 mb-3 flex justify-between">
@@ -145,7 +228,6 @@ const Messages = () => {
               )}
             </div>
           </div>
-          {/* Ô tìm kiếm khách hàng mới thêm */}
           <div className="relative">
             <Search
               className="absolute left-3 top-2.5 text-gray-400"
@@ -202,56 +284,128 @@ const Messages = () => {
         </div>
       </div>
 
-      {/* Main: Nội dung chat */}
       <div className="flex-1 bg-white rounded-2xl shadow-sm border flex flex-col h-[85vh] overflow-hidden">
         {selectedUser ? (
           <>
             <div className="p-4 border-b bg-white flex items-center gap-2 text-blue-600 font-bold shadow-sm z-10">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse mr-1"></div>
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse mr-1" />
               Đang hỗ trợ: {selectedUser.name}
             </div>
 
             <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50/30">
-              {messages.map((m, i) => (
-                <div
-                  key={i}
-                  className={`flex ${m.senderId === "ADMIN" ? "justify-end" : "justify-start"}`}
-                >
-                  <div
-                    className={`max-w-[70%] p-3 rounded-2xl shadow-sm ${
-                      m.senderId === "ADMIN"
-                        ? "bg-blue-600 text-white rounded-tr-none"
-                        : "bg-white text-gray-800 border border-gray-100 rounded-tl-none"
-                    }`}
-                  >
-                    <p className="text-[13.5px] leading-relaxed">{m.message}</p>
-                    <span className="text-[9px] block mt-1 opacity-60 text-right uppercase">
-                      {new Date(m.createdAt ?? 0).toLocaleTimeString(
-                        [],
-                        { hour: "2-digit", minute: "2-digit" },
-                      )}
-                    </span>
-                  </div>
+              {loadingThread ? (
+                <div className="flex justify-center py-16 text-gray-400">
+                  <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
                 </div>
-              ))}
+              ) : (
+                messages.map((m) => (
+                  <div
+                    key={m._id || `${m.createdAt}-${m.senderId}`}
+                    className={`flex ${m.senderId === "ADMIN" ? "justify-end" : "justify-start"}`}
+                  >
+                    <div
+                      className={`max-w-[70%] p-3 rounded-2xl shadow-sm ${
+                        m.senderId === "ADMIN"
+                          ? "bg-blue-600 text-white rounded-tr-none"
+                          : "bg-white text-gray-800 border border-gray-100 rounded-tl-none"
+                      }`}
+                    >
+                      {m.imageUrl ? (
+                        <a
+                          href={m.imageUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={`block ${m.senderId === "ADMIN" ? "text-blue-100" : ""}`}
+                        >
+                          <img
+                            src={m.imageUrl}
+                            alt="Đính kèm"
+                            className="max-h-52 w-full max-w-sm rounded-lg object-contain bg-black/5"
+                          />
+                        </a>
+                      ) : null}
+                      {m.message ? (
+                        <p
+                          className={`text-[13.5px] leading-relaxed ${m.imageUrl ? "mt-2" : ""}`}
+                        >
+                          {m.message}
+                        </p>
+                      ) : null}
+                      <span className="text-[9px] block mt-1 opacity-60 text-right uppercase">
+                        {new Date(m.createdAt ?? 0).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </span>
+                    </div>
+                  </div>
+                ))
+              )}
               <div ref={scrollRef} />
             </div>
 
-            <div className="p-4 bg-white border-t flex gap-3">
-              <input
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSend()}
-                placeholder="Nhập nội dung phản hồi..."
-                className="flex-1 bg-gray-50 border border-gray-200 p-3 rounded-xl outline-none focus:border-blue-400 transition-all text-sm"
-              />
-              <button
-                onClick={handleSend}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-5 rounded-xl font-bold flex items-center gap-2 transition-all shadow-md active:scale-95"
-              >
-                <Send size={16} />
-                <span>Gửi</span>
-              </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleImageFile}
+            />
+
+            <div className="p-4 bg-white border-t flex flex-col gap-2">
+              {pendingImageUrl ? (
+                <div className="flex items-start gap-2 rounded-xl border border-blue-100 bg-blue-50/50 p-2">
+                  <img
+                    src={pendingImageUrl}
+                    alt=""
+                    className="h-16 w-16 rounded-lg object-cover border border-blue-100"
+                  />
+                  <div className="flex-1 min-w-0 text-xs text-blue-900">
+                    Ảnh đã sẵn sàng gửi kèm tin nhắn (có thể thêm chữ ở ô dưới).
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setPendingImageUrl("")}
+                    className="shrink-0 rounded-lg p-1 text-blue-700 hover:bg-blue-100"
+                    title="Bỏ ảnh"
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
+              ) : null}
+              <div className="flex gap-2 items-center">
+                <input
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleSend()}
+                  placeholder="Nhập nội dung phản hồi…"
+                  className="flex-1 bg-gray-50 border border-gray-200 p-3 rounded-xl outline-none focus:border-blue-400 transition-all text-sm"
+                />
+                <button
+                  type="button"
+                  onClick={handlePickImage}
+                  disabled={uploadingImage || !aToken}
+                  title="Gửi ảnh (Cloudinary)"
+                  className="shrink-0 rounded-xl border border-gray-200 bg-gray-50 p-3 text-gray-700 hover:bg-blue-50 hover:border-blue-200 hover:text-blue-700 disabled:opacity-50"
+                >
+                  {uploadingImage ? (
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                  ) : (
+                    <ImagePlus className="h-5 w-5" />
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSend}
+                  disabled={
+                    (!input.trim() && !pendingImageUrl.trim()) || uploadingImage
+                  }
+                  className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white px-5 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-md active:scale-95"
+                >
+                  <Send size={16} />
+                  <span>Gửi</span>
+                </button>
+              </div>
             </div>
           </>
         ) : (

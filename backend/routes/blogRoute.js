@@ -1,7 +1,9 @@
 import express from "express";
 import {
   addBlog,
-  listBlogs,
+  listPublicBlogs,
+  listAdminBlogs,
+  getAdminBlogById,
   getBlogById,
   addBlogComment,
   deleteBlog,
@@ -18,7 +20,10 @@ const blogRouter = express.Router();
 blogRouter.post("/add-blog", adminAuth, upload.single("image"), addBlog);
 blogRouter.post("/generate-ai", adminAuth, generateBlogWithAI);
 
-blogRouter.get("/list-blogs", listBlogs);
+blogRouter.get("/list-blogs", listPublicBlogs);
+blogRouter.get("/admin/list-blogs", adminAuth, listAdminBlogs);
+blogRouter.get("/admin/detail/:id", adminAuth, getAdminBlogById);
+
 blogRouter.get("/:id", getBlogById);
 blogRouter.post("/:id/comments", authMiddleware, addBlogComment);
 

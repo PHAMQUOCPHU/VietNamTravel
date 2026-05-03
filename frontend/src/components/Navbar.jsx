@@ -11,7 +11,6 @@ import {
   Sun,
   Moon,
   Bell,
-  Compass,
 } from "lucide-react";
 import { AppContext } from "../context/AppContext";
 import ChangePassword from "./ChangePassword";
@@ -141,9 +140,13 @@ const Navbar = () => {
                 className="flex-shrink-0 transition-transform hover:scale-105 duration-200"
               >
                 <div className="flex items-center">
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center mr-2 bg-sky-50 text-sky-600 border border-sky-100">
-                    <Compass className="w-5 h-5 sm:w-6 sm:h-6" />
-                  </div>
+                  <img
+                    src="/logo.png"
+                    alt="VietNam Travel"
+                    width={40}
+                    height={40}
+                    className="h-8 w-8 sm:h-10 sm:w-10 shrink-0 rounded-lg object-cover mr-2 ring-1 ring-sky-100 border border-sky-100/80"
+                  />
                   <span className="text-xl sm:text-2xl font-extrabold bg-gradient-to-r from-sky-600 to-blue-600 bg-clip-text text-transparent hidden sm:block">
                     VietNam Travel
                   </span>

@@ -588,8 +588,13 @@ const updateSaleForTours = async (req, res) => {
           saleEndDate: null,
         };
 
-    await tourModel.updateMany(query, { $set: updateData });
-    const updatedCount = await tourModel.countDocuments(query);
+    const result = await tourModel.updateMany(query, { $set: updateData });
+    const updatedCount =
+      typeof result.modifiedCount === "number"
+        ? result.modifiedCount
+        : typeof result.matchedCount === "number"
+          ? result.matchedCount
+          : 0;
     invalidateTourListCache();
 
     res.json({

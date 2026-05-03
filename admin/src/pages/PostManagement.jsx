@@ -13,7 +13,12 @@ import {
   CalendarDays,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import React, { useEffect, useState, useContext, useCallback } from "react";
+import React, {
+  useEffect,
+  useState,
+  useContext,
+  useCallback,
+} from "react";
 import axios from "axios";
 import { AdminContext } from "../context/AdminContext";
 import { toast } from "react-toastify";
@@ -21,7 +26,8 @@ import { toast } from "react-toastify";
 const PostManagement = () => {
   const navigate = useNavigate();
   const [blogs, setBlogs] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [totalItems, setTotalItems] = useState(0);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDate, setSelectedDate] = useState("");
 
@@ -33,22 +39,53 @@ const PostManagement = () => {
       : "https://placehold.co/600x400?text=No+Image";
   };
 
-  const fetchBlogs = useCallback(async () => {
-    try {
-      setLoading(true);
-      const { data } = await axios.get(backendUrl + "/api/blog/list-blogs", {
-        params: { includeHidden: true, date: selectedDate || undefined },
-      });
-      if (data.success) {
-        setBlogs(data.blogs);
+  const fetchBlogs = useCallback(
+    async (signal) => {
+      try {
+        setLoading(true);
+        const { data } = await axios.get(
+          `${backendUrl}/api/blog/admin/list-blogs`,
+          {
+            headers: { aToken },
+            params: {
+              date: selectedDate || undefined,
+              search: searchTerm.trim() || undefined,
+              limit: 5000,
+              page: 1,
+            },
+            signal,
+          },
+        );
+        if (signal?.aborted) return;
+        if (data.success) {
+          const blogList = data.blogs || [];
+          setBlogs(blogList);
+          const fromRoot =
+            typeof data.totalItems === "number" ? data.totalItems : null;
+          const fromPag =
+            typeof data.pagination?.totalItems === "number"
+              ? data.pagination.totalItems
+              : null;
+          setTotalItems(fromRoot ?? fromPag ?? blogList.length);
+        }
+      } catch (err) {
+        if (
+          err.code === "ERR_CANCELED" ||
+          err.name === "CanceledError" ||
+          axios.isCancel?.(err)
+        ) {
+          return;
+        }
+        console.error(err);
+        toast.error("Không thể tải danh sách bài viết");
+      } finally {
+        if (!signal?.aborted) {
+          setLoading(false);
+        }
       }
-    } catch (err) {
-      console.error(err);
-      toast.error("Không thể tải danh sách bài viết");
-    } finally {
-      setLoading(false);
-    }
-  }, [backendUrl, selectedDate]);
+    },
+    [backendUrl, aToken, selectedDate, searchTerm],
+  );
 
   const toggleVisibility = async (post) => {
     try {
@@ -85,12 +122,10 @@ const PostManagement = () => {
   };
 
   useEffect(() => {
-    fetchBlogs();
+    const ac = new AbortController();
+    fetchBlogs(ac.signal);
+    return () => ac.abort();
   }, [fetchBlogs]);
-
-  const filteredBlogs = blogs.filter((blog) =>
-    blog.title.toLowerCase().includes(searchTerm.toLowerCase()),
-  );
 
   const getCategoryName = (category) => {
     if (category === "destination" || category === "Điểm đến") return "Điểm đến";
@@ -110,7 +145,6 @@ const PostManagement = () => {
       animate={{ opacity: 1, y: 0 }}
       className="space-y-6"
     >
-      {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-black text-gray-800 flex items-center gap-2">
@@ -118,8 +152,7 @@ const PostManagement = () => {
           </h1>
           <p className="text-sm text-gray-500 font-medium mt-1">
             Tổng cộng:{" "}
-            <span className="text-blue-600 font-bold">{blogs.length}</span> bài
-            viết trên hệ thống
+            <span className="font-bold text-blue-600">{totalItems}</span> bài viết trên hệ thống
           </p>
         </div>
         <button
@@ -139,8 +172,11 @@ const PostManagement = () => {
           <input
             type="text"
             placeholder="Tìm tiêu đề bài viết..."
-            className="w-full pl-12 pr-4 py-3 rounded-2xl border border-gray-100 outline-none focus:ring-2 focus:ring-blue-500 bg-white shadow-sm transition-all"
-            onChange={(e) => setSearchTerm(e.target.value)}
+            value={searchTerm}
+            className="w-full rounded-2xl border border-gray-100 bg-white py-3 pl-12 pr-4 shadow-sm outline-none transition-all focus:ring-2 focus:ring-blue-500"
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+            }}
           />
         </div>
         <div className="relative">
@@ -151,14 +187,15 @@ const PostManagement = () => {
           <input
             type="date"
             value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
+            onChange={(e) => {
+              setSelectedDate(e.target.value);
+            }}
             className="w-full pl-12 pr-4 py-3 rounded-2xl border border-gray-100 outline-none focus:ring-2 focus:ring-blue-500 bg-white shadow-sm transition-all font-semibold text-slate-600"
           />
         </div>
       </div>
 
-      {/* Table Container */}
-      <div className="bg-white rounded-[2rem] shadow-xl shadow-gray-100/50 border border-gray-100 overflow-hidden">
+      <div className="overflow-hidden rounded-[2rem] border border-gray-100 bg-white shadow-xl shadow-gray-100/50">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[980px] text-left">
             <thead className="bg-gray-50/50 border-b border-gray-100">
@@ -195,8 +232,8 @@ const PostManagement = () => {
                     </div>
                   </td>
                 </tr>
-              ) : filteredBlogs.length > 0 ? (
-                filteredBlogs.map((post) => (
+              ) : blogs.length > 0 ? (
+                blogs.map((post) => (
                   <tr
                     key={post._id}
                     className={`transition-colors group ${post.isHidden ? "bg-rose-50/70 hover:bg-rose-100/70" : "hover:bg-blue-50/30"}`}
@@ -251,7 +288,7 @@ const PostManagement = () => {
                         </span>
                         <span className="inline-flex items-center gap-2">
                           <MessageCircle size={13} className="text-indigo-500" />
-                          {post.comments?.length || 0} bình luận
+                          {post.commentCount ?? post.comments?.length ?? 0} bình luận
                         </span>
                       </div>
                     </td>

@@ -51,5 +51,8 @@ const voucherSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+voucherSchema.index({ isActive: 1, expiryDate: -1 });
+voucherSchema.index({ status: 1, isActive: 1 });
+
 const voucherModel = mongoose.models.voucher || mongoose.model("voucher", voucherSchema);
 export default voucherModel;

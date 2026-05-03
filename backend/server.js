@@ -1,10 +1,22 @@
 import express from "express";
 import cors from "cors";
 import "dotenv/config";
+import jwt from "jsonwebtoken";
 import { createServer } from "http";
 import { Server } from "socket.io";
+import multer from "multer";
 import connectDB from "./config/mongodb.js";
 import connectCloudinary from "./config/cloudinary.js";
+import adminAuth from "./middlewares/adminAuth.js";
+import authMiddleware from "./middlewares/auth.js";
+import {
+  allowAdminOrThreadUser,
+  requireUserMatchesParam,
+} from "./middlewares/messageAccess.js";
+import {
+  uploadBufferToCloudinary,
+  CLOUDINARY_FOLDERS,
+} from "./services/cloudinaryUpload.js";
 
 // Models
 import messageModel from "./models/messageModel.js";
@@ -28,6 +40,9 @@ import geminiTourAdvisorRouter from "./routes/geminiTourAdvisorRoute.js";
 import voucherRouter from "./routes/voucherRoute.js";
 import diaryRouter from "./routes/diaryRoute.js";
 import safetyRouter from "./routes/safetyRoute.js";
+import jobApplicationRouter from "./routes/jobApplicationRoute.js";
+import jobRouter from "./routes/jobRoute.js";
+import termsRouter from "./routes/termsRoute.js";
 
 const PORT = process.env.PORT || 5001;
 const app = express();
@@ -87,8 +102,27 @@ if (enableRequestLog) {
   });
 }
 
+/** Phòng Socket để SPA admin nhận tin khách gửi tới ADMIN (không cần mở từng thread). */
+const STAFF_ADMIN_CHAT_ROOM = "vn_staff_admin_chat";
+
+const CHAT_HISTORY_LIMIT = Number(
+  process.env.CHAT_HISTORY_LIMIT || 500,
+);
+
+const chatImageUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    if (file.mimetype && file.mimetype.startsWith("image/")) {
+      cb(null, true);
+    } else {
+      cb(new Error("CHỈ_CHO_PHEP_ANH"));
+    }
+  },
+});
+
 // --- 4. API CHAT ---
-app.get("/api/messages/:userId", async (req, res) => {
+app.get("/api/messages/:userId", allowAdminOrThreadUser, async (req, res) => {
   try {
     const { userId } = req.params;
     const messages = await messageModel
@@ -98,14 +132,17 @@ app.get("/api/messages/:userId", async (req, res) => {
           { senderId: "ADMIN", receiverId: userId },
         ],
       })
-      .sort({ createdAt: 1 });
+      .sort({ createdAt: -1 })
+      .limit(CHAT_HISTORY_LIMIT)
+      .lean();
+    messages.reverse();
     res.json({ success: true, messages });
   } catch (error) {
     res.json({ success: false, message: error.message });
   }
 });
 
-app.get("/api/messages/admin/users", async (req, res) => {
+app.get("/api/messages/admin/users", adminAuth, async (req, res) => {
   try {
     const conversations = await messageModel.aggregate([
       {
@@ -124,6 +161,7 @@ app.get("/api/messages/admin/users", async (req, res) => {
             ],
           },
           lastMessage: { $first: "$message" },
+          lastImageUrl: { $first: "$imageUrl" },
           lastMessageAt: { $first: "$createdAt" },
           unreadCount: {
             $sum: {
@@ -167,7 +205,11 @@ app.get("/api/messages/admin/users", async (req, res) => {
         name: user?.name || "Khách hàng",
         email: user?.email || "",
         image: user?.image || "",
-        lastMessage: item.lastMessage || "",
+        lastMessage: item.lastImageUrl
+          ? item.lastMessage?.trim()
+            ? `📷 ${item.lastMessage}`
+            : "📷 Ảnh"
+          : item.lastMessage || "",
         lastMessageAt: item.lastMessageAt || null,
         unreadCount: item.unreadCount || 0,
       };
@@ -179,7 +221,65 @@ app.get("/api/messages/admin/users", async (req, res) => {
   }
 });
 
-app.get("/api/messages/admin/unread-count", async (req, res) => {
+app.post(
+  "/api/messages/chat-image/admin",
+  adminAuth,
+  chatImageUpload.single("image"),
+  async (req, res) => {
+    try {
+      if (!req.file?.buffer) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Thiếu file ảnh" });
+      }
+      const imageUrl = await uploadBufferToCloudinary(
+        req.file,
+        CLOUDINARY_FOLDERS.chat,
+      );
+      res.json({ success: true, imageUrl });
+    } catch (error) {
+      console.error("chat-image admin:", error);
+      res.status(500).json({
+        success: false,
+        message:
+          error.message === "CHỈ_CHO_PHEP_ANH"
+            ? "Chỉ được tải file ảnh"
+            : error.message || "Upload thất bại",
+      });
+    }
+  },
+);
+
+app.post(
+  "/api/messages/chat-image/user",
+  authMiddleware,
+  chatImageUpload.single("image"),
+  async (req, res) => {
+    try {
+      if (!req.file?.buffer) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Thiếu file ảnh" });
+      }
+      const imageUrl = await uploadBufferToCloudinary(
+        req.file,
+        CLOUDINARY_FOLDERS.chat,
+      );
+      res.json({ success: true, imageUrl });
+    } catch (error) {
+      console.error("chat-image user:", error);
+      res.status(500).json({
+        success: false,
+        message:
+          error.message === "CHỈ_CHO_PHEP_ANH"
+            ? "Chỉ được tải file ảnh"
+            : error.message || "Upload thất bại",
+      });
+    }
+  },
+);
+
+app.get("/api/messages/admin/unread-count", adminAuth, async (req, res) => {
   try {
     const unreadCount = await messageModel.countDocuments({
       receiverId: "ADMIN",
@@ -192,7 +292,7 @@ app.get("/api/messages/admin/unread-count", async (req, res) => {
   }
 });
 
-app.post("/api/messages/admin/mark-read/:userId", async (req, res) => {
+app.post("/api/messages/admin/mark-read/:userId", adminAuth, async (req, res) => {
   try {
     const { userId } = req.params;
     await messageModel.updateMany(
@@ -209,7 +309,11 @@ app.post("/api/messages/admin/mark-read/:userId", async (req, res) => {
   }
 });
 
-app.get("/api/messages/user/unread-count/:userId", async (req, res) => {
+app.get(
+  "/api/messages/user/unread-count/:userId",
+  authMiddleware,
+  requireUserMatchesParam,
+  async (req, res) => {
   try {
     const { userId } = req.params;
     const unreadCount = await messageModel.countDocuments({
@@ -221,9 +325,14 @@ app.get("/api/messages/user/unread-count/:userId", async (req, res) => {
   } catch (error) {
     res.json({ success: false, message: error.message });
   }
-});
+  },
+);
 
-app.post("/api/messages/user/mark-read/:userId", async (req, res) => {
+app.post(
+  "/api/messages/user/mark-read/:userId",
+  authMiddleware,
+  requireUserMatchesParam,
+  async (req, res) => {
   try {
     const { userId } = req.params;
     await messageModel.updateMany(
@@ -238,34 +347,71 @@ app.post("/api/messages/user/mark-read/:userId", async (req, res) => {
   } catch (error) {
     res.json({ success: false, message: error.message });
   }
-});
+  },
+);
 
 // --- 5. LOGIC SOCKET.IO ---
 io.on("connection", (socket) => {
   console.log("⚡ Kết nối mới:", socket.id);
 
   socket.on("join_room", (userId) => {
-    socket.join(userId);
+    if (userId) socket.join(userId);
     console.log(`👤 Phòng chat hoạt động: ${userId}`);
+  });
+
+  socket.on("leave_room", (userId) => {
+    if (userId) socket.leave(userId);
+  });
+
+  socket.on("join_staff_admin_chat", (payload) => {
+    try {
+      const raw =
+        payload && typeof payload === "object"
+          ? payload.atoken || payload.token
+          : null;
+      if (!raw || !process.env.JWT_SECRET) return;
+      const decoded = jwt.verify(raw, process.env.JWT_SECRET);
+      if (decoded.role !== "admin") return;
+      socket.join(STAFF_ADMIN_CHAT_ROOM);
+    } catch {
+      /* token sai / hết hạn — không join */
+    }
+  });
+
+  socket.on("leave_staff_admin_chat", () => {
+    socket.leave(STAFF_ADMIN_CHAT_ROOM);
   });
 
   socket.on("send_message", async (data) => {
     try {
-      const { senderId, receiverId, message } = data;
+      const { senderId, receiverId, message, imageUrl } = data;
+      const text = typeof message === "string" ? message.trim() : "";
+      const img =
+        typeof imageUrl === "string" ? imageUrl.trim().slice(0, 2000) : "";
+      if (!text && !img) return;
+
       const newMessage = new messageModel({
         senderId,
         receiverId,
-        message,
+        message: text,
+        imageUrl: img,
         isRead: false,
       });
       await newMessage.save();
       const targetRoom = receiverId === "ADMIN" ? senderId : receiverId;
-      io.to(targetRoom).emit("receive_message", {
-        ...data,
+      const payload = {
+        senderId,
+        receiverId,
+        message: newMessage.message,
+        imageUrl: newMessage.imageUrl || "",
         _id: newMessage._id,
         createdAt: newMessage.createdAt,
         isRead: newMessage.isRead,
-      });
+      };
+      io.to(targetRoom).emit("receive_message", payload);
+      if (receiverId === "ADMIN") {
+        io.to(STAFF_ADMIN_CHAT_ROOM).emit("receive_message", payload);
+      }
     } catch (error) {
       console.log("❌ Lỗi socket:", error.message);
     }
@@ -278,9 +424,6 @@ io.on("connection", (socket) => {
 
 // --- 6. ROUTES & DATABASE ---
 connectCloudinary();
-connectDB(); // Gọi kết nối DB luôn ở đây cho gọn
-startPaymentDeadlineCron();
-startDepartureReminderCron();
 
 app.use("/api/user/captcha", captchaRouter);
 app.use("/api/user", userRouter);
@@ -296,13 +439,43 @@ app.use("/api/insurance-leads", insuranceLeadRouter);
 app.use("/api/vouchers", voucherRouter);
 app.use("/api/diaries", diaryRouter);
 app.use("/api/safety", safetyRouter);
+app.use("/api/jobs", jobRouter);
+app.use("/api/job-applications", jobApplicationRouter);
+app.use("/api/terms", termsRouter);
 app.use("/api", geminiTourAdvisorRouter);
 
 app.get("/", (req, res) => {
   res.send("API VietNam Travel is Working!");
 });
 
-// DÙNG httpServer.listen ĐỂ CHẠY CẢ APP VÀ SOCKET
-httpServer.listen(PORT, "0.0.0.0", () => {
-  console.log(`🚀 Server chạy ổn định tại: http://localhost:${PORT}`);
-});
+async function start() {
+  try {
+    await connectDB();
+    startPaymentDeadlineCron();
+    startDepartureReminderCron();
+
+    httpServer.on("error", (err) => {
+      if (err.code === "EADDRINUSE") {
+        console.error(
+          `\nCổng ${PORT} đang bị chiếm (thường là bản server.js chạy trước đó).`,
+        );
+        console.error(
+          `Gợi ý: lsof -nP -iTCP:${PORT} -sTCP:LISTEN  →  kill <PID>`,
+        );
+        console.error(`Hoặc đặt PORT khác trong file .env\n`);
+        process.exit(1);
+        return;
+      }
+      throw err;
+    });
+
+    httpServer.listen(PORT, "0.0.0.0", () => {
+      console.log(`🚀 Server chạy ổn định tại: http://localhost:${PORT}`);
+    });
+  } catch (err) {
+    console.error("Không khởi động được server:", err.message);
+    process.exit(1);
+  }
+}
+
+start();

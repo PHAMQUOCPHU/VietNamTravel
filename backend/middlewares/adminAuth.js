@@ -1,9 +1,18 @@
 import jwt from "jsonwebtoken";
 
+const bearerFromAuth = (req) => {
+  const a = req.headers.authorization;
+  if (a && typeof a === "string" && a.startsWith("Bearer "))
+    return a.slice(7).trim();
+  return null;
+};
+
 const adminAuth = async (req, res, next) => {
   try {
-    // Thử lấy token từ header 'atoken' (thường dùng ở Frontend) hoặc 'token'
-    const token = req.headers.atoken || req.headers.token;
+    const token =
+      req.headers.atoken ||
+      req.headers.token ||
+      bearerFromAuth(req);
 
     if (!token) {
       return res.status(401).json({
