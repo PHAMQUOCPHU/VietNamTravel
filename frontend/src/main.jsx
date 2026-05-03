@@ -4,15 +4,23 @@ import "./index.css";
 import App from "./App.jsx";
 import { BrowserRouter } from "react-router-dom";
 import AppContextProvider from "./context/AppContext.jsx";
+import AppErrorBoundary from "./components/AppErrorBoundary.jsx";
 
-createRoot(document.getElementById("root")).render(
+const rootEl = document.getElementById("root");
+if (!rootEl) {
+  throw new Error('Thiếu #root trong index.html — không thể khởi tạo React.');
+}
+
+createRoot(rootEl).render(
   <StrictMode>
     <BrowserRouter>
-      <AppContextProvider>
-        <App />
-      </AppContextProvider>
+      <AppErrorBoundary>
+        <AppContextProvider>
+          <App />
+        </AppContextProvider>
+      </AppErrorBoundary>
     </BrowserRouter>
-  </StrictMode>
+  </StrictMode>,
 );
 
   

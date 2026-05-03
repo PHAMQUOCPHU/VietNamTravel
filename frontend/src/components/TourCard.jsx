@@ -85,9 +85,15 @@ const TourCard = ({ tour }) => {
     return `${d} ngày ${d - 1} đêm`;
   };
 
-  const isFavorite = user?.favorites?.some(
-    (fav) => (fav._id ? fav._id.toString() : fav.toString()) === _id.toString(),
-  );
+  const tourIdStr = _id != null ? String(_id) : "";
+  const isFavorite =
+    !!tourIdStr &&
+    Boolean(
+      user?.favorites?.some((fav) => {
+        const fid = fav._id != null ? String(fav._id) : String(fav);
+        return fid === tourIdStr;
+      }),
+    );
   const detailPath = `/tours/${buildTourSlug(tour)}`;
 
   return (

@@ -17,8 +17,14 @@ function manualChunks(id) {
   if (id.includes("framer-motion")) return "framer-motion";
   if (id.includes("socket.io-client")) return "socket-io";
 
-  if (id.includes("leaflet") || id.includes("react-leaflet"))
-    return "maps-leaflet";
+  // react-leaflet + @react-leaflet/core gọi React.createContext khi khởi tạo module.
+  // Nếu cho vào chunk "maps-leaflet" tách khỏi "react-core", production có thể lỗi:
+  // "Cannot read properties of undefined (reading 'createContext')".
+  if (id.includes("@react-leaflet") || id.includes("/react-leaflet/"))
+    return "react-core";
+
+  // Thư viện bản đồ thuần (không phụ thuộc React)
+  if (id.includes("/node_modules/leaflet/")) return "maps-leaflet";
   if (
     id.includes("@react-google-maps") ||
     id.includes("react-simple-maps") ||

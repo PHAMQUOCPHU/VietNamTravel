@@ -10,11 +10,14 @@ const Favorites = () => {
 
   const favoriteTours = useMemo(
     () =>
-      tours.filter((tour) =>
-        user?.favorites?.some(
-          (fav) => (fav._id || fav).toString() === tour._id.toString(),
-        ),
-      ),
+      tours.filter((tour) => {
+        const tid = tour?._id != null ? String(tour._id) : "";
+        if (!tid) return false;
+        return user?.favorites?.some((fav) => {
+          const fid = fav?._id != null ? String(fav._id) : String(fav);
+          return fid === tid;
+        });
+      }),
     [tours, user],
   );
 
