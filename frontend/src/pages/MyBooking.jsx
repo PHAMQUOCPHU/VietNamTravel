@@ -397,14 +397,14 @@ const MyBooking = () => {
                 return (
                   <div
                     key={booking._id}
-                    className={`p-6 md:p-7 hover:bg-blue-50/30 transition-colors ${isCompleted ? "opacity-90" : ""}`}
+                    className={`p-4 transition-colors hover:bg-blue-50/30 sm:p-6 md:p-7 ${isCompleted ? "opacity-90" : ""}`}
                   >
-                    <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
-                      <div className="flex-1">
-                        <div className="flex items-start justify-between mb-5">
-                          <div>
+                    <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+                      <div className="min-w-0 flex-1">
+                        <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                          <div className="min-w-0">
                             <h3
-                              className={`text-2xl font-black mb-1 ${isCompleted ? "text-slate-500" : "text-slate-800"}`}
+                              className={`mb-1 text-xl font-black sm:text-2xl ${isCompleted ? "text-slate-500" : "text-slate-800"}`}
                             >
                               {booking.tourTitle}
                             </h3>
@@ -416,7 +416,7 @@ const MyBooking = () => {
                             </div>
                           </div>
                           <div
-                            className={`flex items-center gap-2 px-3 py-1 rounded-full ${statusInfo.bgColor}`}
+                            className={`flex w-fit shrink-0 items-center gap-2 self-start rounded-full px-3 py-1 sm:self-auto ${statusInfo.bgColor}`}
                           >
                             <StatusIcon
                               size={16}
@@ -511,12 +511,12 @@ const MyBooking = () => {
                           </div>
                         </div>
 
-                        <div className="flex flex-wrap gap-4 text-sm text-slate-500 border-t border-slate-100 pt-4">
-                          <span className="flex items-center gap-1.5">
-                            <Mail size={14} /> {booking.email}
+                        <div className="flex flex-col gap-2 border-t border-slate-100 pt-4 text-sm text-slate-500 sm:flex-row sm:flex-wrap sm:gap-4">
+                          <span className="flex min-w-0 items-center gap-1.5 break-all">
+                            <Mail size={14} className="shrink-0" /> {booking.email}
                           </span>
                           <span className="flex items-center gap-1.5">
-                            <Phone size={14} /> {booking.phone}
+                            <Phone size={14} className="shrink-0" /> {booking.phone}
                           </span>
                         </div>
 
@@ -540,7 +540,7 @@ const MyBooking = () => {
                           )}
                       </div>
 
-                      <div className="flex flex-col gap-2.5 lg:min-w-[180px]">
+                      <div className="flex w-full flex-col gap-2.5 lg:w-auto lg:min-w-[180px]">
                         <button
                           onClick={() =>
                             navigate("/invoice", { state: { booking } })
@@ -591,8 +591,8 @@ const MyBooking = () => {
 
         {/* Summary Card */}
         {bookings && bookings.length > 0 && (
-          <div className="mt-8 rounded-3xl border border-blue-100 bg-gradient-to-r from-[#1e40af] via-[#2563eb] to-[#3b82f6] p-8 text-white shadow-lg">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+          <div className="mt-6 rounded-2xl border border-blue-100 bg-gradient-to-r from-[#1e40af] via-[#2563eb] to-[#3b82f6] p-5 text-white shadow-lg sm:mt-8 sm:rounded-3xl sm:p-8">
+            <div className="grid grid-cols-1 gap-6 text-center md:grid-cols-3 md:gap-8">
               <div>
                 <p className="text-4xl font-black mb-1">{bookings.length}</p>
                 <p className="text-blue-100 text-xs uppercase tracking-widest font-bold">

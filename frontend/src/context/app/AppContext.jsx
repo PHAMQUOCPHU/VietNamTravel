@@ -1,5 +1,11 @@
 /* eslint-disable react-refresh/only-export-components */
-import React, { createContext, useEffect, useState, useCallback } from "react";
+import React, {
+  createContext,
+  useEffect,
+  useState,
+  useCallback,
+  useMemo,
+} from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { getSocket } from "../../lib/socketClient";
@@ -251,7 +257,7 @@ const AppContextProvider = (props) => {
     };
   }, [token, user?._id, backendUrl, fetchNotificationUnreadCount]);
 
-  const logout = () => {
+  const logout = useCallback(() => {
     setToken("");
     setUser(null);
     setBookings([]);
@@ -261,35 +267,57 @@ const AppContextProvider = (props) => {
     toast.info("Đã đăng xuất");
     navigate("/login");
     window.location.reload();
-  };
+  }, [navigate]);
 
-  const notifyReviewUpdated = () => {
+  const notifyReviewUpdated = useCallback(() => {
     setReviewRefreshTick((prev) => prev + 1);
-  };
+  }, []);
 
-  const value = {
-    user,
-    setUser,
-    token,
-    setToken,
-    backendUrl,
-    tours,
-    bookings,
-    getToursData,
-    loadUserProfileData,
-    getUserBookings,
-    reviewRefreshTick,
-    bookingRefreshTick,
-    notifyReviewUpdated,
-    logout,
-    toggleFavorite,
-    toggleSavedJob,
-    notificationUnreadCount,
-    notifications,
-    fetchNotifications,
-    fetchNotificationUnreadCount,
-    markAllNotificationsRead,
-  };
+  const value = useMemo(
+    () => ({
+      user,
+      setUser,
+      token,
+      setToken,
+      backendUrl,
+      tours,
+      bookings,
+      getToursData,
+      loadUserProfileData,
+      getUserBookings,
+      reviewRefreshTick,
+      bookingRefreshTick,
+      notifyReviewUpdated,
+      logout,
+      toggleFavorite,
+      toggleSavedJob,
+      notificationUnreadCount,
+      notifications,
+      fetchNotifications,
+      fetchNotificationUnreadCount,
+      markAllNotificationsRead,
+    }),
+    [
+      user,
+      token,
+      tours,
+      bookings,
+      getToursData,
+      loadUserProfileData,
+      getUserBookings,
+      reviewRefreshTick,
+      bookingRefreshTick,
+      notifyReviewUpdated,
+      logout,
+      toggleFavorite,
+      toggleSavedJob,
+      notificationUnreadCount,
+      notifications,
+      fetchNotifications,
+      fetchNotificationUnreadCount,
+      markAllNotificationsRead,
+    ],
+  );
 
   return <AppContext.Provider value={value}>{props.children}</AppContext.Provider>;
 };

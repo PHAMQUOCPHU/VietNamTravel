@@ -32,11 +32,11 @@ const Notifications = () => {
   }
 
   return (
-    <div className="max-w-2xl mx-auto py-10 px-4">
-      <div className="flex items-center justify-between mb-8">
+    <div className="mx-auto max-w-2xl px-3 py-8 sm:px-4 sm:py-10">
+      <div className="mb-6 flex flex-col gap-3 sm:mb-8 sm:flex-row sm:items-center sm:justify-between">
         <Link
           to="/"
-          className="inline-flex items-center gap-2 text-sm font-bold text-blue-600 hover:text-blue-700"
+          className="inline-flex w-fit items-center gap-2 text-sm font-bold text-blue-600 hover:text-blue-700 dark:text-blue-400"
         >
           <ArrowLeft size={18} /> Trang chủ
         </Link>
@@ -44,14 +44,14 @@ const Notifications = () => {
           <button
             type="button"
             onClick={() => markAllNotificationsRead()}
-            className="text-xs font-bold text-slate-500 hover:text-blue-600 uppercase tracking-wide"
+            className="text-left text-xs font-bold uppercase tracking-wide text-slate-500 hover:text-blue-600 sm:text-right dark:text-slate-400 dark:hover:text-blue-400"
           >
             Đánh dấu đã đọc hết
           </button>
         )}
       </div>
 
-      <h1 className="text-2xl font-black text-slate-800 dark:text-slate-100 flex items-center gap-3 mb-6">
+      <h1 className="mb-5 flex flex-wrap items-center gap-2 text-xl font-black text-slate-800 dark:text-slate-100 sm:mb-6 sm:gap-3 sm:text-2xl">
         <Bell className="text-blue-600" />
         Thông báo
       </h1>

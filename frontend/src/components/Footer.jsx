@@ -1,5 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { Shield } from "lucide-react";
 import {
   FaFacebookF,
   FaInstagram,
@@ -9,6 +10,7 @@ import {
   FaCcPaypal,
   FaQrcode,
 } from "react-icons/fa";
+import { INSURANCE_PARTNERS } from "../constants/insurancePartners";
 
 const Footer = () => {
   return (
@@ -121,6 +123,66 @@ const Footer = () => {
             </div>
           </div>
         </div>
+
+        <section
+          className="mt-10 sm:mt-12 rounded-2xl border border-slate-200/90 bg-white/80 p-6 shadow-[0_12px_40px_rgba(15,23,42,0.06)] backdrop-blur-md sm:p-8 dark:border-slate-700/90 dark:bg-slate-900/55 dark:shadow-[0_12px_40px_rgba(0,0,0,0.35)]"
+          aria-labelledby="footer-partners-heading"
+        >
+          <div className="flex flex-col gap-4 border-b border-slate-100 pb-5 dark:border-slate-700/80 sm:flex-row sm:items-end sm:justify-between sm:pb-6">
+            <div className="space-y-2">
+              <p className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.22em] text-blue-600 dark:text-blue-400">
+                <Shield className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                Đối tác bảo hiểm
+              </p>
+              <h2
+                id="footer-partners-heading"
+                className="text-lg font-black tracking-tight text-slate-900 sm:text-xl dark:text-white"
+              >
+                Đối tác của chúng tôi
+              </h2>
+              <p className="max-w-2xl text-xs leading-relaxed text-slate-600 sm:text-sm dark:text-slate-400">
+                Bốn công ty nhân thọ hàng đầu đồng hành cùng VietNam Travel trong
+                hành trình mang đến lớp an tâm bổ sung cho khách — tư vấn minh
+                bạch, không ép mua; quyền lợi theo điều khoản từng nhà bảo hiểm.
+              </p>
+            </div>
+            <Link
+              to="/about"
+              className="shrink-0 self-start rounded-xl border border-blue-200 bg-blue-50/90 px-4 py-2.5 text-xs font-bold text-blue-800 transition hover:border-blue-300 hover:bg-blue-100 dark:border-blue-800/80 dark:bg-blue-950/50 dark:text-blue-200 dark:hover:bg-blue-900/60 sm:self-auto"
+            >
+              Tìm hiểu thêm
+            </Link>
+          </div>
+
+          <ul className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
+            {INSURANCE_PARTNERS.map((p) => (
+              <li key={p.name}>
+                <a
+                  href={p.website}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group flex h-full flex-col rounded-xl border border-slate-200/90 bg-gradient-to-b from-white to-slate-50/90 p-3 shadow-sm outline-none ring-blue-500/0 transition hover:-translate-y-0.5 hover:border-blue-200/90 hover:shadow-md focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:border-slate-600/90 dark:from-slate-900/90 dark:to-slate-950/90 dark:hover:border-blue-700/60"
+                >
+                  <div className="flex flex-1 items-center justify-center rounded-lg border border-slate-100 bg-white px-2 py-4 dark:border-slate-700 dark:bg-slate-900/80">
+                    <img
+                      src={p.image}
+                      alt={`Logo ${p.name}`}
+                      className="max-h-10 w-auto max-w-[min(100%,9rem)] object-contain object-center sm:max-h-11"
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  </div>
+                  <span className="mt-2.5 block text-center text-[11px] font-bold leading-snug text-slate-800 transition group-hover:text-blue-700 dark:text-slate-100 dark:group-hover:text-blue-300 sm:text-xs">
+                    {p.name}
+                  </span>
+                  <span className="mt-1 line-clamp-2 min-h-[2rem] text-center text-[9px] font-medium leading-snug text-slate-500 dark:text-slate-400 sm:text-[10px]">
+                    {p.tagline}
+                  </span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
 
         <div className="mt-8 sm:mt-10 pt-4 sm:pt-6 border-t border-blue-100 dark:border-slate-800 text-center text-xs sm:text-sm text-slate-500 dark:text-slate-400 px-2">
           © {new Date().getFullYear()} VietNam Travel. All rights reserved.

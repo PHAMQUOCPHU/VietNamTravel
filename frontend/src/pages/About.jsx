@@ -2,167 +2,80 @@ import React, { useMemo, useState } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { motion } from "framer-motion";
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
+import markerIcon from "leaflet/dist/images/marker-icon.png";
+import markerShadow from "leaflet/dist/images/marker-shadow.png";
 import {
   Building2,
   Stethoscope,
   BadgeCheck,
   ArrowRight,
-  CalendarClock,
   HelpCircle,
   ChevronDown,
-  GraduationCap,
-  Code2,
-  Layers,
-  Server,
-  Database,
-  Lock,
-  Wifi,
-  Plug,
   ExternalLink,
+  Phone,
+  Mail,
+  MapPin,
+  Clock,
+  CheckCircle2,
+  Sparkles,
 } from "lucide-react";
-import { insuranceImages } from "../assets";
 import { BACKEND_URL } from "../config/env";
+import { INSURANCE_PARTNERS } from "../constants/insurancePartners";
+import contactShowreel from "../assets/Agent_video_Pippit_20260504145346.mp4";
+
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: markerIcon2x,
+  iconUrl: markerIcon,
+  shadowUrl: markerShadow,
+});
+
+const partners = INSURANCE_PARTNERS;
 
 const fadeUp = {
   hidden: { opacity: 0, y: 28 },
   show: { opacity: 1, y: 0, transition: { duration: 0.65, ease: "easeOut" } },
 };
 
-/** Đối tác bảo hiểm — logo từ `src/assets` */
-const partners = [
-  {
-    name: "Bảo Việt Life",
-    website: "https://www.baovietlife.com.vn/",
-    tagline: "Thương hiệu nhân thọ bản địa uy tín",
-    image: insuranceImages.baovietlife,
-    accent: "from-emerald-600/15 via-white to-sky-500/10",
-    ring: "ring-emerald-500/40",
-    benefits: ["Gói du lịch & tai nạn linh hoạt", "Mạng lưới hỗ trợ trong nước rộng", "Quy trình hồ sơ quen thuộc"],
+const stagger = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: { staggerChildren: 0.08, delayChildren: 0.08 },
   },
-  {
-    name: "Manulife Vietnam",
-    website: "https://www.manulife.com.vn/vi.html",
-    tagline: "Kinh nghiệm quốc tế, tư vấn chuyên sâu",
-    image: insuranceImages.manulife,
-    accent: "from-green-600/12 via-white to-emerald-400/10",
-    ring: "ring-green-600/35",
-    benefits: ["Ưu tiên quyền lợi y tế & an toàn", "Đồng hành tour dài ngày", "Hotline hỗ trợ rõ ràng"],
-  },
-  {
-    name: "Dai-ichi Life Việt Nam",
-    website: "https://dai-ichi-life.com.vn/",
-    tagline: "Ổn định & minh bạch theo hành trình",
-    image: insuranceImages.daichilife,
-    accent: "from-red-500/10 via-white to-rose-400/8",
-    ring: "ring-rose-500/35",
-    benefits: ["Bảo vệ gia đình đi cùng", "Lựa chọn hạn mức theo nhu cầu", "Tư vấn cá nhân hóa"],
-  },
-  {
-    name: "Prudential Vietnam",
-    website: "https://www.prudential.com.vn/",
-    tagline: "Giải pháp tài chính & bảo vệ toàn diện",
-    image: insuranceImages.prudential,
-    accent: "from-blue-700/12 via-white to-indigo-500/10",
-    ring: "ring-blue-600/40",
-    benefits: ["Gói kết hợp nhiều rủi ro du lịch", "Hỗ trợ tài chính khi sự cố", "Thương hiệu quen thuộc tại VN"],
-  },
-];
-
-/** Nội dung giới thiệu kiến thức CNTT — phục vụ trình bày khóa luận / bảo vệ đồ án */
-const thesisTechShowcase = {
-  intro:
-    "Dưới đây là các hạ tầng kỹ thuật và kiến thức lập trình web hiện đại đã được vận dụng trực tiếp trong hệ thống: từ giao diện, API, cơ sở dữ liệu đến bảo mật, realtime và tích hợp dịch vụ bên thứ ba.",
-  blocks: [
-    {
-      title: "Ngôn ngữ & môi trường phát triển",
-      icon: Code2,
-      bullets: [
-        "Ngôn ngữ JavaScript (chuẩn ES Modules) dùng thống nhất cho frontend và backend.",
-        "Runtime Node.js; tách ứng dụng thành client (trình duyệt) và server (API).",
-      ],
-    },
-    {
-      title: "Giao diện người dùng (SPA)",
-      icon: Layers,
-      bullets: [
-        "Thư viện React 18, bundler Vite, định tuyến React Router.",
-        "Styling với Tailwind CSS; hiệu ứng giao diện Framer Motion; icon Lucide React.",
-        "Bản đồ & dữ liệu địa lý: Leaflet, react-leaflet; tích hợp Google Maps API.",
-        "Các thành phần UX: Swiper, react-datepicker, toast thông báo, PDF (react-pdf).",
-      ],
-    },
-    {
-      title: "Máy chủ & API (backend)",
-      icon: Server,
-      bullets: [
-        "Framework Express.js, kiến trúc RESTful API, middleware xử lý request/response.",
-        "HTTP server tích hợp Socket.io trên cùng cổng để chat và thông báo realtime.",
-        "Tác vụ định kỳ (cron) với node-cron: nhắc hạn thanh toán, nhắc lịch khởi hành.",
-      ],
-    },
-    {
-      title: "Cơ sở dữ liệu & mô hình dữ liệu",
-      icon: Database,
-      bullets: [
-        "MongoDB (NoSQL) kết nối qua Mongoose ODM: schema, truy vấn, quan hệ tham chiếu.",
-        "Mô hình hóa thực thể: người dùng, tour, booking, blog, đánh giá, tin nhắn, thông báo.",
-      ],
-    },
-    {
-      title: "Bảo mật & xác thực",
-      icon: Lock,
-      bullets: [
-        "Xác thực người dùng bằng JSON Web Token (JWT), middleware bảo vệ route.",
-        "Mã hóa mật khẩu với bcrypt; CAPTCHA (svg-captcha) hỗ trợ chống spam đăng nhập.",
-      ],
-    },
-    {
-      title: "Realtime & trải nghiệm tương tác",
-      icon: Wifi,
-      bullets: [
-        "Socket.io (client–server): chat hỗ trợ, đồng bộ thông báo giữa khách và quản trị.",
-      ],
-    },
-    {
-      title: "Tích hợp dịch vụ & quản trị",
-      icon: Plug,
-      bullets: [
-        "Cloudinary: lưu trữ và tối ưu hình ảnh/ media; Multer xử lý upload phía server.",
-        "Gửi email giao dịch / OTP qua Nodemailer; thanh toán trực tuyến tích hợp VNPay.",
-        "Ứng dụng quản trị (admin) riêng: React, biểu đồ Chart.js, soạn thảo rich text (React Quill).",
-      ],
-    },
-  ],
 };
 
-/** Lộ trình thực tế theo các hạng mục đã xây dựng trong VietNam Travel */
-const vietNamTravelTimeline = [
-  {
-    phase: "Khởi động & định hướng kỹ thuật",
-    detail:
-      "Phân tích nhu cầu đặt tour nội địa, chọn kiến trúc ba lớp (React + Express + MongoDB), thiết kế luồng người dùng và sơ đồ API.",
+const popIn = {
+  hidden: { opacity: 0, y: 18, scale: 0.97 },
+  show: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] },
   },
-  {
-    phase: "Core backend & cơ sở dữ liệu",
-    detail:
-      "Triển khai REST API với Express, mô hình dữ liệu Mongoose (user, tour, booking), xác thực JWT và middleware bảo vệ route.",
-  },
-  {
-    phase: "Ứng dụng khách hàng & đặt tour",
-    detail:
-      "Xây dựng SPA bằng Vite + React: trang chủ, chi tiết tour, giỏ/đặt chỗ, bản đồ tuyến (Leaflet/Google Maps), blog du lịch.",
-  },
-  {
-    phase: "Thanh toán, media & vận hành",
-    detail:
-      "Tích hợp VNPay, upload ảnh Cloudinary (Multer), email OTP (Nodemailer), cron nhắc hạn thanh toán và nhắc lịch khởi hành.",
-  },
-  {
-    phase: "Realtime, thông báo & quản trị",
-    detail:
-      "Socket.io cho chat hỗ trợ và thông báo; panel admin quản lý tour/booking/blog; hoàn thiện luồng hóa đơn (PDF) và trải nghiệm người dùng.",
-  },
+};
+
+const trustChips = [
+  { icon: CheckCircle2, text: "Phản hồi trong ngày làm việc" },
+  { icon: CheckCircle2, text: "Tư vấn tour & hỗ trợ đặt chỗ" },
+  { icon: CheckCircle2, text: "Kết nối đối tác bảo hiểm uy tín" },
 ];
+
+const OFFICE = {
+  lat: 10.82285,
+  lng: 106.68835,
+  shortAddress: "12 Nguyễn Văn Bảo, P.1, Gò Vấp, TP.HCM",
+  mapsUrl:
+    "https://www.google.com/maps/dir/?api=1&destination=12%20Nguy%E1%BB%85n%20V%C4%83n%20B%E1%BA%A3o%2C%20G%C3%B2%20V%E1%BA%A5p%2C%20TP.HCM",
+  phone: "0905 713 702",
+  phoneHref: "tel:+84905713702",
+  email: "phamquocphu@gmail.com",
+  hours: "T2 – T6: 8:30 – 17:30 · T7: 9:00 – 12:00",
+};
 
 const backendUrl = BACKEND_URL;
 
@@ -196,6 +109,45 @@ const insuranceFaq = [
     q: "Tôi có thể mua bảo hiểm sau khi đã đặt tour không?",
     a:
       "Trong nhiều trường hợp, bạn vẫn có thể mua hoặc gia hạn bảo hiểm sau khi đã đặt tour, miễn là trong thời hạn cho phép của nhà bảo hiểm và trước ngày khởi hành (một số gói có điểm bắt đầu bảo hiểm cố định theo ngày xuất phát). Tuy nhiên, mua càng sớm càng tốt: nhiều quyền lợi liên quan hủy chuyến, hoãn bay hoặc bệnh nền chỉ áp dụng nếu bạn tham gia bảo hiểm khi chưa phát sinh sự kiện bảo hiểm. Nên xác nhận rõ ngày hiệu lực, địa lý được bảo vệ và các hoạt động đặc biệt trong tour có nằm trong phạm vi hay không để tránh hiểu nhầm khi cần dùng đến bảo hiểm.",
+  },
+];
+
+const contactCards = [
+  {
+    key: "addr",
+    icon: MapPin,
+    label: "Trụ sở & showroom",
+    value: OFFICE.shortAddress,
+    href: OFFICE.mapsUrl,
+    external: true,
+    accent: "from-sky-500/10 to-blue-600/5",
+  },
+  {
+    key: "phone",
+    icon: Phone,
+    label: "Hotline",
+    value: OFFICE.phone,
+    href: OFFICE.phoneHref,
+    external: false,
+    accent: "from-emerald-500/10 to-teal-600/5",
+  },
+  {
+    key: "mail",
+    icon: Mail,
+    label: "Email",
+    value: OFFICE.email,
+    href: `mailto:${OFFICE.email}`,
+    external: false,
+    accent: "from-violet-500/10 to-indigo-600/5",
+  },
+  {
+    key: "hours",
+    icon: Clock,
+    label: "Giờ làm việc",
+    value: OFFICE.hours,
+    href: null,
+    external: false,
+    accent: "from-amber-500/10 to-orange-600/5",
   },
 ];
 
@@ -283,180 +235,198 @@ const About = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-100 via-blue-50 to-white py-8 md:py-10">
-      <div className="mx-auto max-w-6xl px-4">
+    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-slate-50 via-white to-sky-50/90 py-8 md:py-14 dark:from-slate-950 dark:via-slate-950 dark:to-slate-900">
+      <div
+        className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,rgb(148_163_184/0.06)_1px,transparent_1px),linear-gradient(to_bottom,rgb(148_163_184/0.06)_1px,transparent_1px)] bg-[size:3.5rem_3.5rem] dark:bg-[linear-gradient(to_right,rgb(51_65_85/0.35)_1px,transparent_1px),linear-gradient(to_bottom,rgb(51_65_85/0.35)_1px,transparent_1px)]"
+        aria-hidden
+      />
+      <div className="pointer-events-none absolute -left-32 top-24 h-96 w-96 rounded-full bg-sky-400/20 blur-3xl dark:bg-sky-600/15" aria-hidden />
+      <div className="pointer-events-none absolute -right-24 bottom-20 h-80 w-80 rounded-full bg-indigo-400/15 blur-3xl dark:bg-indigo-500/10" aria-hidden />
+
+      <div className="relative mx-auto max-w-6xl px-4">
         <motion.section
           variants={fadeUp}
           initial="hidden"
           whileInView="show"
-          viewport={{ once: true, amount: 0.2 }}
-          className="relative overflow-hidden rounded-3xl border border-blue-100/80 bg-white/70 p-5 shadow-[0_16px_45px_rgba(15,23,42,0.08)] backdrop-blur-xl md:p-8"
+          viewport={{ once: true, amount: 0.12 }}
+          className="overflow-hidden rounded-[2rem] border border-slate-200/90 bg-white/90 shadow-[0_28px_80px_-20px_rgba(30,58,138,0.18),0_0_0_1px_rgba(255,255,255,0.6)_inset] ring-1 ring-slate-200/60 backdrop-blur-sm dark:border-slate-700/80 dark:bg-slate-900/90 dark:shadow-[0_28px_80px_-24px_rgba(0,0,0,0.55)] dark:ring-slate-700/50"
         >
-          <div className="absolute -right-10 -top-8 h-36 w-36 rounded-full bg-blue-200/50 blur-2xl" />
-          <div className="absolute -left-14 bottom-0 h-40 w-40 rounded-full bg-indigo-200/40 blur-2xl" />
-          <div className="relative grid grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-10">
-            <div className="rounded-3xl border border-white/70 bg-gradient-to-br from-slate-100 to-blue-100 p-4">
-              <div className="flex h-[320px] items-center justify-center rounded-3xl border border-dashed border-blue-300/70 bg-white/55 text-center md:h-[420px]">
+          <div className="relative overflow-hidden border-b border-white/10 bg-gradient-to-br from-slate-950 via-blue-950 to-indigo-950 px-6 py-10 text-white md:px-10 md:py-12">
+            <div className="pointer-events-none absolute -right-16 -top-20 h-72 w-72 rounded-full bg-sky-500/30 blur-3xl" />
+            <div className="pointer-events-none absolute -bottom-24 -left-16 h-80 w-80 rounded-full bg-indigo-500/25 blur-3xl" />
+            <div className="pointer-events-none absolute left-1/2 top-1/2 h-[28rem] w-[28rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-blue-600/10 blur-3xl" />
+
+            <div className="relative">
+              <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-[11px] font-black uppercase tracking-[0.22em] text-sky-100 shadow-lg shadow-blue-900/20 backdrop-blur-md">
+                <Sparkles className="h-3.5 w-3.5 text-amber-300" strokeWidth={2.4} aria-hidden />
+                Giới thiệu & liên hệ
+              </span>
+              <h1 className="mt-5 max-w-3xl text-4xl font-black leading-[1.08] tracking-tight md:text-5xl">
+                <span className="bg-gradient-to-r from-white via-sky-100 to-cyan-100 bg-clip-text text-transparent">
+                  VietNam Travel
+                </span>
+              </h1>
+              <p className="mt-4 max-w-2xl text-sm leading-relaxed text-slate-300/95 md:text-base md:leading-relaxed">
+                Nền tảng đặt tour và trải nghiệm du lịch trong nước. Chúng tôi đồng
+                hành chọn hành trình phù hợp, thanh toán minh bạch và kết nối dịch
+                vụ giá trị gia tăng — gồm tư vấn bảo hiểm cùng các đối tác nhân thọ
+                hàng đầu.
+              </p>
+
+              <ul className="mt-8 flex flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:gap-3">
+                {trustChips.map(({ icon: ChipIcon, text }) => (
+                  <li
+                    key={text}
+                    className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-2 text-xs font-semibold text-slate-100 shadow-inner backdrop-blur-sm md:text-[13px]"
+                  >
+                    <ChipIcon className="h-4 w-4 shrink-0 text-emerald-400" strokeWidth={2.5} aria-hidden />
+                    {text}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          <div className="grid gap-0 lg:grid-cols-2">
+            <div className="space-y-7 border-slate-100 bg-gradient-to-b from-white to-slate-50/90 p-6 md:p-9 lg:border-r dark:border-slate-800 dark:from-slate-900/50 dark:to-slate-950/80">
+              <div className="flex items-end justify-between gap-4">
                 <div>
-                  <p className="text-sm font-semibold uppercase tracking-[0.25em] text-blue-700/70">
-                    Founder Portrait
+                  <p className="text-[10px] font-black uppercase tracking-[0.28em] text-blue-600/90 dark:text-sky-400/90">
+                    Contact
                   </p>
-                  <p className="mt-2 text-xs text-slate-500">
-                    Placeholder ảnh Phạm Quốc Phú
+                  <h2 className="mt-1 text-xl font-black tracking-tight text-slate-900 dark:text-white md:text-2xl">
+                    Thông tin liên hệ
+                  </h2>
+                  <p className="mt-2 max-w-md text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+                    Gọi hotline, gửi email hoặc ghé văn phòng — đội ngũ sẽ hỗ trợ
+                    tour, hợp tác và các vấn đề sau đặt chỗ.
                   </p>
                 </div>
               </div>
-            </div>
 
-            <div className="flex flex-col justify-center">
-              <span className="inline-flex w-fit items-center rounded-full border border-blue-200 bg-blue-600 px-4 py-1 text-xs font-bold uppercase tracking-widest text-white">
-                About VietNam Travel
-              </span>
-              <h1 className="mt-4 text-3xl font-black leading-tight text-slate-900 md:text-4xl">
-                Hành trình tạo ra hệ sinh thái du lịch thông minh
-              </h1>
-              <p className="mt-4 text-slate-600">
-                Tôi là <b>Phạm Quốc Phú</b>, Founder & Lead Developer của VietNam
-                Travel. Sản phẩm này được xây dựng từ đam mê khám phá Việt Nam và
-                tư duy công nghệ hiện đại: kết hợp trải nghiệm người dùng, dữ liệu
-                hành trình và dịch vụ đối tác để mỗi chuyến đi an toàn, cá nhân hóa
-                và có giá trị thực tế hơn.
-              </p>
-              <div className="mt-6 flex flex-wrap gap-2.5">
-                {["Innovation", "User Experience", "Travel Expert"].map((badge) => (
-                  <span
-                    key={badge}
-                    className="rounded-full border border-blue-100 bg-white/80 px-4 py-1.5 text-xs font-bold text-blue-700 shadow-sm"
-                  >
-                    {badge}
-                  </span>
-                ))}
-              </div>
-              <p className="mt-5 text-sm leading-relaxed text-slate-600">
-                Mục tiêu của tôi không chỉ là một website đặt tour, mà là một sản phẩm
-                thể hiện tư duy hệ sinh thái: lấy trải nghiệm du lịch làm trung tâm,
-                sau đó mở rộng bằng các dịch vụ giá trị gia tăng như bảo hiểm, chăm sóc
-                sau chuyến đi và hệ thống dữ liệu phục vụ quyết định kinh doanh.
-              </p>
-            </div>
-          </div>
-        </motion.section>
-
-        <motion.section
-          variants={fadeUp}
-          initial="hidden"
-          whileInView="show"
-          viewport={{ once: true, amount: 0.15 }}
-          className="mt-8 rounded-3xl border border-indigo-200/80 bg-gradient-to-br from-white via-indigo-50/40 to-blue-50/60 p-5 shadow-[0_16px_45px_rgba(15,23,42,0.08)] backdrop-blur-xl md:p-8"
-        >
-          <div className="mb-2 flex flex-wrap items-center gap-3">
-            <span className="inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-indigo-600 px-4 py-1.5 text-xs font-black uppercase tracking-widest text-white">
-              <GraduationCap size={16} />
-              Khóa luận / đồ án
-            </span>
-          </div>
-          <h2 className="text-2xl font-black text-slate-900 md:text-3xl">
-            Kiến thức CNTT & công nghệ đã áp dụng trong dự án
-          </h2>
-          <p className="mt-3 max-w-3xl text-sm leading-relaxed text-slate-600 md:text-base">
-            {thesisTechShowcase.intro}
-          </p>
-          <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
-            {thesisTechShowcase.blocks.map((block) => {
-              const Icon = block.icon;
-              return (
-                <article
-                  key={block.title}
-                  className="rounded-3xl border border-indigo-100/90 bg-white/90 p-5 shadow-sm transition-all duration-300 hover:border-indigo-300 hover:shadow-[0_12px_32px_rgba(67,56,202,0.12)]"
-                >
-                  <div className="mb-3 flex items-start gap-3">
-                    <div className="inline-flex shrink-0 rounded-2xl bg-indigo-100 p-3 text-indigo-700">
-                      <Icon size={22} />
-                    </div>
-                    <h3 className="pt-0.5 text-lg font-extrabold leading-snug text-slate-900">
-                      {block.title}
-                    </h3>
-                  </div>
-                  <ul className="space-y-2 border-t border-indigo-100/80 pt-3">
-                    {block.bullets.map((line) => (
-                      <li
-                        key={line}
-                        className="flex gap-2 text-sm leading-relaxed text-slate-600"
-                      >
-                        <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-indigo-500" />
-                        <span>{line}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </article>
-              );
-            })}
-          </div>
-          <p className="mt-6 rounded-2xl border border-dashed border-indigo-200 bg-indigo-50/50 px-4 py-3 text-xs leading-relaxed text-slate-600 md:text-sm">
-            <span className="font-bold text-indigo-900">Gợi ý khi báo cáo:</span> có thể chiếu mục này
-            cùng sơ đồ kiến trúc (client → API → MongoDB → dịch vụ ngoài) để minh chứng năng lực phân
-            tầng hệ thống và lựa chọn công nghệ phù hợp bài toán đặt tour du lịch trực tuyến.
-          </p>
-        </motion.section>
-
-        <motion.section
-          variants={fadeUp}
-          initial="hidden"
-          whileInView="show"
-          viewport={{ once: true, amount: 0.2 }}
-          className="mt-8 rounded-3xl border border-blue-100/80 bg-white/75 p-5 shadow-[0_16px_45px_rgba(15,23,42,0.07)] backdrop-blur-xl md:p-8"
-        >
-          <div className="mb-2 flex flex-wrap items-end justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <CalendarClock className="text-blue-600" size={18} />
-              <h2 className="text-2xl font-black text-slate-900 md:text-[1.65rem]">
-                Timeline phát triển dự án VietNam Travel
-              </h2>
-            </div>
-            <span className="rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-bold text-blue-800">
-              {vietNamTravelTimeline.length} mốc
-            </span>
-          </div>
-          <p className="mb-8 max-w-3xl text-sm leading-relaxed text-slate-600">
-            Các giai đoạn bám sát quá trình hiện thực hóa sản phẩm: từ nền tảng API và cơ sở dữ liệu đến giao diện khách hàng,
-            thanh toán, realtime và kênh quản trị.
-          </p>
-
-          <div className="relative">
-            {/* Đường timeline dọc — gradient */}
-            <div
-              className="pointer-events-none absolute left-[22px] top-3 bottom-3 z-0 w-[4px] rounded-full bg-gradient-to-b from-sky-400 via-blue-600 to-indigo-600 shadow-[0_0_12px_rgba(37,99,235,0.35)] md:left-[23px]"
-              aria-hidden
-            />
-
-            <ul className="relative z-[1] m-0 list-none space-y-0 p-0">
-              {vietNamTravelTimeline.map((item, index) => (
-                <li
-                  key={item.phase}
-                  className="relative flex gap-4 pb-10 last:pb-0 md:gap-5"
-                >
-                  {/* Mốc tròn trên đường */}
-                  <div className="relative z-10 flex w-12 shrink-0 justify-center md:w-14">
-                    <span
-                      className="mt-0.5 flex h-10 w-10 items-center justify-center rounded-full border-[3px] border-white bg-gradient-to-br from-blue-600 to-indigo-600 text-sm font-black text-white shadow-[0_4px_14px_rgba(29,78,216,0.45)] ring-2 ring-blue-100/90 md:h-11 md:w-11"
-                      title={`Mốc ${index + 1}`}
+              <motion.div
+                className="grid gap-3 sm:grid-cols-2"
+                variants={stagger}
+                initial="hidden"
+                whileInView="show"
+                viewport={{ once: true, amount: 0.2 }}
+              >
+                {contactCards.map((card) => {
+                  const Icon = card.icon;
+                  const inner = (
+                    <motion.div
+                      variants={popIn}
+                      whileHover={{ y: -5, transition: { type: "spring", stiffness: 420, damping: 22 } }}
+                      whileTap={{ scale: 0.99 }}
+                      className={`group flex h-full flex-col rounded-2xl border border-slate-200/90 bg-gradient-to-br p-[1.125rem] shadow-[0_8px_30px_-12px_rgba(15,23,42,0.12)] transition-[box-shadow,border-color] duration-300 hover:border-blue-300/80 hover:shadow-[0_20px_44px_-16px_rgba(37,99,235,0.22)] dark:border-slate-600/90 dark:shadow-none dark:hover:border-sky-500/40 ${card.accent} ${card.href ? "cursor-pointer" : ""}`}
                     >
-                      {index + 1}
+                      <div className="mb-3 inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-white to-slate-50 text-blue-600 shadow-md ring-1 ring-slate-200/80 transition group-hover:ring-blue-200/80 dark:from-slate-800 dark:to-slate-900 dark:text-sky-400 dark:ring-slate-600">
+                        <Icon size={21} strokeWidth={2.2} aria-hidden />
+                      </div>
+                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
+                        {card.label}
+                      </p>
+                      <p className="mt-2 text-sm font-bold leading-snug text-slate-900 dark:text-slate-100">
+                        {card.value}
+                      </p>
+                      {card.href && (
+                        <span className="mt-auto pt-4 text-xs font-bold text-blue-600 transition group-hover:translate-x-0.5 dark:text-sky-400">
+                          {card.external ? "Mở bản đồ →" : "Nhấn để liên hệ →"}
+                        </span>
+                      )}
+                    </motion.div>
+                  );
+
+                  return card.href ? (
+                    <a
+                      key={card.key}
+                      href={card.href}
+                      target={card.external ? "_blank" : undefined}
+                      rel={card.external ? "noopener noreferrer" : undefined}
+                      className="block rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900"
+                    >
+                      {inner}
+                    </a>
+                  ) : (
+                    <div key={card.key}>{inner}</div>
+                  );
+                })}
+              </motion.div>
+
+              <div className="rounded-2xl border border-slate-200/80 bg-gradient-to-br from-slate-50 to-white px-4 py-3.5 text-xs leading-relaxed text-slate-600 shadow-inner dark:border-slate-700 dark:from-slate-800/60 dark:to-slate-900/40 dark:text-slate-400">
+                <strong className="font-extrabold text-slate-800 dark:text-slate-200">Ghi chú:</strong>{" "}
+                Hotline có thể bận trong giờ cao điểm — gửi email kèm số điện thoại,
+                chúng tôi phản hồi trong{" "}
+                <span className="font-semibold text-blue-700 dark:text-sky-300">một ngày làm việc</span>.
+              </div>
+            </div>
+
+            <div className="flex flex-col bg-gradient-to-b from-slate-100/90 to-slate-200/50 dark:from-slate-950 dark:to-slate-900/90">
+              <div className="flex items-center justify-between gap-3 border-b border-slate-200/80 bg-white/40 px-5 py-4 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/40">
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h2 className="text-xs font-black uppercase tracking-[0.2em] text-slate-600 dark:text-slate-400">
+                      Bản đồ văn phòng
+                    </h2>
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-800 ring-1 ring-emerald-500/25 dark:text-emerald-300">
+                      <span className="relative flex h-1.5 w-1.5">
+                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                        <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                      </span>
+                      Trực quan
                     </span>
                   </div>
-
-                  <article className="min-w-0 flex-1 rounded-2xl border border-blue-100/90 bg-gradient-to-br from-white to-blue-50/40 p-4 shadow-sm md:p-5">
-                    <p className="text-[11px] font-black uppercase tracking-[0.2em] text-blue-600/90">
-                      Mốc {index + 1} · VietNam Travel
-                    </p>
-                    <h3 className="mt-1.5 text-lg font-extrabold leading-snug text-slate-900 md:text-xl">
-                      {item.phase}
-                    </h3>
-                    <p className="mt-2 text-sm leading-relaxed text-slate-600">{item.detail}</p>
-                  </article>
-                </li>
-              ))}
-            </ul>
+                  <p className="mt-1 text-xs text-slate-600 dark:text-slate-500">
+                    OpenStreetMap · Gò Vấp, TP.HCM
+                  </p>
+                </div>
+                <a
+                  href={OFFICE.mapsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="shrink-0 rounded-full border border-white/80 bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2 text-xs font-bold text-white shadow-lg shadow-blue-900/25 transition hover:brightness-110 active:scale-[0.98]"
+                >
+                  Chỉ đường
+                </a>
+              </div>
+              <div className="relative flex flex-1 flex-col p-3 sm:p-4">
+                <div className="relative min-h-[300px] flex-1 overflow-hidden rounded-2xl ring-1 ring-black/5 shadow-[0_20px_50px_-20px_rgba(15,23,42,0.35),inset_0_1px_0_rgba(255,255,255,0.4)] dark:ring-white/10 dark:shadow-[0_24px_60px_-20px_rgba(0,0,0,0.65)] lg:min-h-[400px]">
+                  <MapContainer
+                    center={[OFFICE.lat, OFFICE.lng]}
+                    zoom={16}
+                    scrollWheelZoom={false}
+                    className="absolute inset-0 z-0 h-full w-full rounded-2xl [&_.leaflet-container]:rounded-2xl"
+                    style={{ minHeight: "100%" }}
+                  >
+                    <TileLayer
+                      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    />
+                    <Marker position={[OFFICE.lat, OFFICE.lng]}>
+                      <Popup>
+                        <div className="text-sm font-semibold text-slate-900">
+                          VietNam Travel
+                        </div>
+                        <p className="mt-1 max-w-[220px] text-xs text-slate-600">
+                          {OFFICE.shortAddress}
+                        </p>
+                        <a
+                          className="mt-2 inline-block text-xs font-bold text-blue-600 hover:underline"
+                          href={OFFICE.mapsUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          Mở Google Maps →
+                        </a>
+                      </Popup>
+                    </Marker>
+                  </MapContainer>
+                </div>
+                <p className="mt-3 text-center text-[10px] font-medium uppercase tracking-wider text-slate-500 dark:text-slate-500">
+                  Vị trí tham chiếu — zoom & kéo trên bản đồ để xem lân cận
+                </p>
+              </div>
+            </div>
           </div>
         </motion.section>
 
@@ -464,34 +434,66 @@ const About = () => {
           variants={fadeUp}
           initial="hidden"
           whileInView="show"
-          viewport={{ once: true, amount: 0.2 }}
-          className="mt-8 rounded-3xl border border-blue-100/80 bg-gradient-to-br from-white/85 to-blue-50/80 p-5 shadow-[0_18px_45px_rgba(15,23,42,0.1)] backdrop-blur-xl md:p-8"
+          viewport={{ once: true, amount: 0.12 }}
+          aria-label="Video giới thiệu liên hệ"
+          className="mt-12 w-full"
         >
-          <div className="flex flex-col gap-2">
-            <span className="inline-flex w-fit items-center gap-2 rounded-full border border-blue-200 bg-white/90 px-4 py-1 text-xs font-black uppercase tracking-widest text-blue-700">
-              <Building2 size={14} />
+          <div className="mb-5 max-w-3xl md:mb-6">
+            <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white md:text-[1.75rem]">
+              Cảm nhận không khí VietNam Travel
+            </h2>
+            <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-400 md:text-base">
+              Xem nhanh giới thiệu trước khi liên hệ hoặc tìm hiểu đối tác bảo hiểm phía dưới.
+            </p>
+          </div>
+
+          <video
+            className="mx-auto block max-h-[min(60vh,540px)] w-auto max-w-full object-contain sm:max-h-[min(66vh,620px)] md:max-h-[min(72vh,720px)]"
+            src={contactShowreel}
+            controls
+            playsInline
+            preload="none"
+          >
+            Trình duyệt của bạn không hỗ trợ phát video.
+          </video>
+        </motion.section>
+
+        <motion.section
+          variants={fadeUp}
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true, amount: 0.2 }}
+          className="relative mt-10 overflow-hidden rounded-[2rem] border border-blue-100/90 bg-gradient-to-br from-white via-sky-50/40 to-indigo-50/50 p-5 shadow-[0_24px_70px_-24px_rgba(37,99,235,0.18)] backdrop-blur-md dark:border-slate-700/80 dark:from-slate-900/95 dark:via-slate-900/80 dark:to-indigo-950/40 md:p-9"
+        >
+          <div className="pointer-events-none absolute -right-20 top-0 h-64 w-64 rounded-full bg-sky-400/15 blur-3xl dark:bg-sky-500/10" aria-hidden />
+          <div className="pointer-events-none absolute -left-16 bottom-0 h-48 w-48 rounded-full bg-indigo-400/10 blur-3xl" aria-hidden />
+
+          <div className="relative flex flex-col gap-3">
+            <span className="inline-flex w-fit items-center gap-2 rounded-full border border-blue-200/90 bg-white/95 px-4 py-1.5 text-xs font-black uppercase tracking-widest text-blue-800 shadow-sm dark:border-blue-800/80 dark:bg-slate-800/90 dark:text-sky-300">
+              <Building2 size={14} className="text-blue-600 dark:text-sky-400" />
               Đối tác bảo hiểm chiến lược
             </span>
-            <h2 className="text-2xl font-black text-slate-900 md:text-3xl">
+            <h2 className="max-w-3xl text-2xl font-black tracking-tight text-slate-900 dark:text-white md:text-[1.75rem]">
               Biến bảo hiểm thành một phần tất yếu của chuyến đi
             </h2>
-            <p className="text-sm leading-relaxed text-slate-600 md:text-base">
+            <p className="max-w-3xl text-sm leading-relaxed text-slate-600 dark:text-slate-400 md:text-base">
               Mỗi lượt tư vấn là một tín hiệu nhu cầu thật. VietNam Travel kết nối
               trực tiếp khách hàng với đối tác bảo hiểm uy tín để tăng độ an tâm
               cho người dùng và mở rộng hệ sinh thái doanh thu dịch vụ.
             </p>
           </div>
 
-          <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="relative mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {partners.map((partner) => {
               const isSelected = selectedPartner === partner.name;
               return (
-                <article
+                <motion.article
                   key={partner.name}
-                  className={`group relative flex flex-col overflow-hidden rounded-3xl border bg-white/95 shadow-sm transition-all duration-300 ${
+                  whileHover={{ y: -6, transition: { type: "spring", stiffness: 380, damping: 22 } }}
+                  className={`group relative flex flex-col overflow-hidden rounded-3xl border bg-white/95 shadow-[0_12px_40px_-18px_rgba(15,23,42,0.15)] transition-shadow duration-300 dark:bg-slate-900/95 ${
                     isSelected
-                      ? `border-blue-400/80 shadow-[0_20px_50px_rgba(29,78,216,0.18)] ring-2 ring-offset-2 ring-offset-blue-50/80 ${partner.ring}`
-                      : "border-slate-200/90 hover:-translate-y-1 hover:border-blue-200 hover:shadow-[0_16px_40px_rgba(15,23,42,0.1)]"
+                      ? `border-blue-400/90 shadow-[0_24px_55px_-12px_rgba(29,78,216,0.35)] ring-2 ring-offset-2 ring-offset-white dark:ring-offset-slate-900 ${partner.ring}`
+                      : "border-slate-200/90 hover:border-blue-200/90 hover:shadow-[0_20px_50px_-20px_rgba(37,99,235,0.2)] dark:border-slate-700"
                   }`}
                 >
                   <div
@@ -531,18 +533,18 @@ const About = () => {
 
                     <div className="space-y-3 p-4 pt-3">
                       <div>
-                        <h3 className="text-[15px] font-black leading-tight text-slate-900 md:text-base">
+                        <h3 className="text-[15px] font-black leading-tight text-slate-900 dark:text-white md:text-base">
                           {partner.name}
                         </h3>
-                        <p className="mt-1 text-xs font-medium leading-relaxed text-slate-500">
+                        <p className="mt-1 text-xs font-medium leading-relaxed text-slate-500 dark:text-slate-400">
                           {partner.tagline}
                         </p>
                       </div>
-                      <ul className="space-y-2 border-t border-slate-100 pt-3">
+                      <ul className="space-y-2 border-t border-slate-100 pt-3 dark:border-slate-700">
                         {partner.benefits.map((line) => (
                           <li
                             key={line}
-                            className="flex items-start gap-2 text-xs font-medium leading-snug text-slate-600"
+                            className="flex items-start gap-2 text-xs font-medium leading-snug text-slate-600 dark:text-slate-400"
                           >
                             <BadgeCheck
                               size={15}
@@ -553,31 +555,31 @@ const About = () => {
                           </li>
                         ))}
                       </ul>
-                      <p className="text-[11px] font-bold uppercase tracking-wide text-blue-600/90 opacity-0 transition-opacity group-hover:opacity-100 md:opacity-100">
+                      <p className="text-[11px] font-bold uppercase tracking-wide text-blue-600/90 opacity-0 transition-opacity group-hover:opacity-100 md:opacity-100 dark:text-blue-400">
                         Nhấn để chọn tư vấn →
                       </p>
                     </div>
                   </div>
 
-                  <div className="border-t border-slate-100 p-3 pt-0">
+                  <div className="border-t border-slate-100 p-3 pt-0 dark:border-slate-700">
                     <a
                       href={partner.website}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-blue-200 bg-white px-3 py-2.5 text-xs font-bold text-blue-700 shadow-sm transition hover:border-blue-400 hover:bg-blue-50/80"
+                      className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-blue-200 bg-white px-3 py-2.5 text-xs font-bold text-blue-700 shadow-sm transition hover:border-blue-400 hover:bg-blue-50/80 dark:border-blue-800 dark:bg-slate-800 dark:text-sky-300 dark:hover:bg-slate-700"
                     >
                       Xem chi tiết
                       <ExternalLink size={14} className="shrink-0 opacity-80" aria-hidden />
                     </a>
                   </div>
-                </article>
+                </motion.article>
               );
             })}
           </div>
 
-          <div className="mt-7 grid grid-cols-1 gap-4 rounded-3xl border border-white/80 bg-white/80 p-4 md:grid-cols-[1.5fr_1fr] md:p-5">
+          <div className="relative mt-8 grid grid-cols-1 gap-4 overflow-hidden rounded-3xl border border-white/90 bg-gradient-to-br from-white to-slate-50/90 p-4 shadow-inner dark:border-slate-600/60 dark:from-slate-800/80 dark:to-slate-900/60 md:grid-cols-[1.5fr_1fr] md:p-6">
             <form onSubmit={handleSubmitLead} className="space-y-3">
-              <p className="text-sm font-bold text-slate-900">
+              <p className="text-sm font-bold text-slate-900 dark:text-white">
                 Nhận tư vấn miễn phí - thu thập nhu cầu bảo hiểm thực tế
               </p>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -588,7 +590,7 @@ const About = () => {
                     setLeadForm((prev) => ({ ...prev, fullName: e.target.value }))
                   }
                   placeholder="Họ và tên *"
-                  className="rounded-2xl border border-blue-100 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                  className="rounded-2xl border border-blue-100 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
                 />
                 <input
                   type="text"
@@ -597,7 +599,7 @@ const About = () => {
                     setLeadForm((prev) => ({ ...prev, phone: e.target.value }))
                   }
                   placeholder="Số điện thoại *"
-                  className="rounded-2xl border border-blue-100 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                  className="rounded-2xl border border-blue-100 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
                 />
               </div>
               <input
@@ -607,9 +609,9 @@ const About = () => {
                   setLeadForm((prev) => ({ ...prev, email: e.target.value }))
                 }
                 placeholder="Email (không bắt buộc)"
-                className="w-full rounded-2xl border border-blue-100 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                className="w-full rounded-2xl border border-blue-100 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
               />
-              <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200/90 bg-slate-50/60 px-3 py-3 text-left">
+              <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200/90 bg-slate-50/60 px-3 py-3 text-left dark:border-slate-600 dark:bg-slate-800/60">
                 <input
                   type="checkbox"
                   checked={insuranceConsent}
@@ -619,7 +621,7 @@ const About = () => {
                   }}
                   className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                 />
-                <span className="text-xs font-medium leading-relaxed text-slate-700">
+                <span className="text-xs font-medium leading-relaxed text-slate-700 dark:text-slate-300">
                   Tôi đồng ý chia sẻ thông tin để nhận tư vấn bảo hiểm.
                 </span>
               </label>
@@ -638,24 +640,26 @@ const About = () => {
               </button>
             </form>
 
-            <div className="rounded-3xl border border-blue-100 bg-blue-50/70 p-4">
-              <div className="mb-3 inline-flex rounded-xl bg-white p-2 text-blue-700">
+            <div className="rounded-3xl border border-blue-100 bg-blue-50/70 p-4 dark:border-blue-900/50 dark:bg-blue-950/30">
+              <div className="mb-3 inline-flex rounded-xl bg-white p-2 text-blue-700 dark:bg-slate-800 dark:text-sky-400">
                 <Stethoscope size={18} />
               </div>
-              <p className="text-sm font-bold text-slate-900">
+              <p className="text-sm font-bold text-slate-900 dark:text-white">
                 Tư vấn được chọn:{" "}
-                <span className="text-blue-700">{selectedPartner || "Chưa chọn đối tác"}</span>
+                <span className="text-blue-700 dark:text-sky-400">
+                  {selectedPartner || "Chưa chọn đối tác"}
+                </span>
               </p>
-              <p className="mt-2 text-xs leading-relaxed text-slate-600">
+              <p className="mt-2 text-xs leading-relaxed text-slate-600 dark:text-slate-400">
                 Tín hiệu lead hiện có: <b>{consultCount}</b> yêu cầu đã ghi nhận từ
                 trang About.
               </p>
-              <p className="mt-2 text-xs leading-relaxed text-slate-600">
+              <p className="mt-2 text-xs leading-relaxed text-slate-600 dark:text-slate-400">
                 Đây là điểm chạm chuyển đổi quan trọng, giúp đội ngũ xác định chính xác
                 khách hàng có nhu cầu bảo hiểm thật để tư vấn cá nhân hóa.
               </p>
               {submitted && (
-                <p className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700">
+                <p className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300">
                   Đã gửi yêu cầu thành công. Đội ngũ tư vấn sẽ liên hệ sớm nhất.
                 </p>
               )}
@@ -668,19 +672,28 @@ const About = () => {
           initial="hidden"
           whileInView="show"
           viewport={{ once: true, amount: 0.2 }}
-          className="mt-8 rounded-3xl border border-blue-100/80 bg-white/75 p-5 shadow-[0_16px_45px_rgba(15,23,42,0.07)] backdrop-blur-xl md:p-8"
+          className="mt-10 rounded-[2rem] border border-slate-200/90 bg-white/85 p-5 shadow-[0_20px_60px_-28px_rgba(15,23,42,0.12)] backdrop-blur-md dark:border-slate-700/80 dark:bg-slate-900/80 md:p-8"
         >
-          <div className="mb-6 flex items-center gap-2">
-            <HelpCircle className="text-blue-600" size={18} />
-            <h2 className="text-2xl font-black text-slate-900">FAQ bảo hiểm du lịch</h2>
+          <div className="mb-7 flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-900/25">
+              <HelpCircle size={20} strokeWidth={2.2} />
+            </div>
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.22em] text-blue-600/90 dark:text-sky-400/90">
+                Hỏi — đáp
+              </p>
+              <h2 className="text-xl font-black tracking-tight text-slate-900 dark:text-white md:text-2xl">
+                FAQ bảo hiểm du lịch
+              </h2>
+            </div>
           </div>
-          <div className="space-y-2.5">
+          <div className="space-y-3">
             {insuranceFaq.map((item) => {
               const isOpen = openFaqId === item.id;
               return (
                 <div
                   key={item.id}
-                  className="overflow-hidden rounded-3xl border border-blue-100 bg-white/90 shadow-sm transition-shadow duration-300 hover:shadow-md hover:shadow-blue-100/40"
+                  className="overflow-hidden rounded-2xl border border-slate-200/90 bg-white/95 shadow-[0_8px_28px_-16px_rgba(15,23,42,0.1)] transition-all duration-300 hover:border-blue-200/80 hover:shadow-[0_14px_40px_-18px_rgba(37,99,235,0.12)] dark:border-slate-700 dark:bg-slate-800/90 dark:hover:border-slate-600"
                 >
                   <button
                     type="button"
@@ -690,14 +703,14 @@ const About = () => {
                     onClick={() =>
                       setOpenFaqId((prev) => (prev === item.id ? null : item.id))
                     }
-                    className="flex w-full items-center justify-between gap-3 px-4 py-4 text-left transition-colors duration-200 hover:bg-blue-50/50 md:px-5"
+                    className="flex w-full items-center justify-between gap-3 px-4 py-4 text-left transition-colors duration-200 hover:bg-blue-50/50 dark:hover:bg-slate-800/80 md:px-5"
                   >
-                    <span className="text-[15px] font-extrabold leading-snug text-slate-900 md:text-base">
+                    <span className="text-[15px] font-extrabold leading-snug text-slate-900 dark:text-white md:text-base">
                       {item.q}
                     </span>
                     <ChevronDown
                       size={22}
-                      className={`shrink-0 text-blue-600 transition-transform duration-300 ease-out motion-reduce:transition-none ${
+                      className={`shrink-0 text-blue-600 transition-transform duration-300 ease-out motion-reduce:transition-none dark:text-sky-400 ${
                         isOpen ? "rotate-180" : "rotate-0"
                       }`}
                       aria-hidden
@@ -717,9 +730,9 @@ const About = () => {
                           opacity: isOpen ? 1 : 0,
                         }}
                         transition={{ duration: 0.25, ease: "easeOut" }}
-                        className="border-t border-blue-100/90 px-4 pb-4 pt-3 md:px-5 md:pb-5 md:pt-3.5"
+                        className="border-t border-blue-100/90 px-4 pb-4 pt-3 dark:border-slate-700 md:px-5 md:pb-5 md:pt-3.5"
                       >
-                        <p className="text-sm leading-relaxed text-slate-600 md:text-[15px]">
+                        <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-400 md:text-[15px]">
                           {item.a}
                         </p>
                       </motion.div>

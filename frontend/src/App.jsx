@@ -33,15 +33,21 @@ const DisasterMap = lazy(() => import("./pages/DisasterMap"));
 const Careers = lazy(() => import("./pages/Careers"));
 const SearchResultList = lazy(() => import("./pages/SearchResultList"));
 const Terms = lazy(() => import("./pages/Terms.jsx"));
+const NotFound = lazy(() => import("./pages/NotFound.jsx"));
 
 function PageFallback() {
   return (
     <div
       role="status"
       aria-live="polite"
-      className="flex min-h-[50vh] w-full flex-1 items-center justify-center text-neutral-500"
+      aria-busy="true"
+      className="flex min-h-[50vh] w-full flex-1 flex-col items-center justify-center gap-4 px-4"
     >
-      Đang tải…
+      <div
+        className="h-10 w-10 animate-spin rounded-full border-2 border-slate-200 border-t-blue-600 dark:border-slate-600 dark:border-t-sky-400"
+        aria-hidden
+      />
+      <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Đang tải trang…</p>
     </div>
   );
 }
@@ -52,7 +58,14 @@ const App = () => {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <ToastContainer theme="dark" position="bottom-right" autoClose={1000} />
+      <ToastContainer
+        theme="dark"
+        position="bottom-right"
+        autoClose={2800}
+        pauseOnHover
+        limit={4}
+        newestOnTop
+      />
       <Navbar />
       <ScrollToTop />
 
@@ -86,6 +99,7 @@ const App = () => {
             <Route path="/my-collection" element={<MyCollection />} />
             <Route path="/diaries" element={<Diaries />} />
             <Route path="/terms" element={<Terms />} />
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
       </main>

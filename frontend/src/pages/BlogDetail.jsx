@@ -116,11 +116,12 @@ const BlogDetail = () => {
   if (!blogData) return null;
 
   return (
-    <div className="min-h-screen bg-white pb-20 pt-24 md:pt-36 overflow-x-hidden">
-      <div className="w-full max-w-[900px] mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen overflow-x-hidden bg-white pb-16 pt-20 dark:bg-slate-950 sm:pb-20 sm:pt-24 md:pt-32 lg:pt-36">
+      <div className="mx-auto w-full max-w-[900px] px-3 sm:px-4 md:px-6 lg:px-8">
         <button
+          type="button"
           onClick={() => navigate(-1)}
-          className="group flex items-center gap-2 text-gray-400 hover:text-blue-600 mb-10 transition-all font-semibold text-sm"
+          className="group mb-6 flex items-center gap-2 text-sm font-semibold text-gray-400 transition-all hover:text-blue-600 sm:mb-10 dark:text-slate-400 dark:hover:text-blue-400"
         >
           <ArrowLeft
             size={18}
@@ -129,18 +130,18 @@ const BlogDetail = () => {
           Quay lại cẩm nang
         </button>
 
-        <header className="mb-12">
-          <div className="flex items-center gap-3 mb-6">
+        <header className="mb-8 sm:mb-12">
+          <div className="mb-4 flex items-center gap-3 sm:mb-6">
             <span className="px-3 py-1 bg-blue-600 text-white text-[10px] font-bold uppercase tracking-widest rounded-md">
               {blogData.category}
             </span>
           </div>
 
-          <h1 className="text-3xl md:text-5xl font-black text-gray-900 leading-tight mb-8 break-words overflow-hidden w-full">
+          <h1 className="mb-6 w-full break-words text-2xl font-black leading-tight text-gray-900 dark:text-slate-100 sm:mb-8 sm:text-3xl md:text-5xl">
             {blogData.title}
           </h1>
 
-          <div className="flex flex-wrap items-center gap-6 text-sm text-gray-500 border-b border-gray-100 pb-8">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-3 border-b border-gray-100 pb-6 text-xs text-gray-500 dark:border-slate-800 dark:text-slate-400 sm:gap-6 sm:pb-8 sm:text-sm">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center border border-gray-200">
                 <User size={20} className="text-gray-400" />
@@ -177,8 +178,8 @@ const BlogDetail = () => {
           dangerouslySetInnerHTML={{ __html: safeArticleHtml }}
         />
 
-        <div className="mt-20 pt-10 border-t border-gray-100 space-y-8">
-          <h3 className="text-2xl font-black text-gray-900">Binh luan</h3>
+        <div className="mt-12 space-y-6 border-t border-gray-100 pt-8 dark:border-slate-800 sm:mt-16 sm:space-y-8 sm:pt-10 md:mt-20">
+          <h3 className="text-xl font-black text-gray-900 dark:text-slate-100 sm:text-2xl">Binh luan</h3>
 
           <form onSubmit={handleSubmitComment} className="space-y-4">
             <textarea
@@ -196,7 +197,7 @@ const BlogDetail = () => {
             />
             <button
               type="submit"
-              className="px-6 py-3 rounded-2xl bg-blue-600 text-white font-bold disabled:opacity-50"
+              className="w-full rounded-2xl bg-blue-600 px-6 py-3 font-bold text-white disabled:opacity-50 sm:w-auto"
               disabled={!token || submitting || !comment.trim()}
             >
               {submitting ? "Dang gui..." : "Gui binh luan"}
@@ -209,11 +210,11 @@ const BlogDetail = () => {
                 key={item._id}
                 className="rounded-2xl border border-slate-200 bg-white p-4"
               >
-                <div className="flex items-center justify-between mb-2">
-                  <p className="font-bold text-slate-800">
+                <div className="mb-2 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                  <p className="font-bold text-slate-800 dark:text-slate-100">
                     {item.userName || user?.name || "Nguoi dung"}
                   </p>
-                  <p className="text-xs text-slate-400">
+                  <p className="shrink-0 text-xs text-slate-400">
                     {new Date(item.createdAt).toLocaleString("vi-VN")}
                   </p>
                 </div>

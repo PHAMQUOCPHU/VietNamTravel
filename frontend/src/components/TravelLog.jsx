@@ -5,7 +5,7 @@ import { ArrowRight, Calendar, Star } from "lucide-react"; // Thêm icon Star ch
 
 const TravelLog = () => {
   return (
-    <div className="py-16 bg-white container mx-auto px-4 md:px-20 animate-fadeIn">
+    <div className="container mx-auto animate-fadeIn bg-white px-3 py-12 dark:bg-slate-950 sm:px-4 sm:py-16 md:px-10 lg:px-20">
       {/* SECTION 1: NHẬT KÝ HÀNH TRÌNH */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -13,13 +13,13 @@ const TravelLog = () => {
         viewport={{ once: true }}
         className="text-center mb-12"
       >
-        <h2 className="text-3xl md:text-4xl font-black text-gray-800 mb-4 uppercase tracking-tighter">
-          Nhật ký <span className="text-blue-600">Hành trình</span>
+        <h2 className="mb-4 text-2xl font-black uppercase tracking-tighter text-gray-800 dark:text-slate-100 sm:text-3xl md:text-4xl">
+          Nhật ký <span className="text-blue-600 dark:text-blue-400">Hành trình</span>
         </h2>
         <div className="w-24 h-1 bg-blue-600 mx-auto rounded-full"></div>
       </motion.div>
 
-      <div className="grid md:grid-cols-3 gap-8 mb-24">
+      <div className="mb-16 grid gap-6 sm:mb-20 sm:gap-8 md:mb-24 md:grid-cols-3">
         {blogs.map((blog, index) => (
           <motion.div
             key={blog.id}
@@ -29,7 +29,7 @@ const TravelLog = () => {
             whileHover={{ y: -10 }}
             className="group cursor-pointer bg-gray-50 rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500"
           >
-            <div className="relative h-60 overflow-hidden">
+            <div className="relative h-48 overflow-hidden sm:h-56 md:h-60">
               <img
                 src={blog.img}
                 alt={blog.title}
@@ -62,11 +62,11 @@ const TravelLog = () => {
         viewport={{ once: true }}
         className="text-center mb-12"
       >
-        <h2 className="text-3xl md:text-4xl font-black text-gray-800 mb-4 uppercase tracking-tighter">
-          Những nơi <span className="text-blue-600">nghỉ dưỡng</span> tốt nhất
+        <h2 className="mb-4 text-2xl font-black uppercase tracking-tighter text-gray-800 dark:text-slate-100 sm:text-3xl md:text-4xl">
+          Những nơi <span className="text-blue-600 dark:text-blue-400">nghỉ dưỡng</span> tốt nhất
         </h2>
         <div className="w-24 h-1 bg-blue-600 mx-auto rounded-full"></div>
-        <p className="text-gray-400 mt-4 text-sm font-medium italic">
+        <p className="mt-4 px-1 text-sm font-medium italic text-gray-400 dark:text-slate-500">
           Khám phá không gian sang trọng và dịch vụ đẳng cấp 5 sao dành riêng
           cho bạn
         </p>
@@ -82,7 +82,7 @@ const TravelLog = () => {
             whileInView={{ opacity: 1, x: 0 }}
             transition={{ delay: idx * 0.2 }}
             whileHover={{ flex: 3 }}
-            className="flex-1 min-h-[220px] md:min-h-0 overflow-hidden rounded-3xl cursor-pointer relative group transition-all duration-700 shadow-lg border-2 border-transparent hover:border-blue-100"
+            className="group relative min-h-[200px] flex-1 cursor-pointer overflow-hidden rounded-2xl border-2 border-transparent shadow-lg transition-all duration-700 hover:border-blue-100 sm:min-h-[220px] md:min-h-0 md:rounded-3xl"
           >
             <img
               src={res}
@@ -93,7 +93,7 @@ const TravelLog = () => {
             {/* Overlay Gradient cho chữ dễ đọc */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60 group-hover:opacity-40 transition-opacity"></div>
 
-            <div className="absolute bottom-8 left-8 text-white transition-all duration-500 transform group-hover:translate-x-2">
+            <div className="absolute bottom-4 left-4 text-white transition-all duration-500 group-hover:translate-x-1 sm:bottom-6 sm:left-6 sm:group-hover:translate-x-2 md:bottom-8 md:left-8">
               <div className="flex items-center gap-1 mb-2">
                 {[...Array(5)].map((_, i) => (
                   <Star
@@ -103,7 +103,7 @@ const TravelLog = () => {
                   />
                 ))}
               </div>
-              <p className="font-black text-2xl mb-1 tracking-tight">
+              <p className="mb-1 text-lg font-black tracking-tight sm:text-xl md:text-2xl">
                 Resort Nghỉ Dưỡng {idx + 1}
               </p>
               <p className="text-xs text-blue-200 uppercase tracking-[0.2em] font-bold">

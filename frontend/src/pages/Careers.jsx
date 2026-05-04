@@ -279,10 +279,10 @@ const Careers = () => {
                   className="p-4 sm:p-6 bg-gradient-to-br from-sky-50 to-blue-50 rounded-lg border border-sky-200 text-center"
                 >
                   <Icon size={32} className="text-sky-600 mx-auto mb-3" />
-                  <p className="text-2xl sm:text-3xl font-black text-gray-900">
+                  <p className="text-xl font-black text-gray-900 sm:text-2xl md:text-3xl">
                     {stat.value}
                   </p>
-                  <p className="text-sm text-gray-600 mt-1">{stat.label}</p>
+                  <p className="mt-1 text-xs text-gray-600 sm:text-sm">{stat.label}</p>
                 </motion.div>
               );
             })}
@@ -291,14 +291,14 @@ const Careers = () => {
       </motion.section>
 
       {/* Main Content */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
-        <div className="grid lg:grid-cols-3 gap-8">
+      <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-12 md:py-16 lg:px-8">
+        <div className="grid min-w-0 gap-6 lg:grid-cols-3 lg:gap-8">
           {/* Job Listings — dùng animate="show" thay vì whileInView để tránh kẹt opacity:0 khi IO không chạy (reload / Strict Mode) */}
           <motion.div
             variants={jobListStagger}
             initial="hidden"
             animate="show"
-            className="lg:col-span-2 space-y-6"
+            className="min-w-0 space-y-6 lg:col-span-2"
           >
             <div
               id="careers-job-listings"
@@ -349,11 +349,11 @@ const Careers = () => {
             initial={{ opacity: 0, x: 20 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
-            className="lg:col-span-1"
+            className="min-w-0 lg:col-span-1"
           >
-            <div className="space-y-6 sticky top-24">
+            <div className="space-y-6 lg:sticky lg:top-24">
               {/* Application Tracker */}
-              <div className="rounded-2xl border border-slate-200/90 bg-white/90 p-6 shadow-[0_8px_30px_rgba(15,23,42,0.06)] backdrop-blur-sm ring-1 ring-slate-900/[0.03]">
+              <div className="rounded-2xl border border-slate-200/90 bg-white/90 p-4 shadow-[0_8px_30px_rgba(15,23,42,0.06)] backdrop-blur-sm ring-1 ring-slate-900/[0.03] sm:p-6">
                 <h3 className="mb-4 flex items-center gap-2 text-base font-semibold tracking-tight text-slate-900">
                   <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-sky-100 text-sky-600">
                     <ClipboardList size={18} />
@@ -481,7 +481,7 @@ const Careers = () => {
               </div>
 
               {/* Benefits Highlight */}
-              <div className="rounded-2xl border border-emerald-200/70 bg-gradient-to-br from-emerald-50/90 via-white to-teal-50/40 p-6 shadow-sm ring-1 ring-emerald-900/[0.03]">
+              <div className="rounded-2xl border border-emerald-200/70 bg-gradient-to-br from-emerald-50/90 via-white to-teal-50/40 p-4 shadow-sm ring-1 ring-emerald-900/[0.03] sm:p-6">
                 <h4 className="mb-4 flex items-center gap-2 text-sm font-semibold text-emerald-950">
                   <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500 text-white shadow-sm">
                     <ShieldCheck size={18} />
@@ -507,7 +507,7 @@ const Careers = () => {
               </div>
 
               {/* Contact CTA */}
-              <div className="rounded-2xl border border-slate-200/90 bg-slate-50/80 p-6 text-center ring-1 ring-slate-900/[0.02]">
+              <div className="rounded-2xl border border-slate-200/90 bg-slate-50/80 p-4 text-center ring-1 ring-slate-900/[0.02] sm:p-6">
                 <p className="mb-4 text-sm font-medium text-slate-600">
                   Mọi thắc mắc? Liên hệ với Mr.Phú
                 </p>

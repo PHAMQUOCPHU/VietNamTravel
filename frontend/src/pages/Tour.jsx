@@ -461,7 +461,7 @@ const Tour = () => {
                     placeholder="Tìm tên tour, tỉnh thành..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="rounded-xl border border-slate-200 bg-white pl-4 pr-10 py-2 text-sm font-semibold text-slate-700 shadow-sm outline-none focus:border-blue-400 min-w-[220px] dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200"
+                    className="w-full min-w-0 max-w-full rounded-xl border border-slate-200 bg-white py-2 pl-4 pr-10 text-sm font-semibold text-slate-700 shadow-sm outline-none focus:border-blue-400 sm:max-w-md sm:min-w-[12rem] md:min-w-[220px] dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200"
                   />
                   <Search size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" />
                 </div>

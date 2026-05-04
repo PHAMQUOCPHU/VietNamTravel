@@ -9,7 +9,6 @@ import {
   Loader2,
 } from "lucide-react";
 import { toast } from "react-toastify";
-import VoucherWallet from "../components/VoucherWallet";
 
 const Profile = () => {
   const { user } = useContext(AppContext);
@@ -76,7 +75,7 @@ const Profile = () => {
 
   if (!user) {
     return (
-      <div className="flex justify-center items-center h-screen bg-gray-50">
+      <div className="flex min-h-[50vh] items-center justify-center bg-gray-50 px-4 py-16 dark:bg-slate-950">
         <div className="text-center">
           <Loader2
             className="animate-spin text-blue-600 mx-auto mb-4"
@@ -91,12 +90,12 @@ const Profile = () => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto my-10 p-4 animate-in fade-in duration-500 space-y-12">
+    <div className="mx-auto max-w-4xl animate-in space-y-10 px-3 py-6 fade-in duration-500 sm:my-8 sm:space-y-12 sm:px-4 sm:py-10 md:my-10">
       <div>
-        <h1 className="text-3xl font-bold text-gray-800 mb-8 border-b pb-4">
+        <h1 className="mb-6 border-b pb-3 text-2xl font-bold text-gray-800 dark:border-slate-700 dark:text-slate-100 sm:mb-8 sm:pb-4 sm:text-3xl">
           Hồ sơ cá nhân
         </h1>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid min-w-0 grid-cols-1 gap-6 md:grid-cols-3 md:gap-8">
           <div className="flex flex-col items-center space-y-4">
             <div className="relative group">
               <input
@@ -119,7 +118,7 @@ const Profile = () => {
                   onError={(e) => {
                     e.target.src = DEFAULT_AVATAR;
                   }}
-                  className="w-44 h-44 rounded-full object-cover ring-4 ring-white shadow-xl"
+                  className="h-32 w-32 rounded-full object-cover shadow-xl ring-4 ring-white dark:ring-slate-800 sm:h-40 sm:w-40 md:h-44 md:w-44"
                 />
                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/30 rounded-full">
                   <Camera size={32} className="text-white drop-shadow-md" />
@@ -137,10 +136,10 @@ const Profile = () => {
             </div>
           </div>
 
-          <div className="md:col-span-2 space-y-6 bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
+          <div className="min-w-0 space-y-5 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:space-y-6 sm:rounded-3xl sm:p-6 md:col-span-2 md:p-8">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <div>
-                <label className="block text-sm font-semibold text-gray-500 mb-2">
+                <label className="mb-2 block text-sm font-semibold text-gray-500 dark:text-slate-400">
                   Họ và tên
                 </label>
                 <div className="relative">
@@ -153,12 +152,12 @@ const Profile = () => {
                     name="name"
                     value={userData.name}
                     onChange={handleInputChange}
-                    className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+                    className="w-full min-w-0 rounded-xl border border-gray-200 py-2.5 pl-10 pr-4 outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-950 dark:text-slate-100"
                   />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-500 mb-2">
+                <label className="mb-2 block text-sm font-semibold text-gray-500 dark:text-slate-400">
                   Email
                 </label>
                 <div className="relative">
@@ -170,12 +169,12 @@ const Profile = () => {
                     type="email"
                     value={user?.email || ""}
                     disabled
-                    className="w-full pl-10 pr-4 py-2.5 border bg-gray-50 text-gray-400 rounded-xl cursor-not-allowed italic"
+                    className="w-full min-w-0 cursor-not-allowed rounded-xl border bg-gray-50 py-2.5 pl-10 pr-4 italic text-gray-400 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-500"
                   />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-500 mb-2">
+                <label className="mb-2 block text-sm font-semibold text-gray-500 dark:text-slate-400">
                   Số điện thoại
                 </label>
                 <div className="relative">
@@ -188,12 +187,12 @@ const Profile = () => {
                     name="phone"
                     value={userData.phone}
                     onChange={handleInputChange}
-                    className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+                    className="w-full min-w-0 rounded-xl border border-gray-200 py-2.5 pl-10 pr-4 outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-950 dark:text-slate-100"
                   />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-500 mb-2">
+                <label className="mb-2 block text-sm font-semibold text-gray-500 dark:text-slate-400">
                   Ngày sinh
                 </label>
                 <input
@@ -201,18 +200,18 @@ const Profile = () => {
                   name="dob"
                   value={userData.dob}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full min-w-0 rounded-xl border border-gray-200 px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-950 dark:text-slate-100"
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-500 mb-2">
+                <label className="mb-2 block text-sm font-semibold text-gray-500 dark:text-slate-400">
                   Giới tính
                 </label>
                 <select
                   name="gender"
                   value={userData.gender}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full min-w-0 rounded-xl border border-gray-200 px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-950 dark:text-slate-100"
                 >
                   <option value="male">Nam</option>
                   <option value="female">Nữ</option>
@@ -220,7 +219,7 @@ const Profile = () => {
                 </select>
               </div>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 rounded-2xl bg-slate-50 border border-slate-100 px-4 py-3">
+            <div className="grid grid-cols-1 gap-3 rounded-2xl border border-slate-100 bg-slate-50 px-3 py-3 sm:grid-cols-3 sm:px-4 dark:border-slate-700 dark:bg-slate-800/50">
               <div>
                 <p className="text-[11px] uppercase tracking-wide text-slate-500">
                   Ngày đăng ký

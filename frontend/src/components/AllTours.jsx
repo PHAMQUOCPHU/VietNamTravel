@@ -5,7 +5,7 @@ import TourList from "./TourList";
 const AllTours = () => {
   return (
     <motion.div
-      className="flex flex-col justify-center items-center my-24 p-6 md:px-28"
+      className="my-16 flex flex-col items-center justify-center px-4 py-8 sm:my-20 sm:px-6 md:my-24 md:px-8 lg:px-16 xl:px-24"
       initial={{ opacity: 0, y: 50 }}
       whileInView={{ opacity: 1, y: 0 }}
       transition={{ duration: 1, ease: "easeInOut" }}

@@ -6,22 +6,22 @@ const FoodSlide = () => {
   const [selectedFood, setSelectedFood] = useState(foodServices[0]);
 
   return (
-    <div className="py-24 bg-white min-h-screen flex flex-col items-center font-sans">
-      <div className="container mx-auto px-4 md:px-20">
+    <div className="flex min-h-0 flex-col items-center bg-white py-12 font-sans sm:py-16 md:py-24 dark:bg-slate-950">
+      <div className="container mx-auto max-w-full px-3 sm:px-6 md:px-12 lg:px-20">
         {/* TIÊU ĐỀ ĐỒNG BỘ MÀU BLUE VIETNAM TRAVEL */}
-        <div className="text-center mb-16 relative">
-          <h2 className="text-4xl font-black text-[#1e3a8a] uppercase tracking-tight flex flex-col items-center">
+        <div className="relative mb-10 text-center sm:mb-14 md:mb-16">
+          <h2 className="flex flex-col items-center text-2xl font-black uppercase tracking-tight text-[#1e3a8a] sm:text-3xl md:text-4xl dark:text-blue-200">
             DI SẢN <span className="text-[#f97316]">VỊ GIÁC</span>
-            <div className="w-16 h-1 bg-[#2563eb] mt-3 rounded-full shadow-sm"></div>
+            <div className="mt-3 h-1 w-12 rounded-full bg-[#2563eb] shadow-sm sm:w-16"></div>
           </h2>
           <p className="text-slate-400 mt-5 font-medium text-xs uppercase tracking-[0.3em]">
             Hành trình tìm về cội nguồn ẩm thực Việt
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+        <div className="grid grid-cols-1 items-center gap-6 sm:gap-8 lg:grid-cols-12 lg:gap-10">
           {/* PHẦN HIỂN THỊ CHÍNH */}
-          <div className="lg:col-span-8 relative h-[550px] w-full group">
+          <div className="group relative h-[min(52vh,420px)] w-full min-h-[240px] max-w-full sm:h-[min(56vh,480px)] md:h-[520px] lg:col-span-8 lg:h-[550px]">
             <AnimatePresence mode="wait">
               <motion.div
                 key={selectedFood.id}
@@ -29,7 +29,7 @@ const FoodSlide = () => {
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 1.02 }}
                 transition={{ duration: 0.5 }}
-                className="absolute inset-0 rounded-[2.5rem] overflow-hidden shadow-2xl border-[10px] border-white"
+                className="absolute inset-0 overflow-hidden rounded-2xl border-4 border-white shadow-2xl sm:rounded-3xl sm:border-[6px] md:rounded-[2.5rem] md:border-[10px]"
               >
                 <img
                   src={selectedFood.img}
@@ -37,7 +37,7 @@ const FoodSlide = () => {
                 />
 
                 {/* LỚP PHỦ GRADIENT & TEXT NHỎ TINH TẾ */}
-                <div className="absolute inset-0 bg-gradient-to-t from-[#1e3a8a]/90 via-transparent p-12 flex flex-col justify-end">
+                <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-[#1e3a8a]/90 via-transparent p-4 sm:p-8 md:p-12">
                   <motion.span
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -48,7 +48,7 @@ const FoodSlide = () => {
                   <motion.h3
                     initial={{ y: 20, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
-                    className="text-4xl font-black text-white uppercase leading-none drop-shadow-md mb-4"
+                    className="mb-3 text-2xl font-black uppercase leading-tight text-white drop-shadow-md sm:mb-4 sm:text-3xl md:text-4xl"
                   >
                     {selectedFood.name}
                   </motion.h3>
@@ -56,7 +56,7 @@ const FoodSlide = () => {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.2 }}
-                    className="text-white/70 text-sm italic max-w-sm line-clamp-2"
+                    className="line-clamp-2 max-w-sm text-xs italic text-white/80 sm:text-sm"
                   >
                     {selectedFood.desc}
                   </motion.p>
@@ -66,7 +66,7 @@ const FoodSlide = () => {
           </div>
 
           {/* DÃY THUMBNAIL BÊN PHẢI */}
-          <div className="lg:col-span-4 flex flex-row lg:flex-col gap-5 overflow-x-auto py-2 scrollbar-hide">
+          <div className="flex flex-row gap-3 overflow-x-auto py-1 hide-scrollbar sm:gap-4 lg:col-span-4 lg:flex-col lg:gap-5 lg:overflow-x-visible lg:py-2">
             {foodServices.map((item) => (
               <motion.div
                 key={item.id}

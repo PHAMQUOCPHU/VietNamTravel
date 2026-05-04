@@ -60,8 +60,8 @@ const Blogs = () => {
                 }}
               />
             </div>
-            <div className="flex gap-3">
-              <div className="relative flex-1">
+            <div className="flex min-w-0 gap-3">
+              <div className="relative min-w-0 flex-1">
                 <CalendarDays
                   className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
                   size={18}

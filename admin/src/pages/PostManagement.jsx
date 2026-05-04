@@ -22,6 +22,7 @@ import React, {
 import axios from "axios";
 import { AdminContext } from "../context/AdminContext";
 import { toast } from "react-toastify";
+import { getBlogPublicUrl } from "../config/publicSiteUrl";
 
 const PostManagement = () => {
   const navigate = useNavigate();
@@ -295,7 +296,7 @@ const PostManagement = () => {
                     <td className="px-8 py-4">
                       <div className="flex items-center justify-center gap-2">
                         <a
-                          href={`${import.meta.env.VITE_FRONTEND_URL || window.location.origin}/blog/${post._id}`}
+                          href={getBlogPublicUrl(post._id)}
                           target="_blank"
                           rel="noreferrer"
                           className="p-2.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"

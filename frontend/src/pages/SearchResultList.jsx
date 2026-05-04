@@ -144,12 +144,12 @@ const SearchResultList = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 py-12 px-4">
-      <div className="max-w-[1400px] mx-auto">
+    <div className="min-h-screen bg-slate-50 px-3 py-8 sm:px-4 sm:py-12">
+      <div className="mx-auto max-w-[1400px]">
         <motion.div
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
-          className="rounded-3xl bg-gradient-to-r from-[#0f3fa8] via-[#1d4ed8] to-[#2563eb] p-6 md:p-7 shadow-xl mb-8"
+          className="mb-6 rounded-2xl bg-gradient-to-r from-[#0f3fa8] via-[#1d4ed8] to-[#2563eb] p-4 shadow-xl sm:mb-8 sm:rounded-3xl sm:p-6 md:p-7"
         >
           <div className="flex items-center gap-2 text-white/95 mb-2">
             <Sparkles size={18} />
@@ -157,7 +157,7 @@ const SearchResultList = () => {
               Lịch trình khả dụng
             </span>
           </div>
-          <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight uppercase">
+          <h1 className="text-2xl font-black uppercase tracking-tight text-white sm:text-3xl md:text-4xl">
             Kết quả tìm kiếm
           </h1>
           <p className="text-blue-100 text-sm mt-2 font-medium">
@@ -205,18 +205,21 @@ const SearchResultList = () => {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.35 }}
-            className="bg-white rounded-[32px] shadow-[0_20px_60px_rgba(37,99,235,0.10)] border border-slate-100 overflow-hidden"
+            className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-[0_20px_60px_rgba(37,99,235,0.10)] sm:rounded-[32px]"
           >
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse min-w-[1000px]">
+            <p className="border-b border-slate-100 bg-slate-50/90 px-3 py-2 text-center text-[11px] font-semibold text-slate-500 md:hidden">
+              Vuốt ngang để xem đủ các cột bảng
+            </p>
+            <div className="table-responsive hide-scrollbar -mx-px px-px sm:mx-0 sm:px-0">
+              <table className="w-full min-w-[720px] border-collapse text-left sm:min-w-[900px] lg:min-w-[1000px]">
                 <thead>
                   <tr className="bg-slate-50 border-b border-slate-100">
-                    <th className="p-4 text-[11px] font-black uppercase text-slate-500 tracking-widest">Tour</th>
-                    <th className="p-4 text-[11px] font-black uppercase text-slate-500 tracking-widest w-32">Số chỗ</th>
-                    <th className="p-4 text-[11px] font-black uppercase text-slate-500 tracking-widest w-40">Thời gian</th>
+                    <th className="p-3 text-[10px] font-black uppercase tracking-wider text-slate-500 sm:p-4 sm:text-[11px] sm:tracking-widest">Tour</th>
+                    <th className="w-28 p-3 text-[10px] font-black uppercase tracking-wider text-slate-500 sm:w-32 sm:p-4 sm:text-[11px] sm:tracking-widest">Số chỗ</th>
+                    <th className="w-36 p-3 text-[10px] font-black uppercase tracking-wider text-slate-500 sm:w-40 sm:p-4 sm:text-[11px] sm:tracking-widest">Thời gian</th>
 
-                    <th className="p-4 text-[11px] font-black uppercase text-slate-500 tracking-widest w-40 text-center">Giá tour</th>
-                    <th className="p-4 text-[11px] font-black uppercase text-slate-500 tracking-widest w-40 text-center">Hành động</th>
+                    <th className="w-36 p-3 text-center text-[10px] font-black uppercase tracking-wider text-slate-500 sm:w-40 sm:p-4 sm:text-[11px] sm:tracking-widest">Giá tour</th>
+                    <th className="w-36 p-3 text-center text-[10px] font-black uppercase tracking-wider text-slate-500 sm:w-40 sm:p-4 sm:text-[11px] sm:tracking-widest">Hành động</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -232,19 +235,19 @@ const SearchResultList = () => {
                         key={`${tour._id}-${slot || idx}`}
                         className="group hover:bg-slate-50/80 transition-colors"
                       >
-                        <td className="p-4">
-                          <div className="flex gap-4">
-                            <div className="relative flex-shrink-0">
+                        <td className="p-3 sm:p-4">
+                          <div className="flex gap-2 sm:gap-4">
+                            <div className="relative shrink-0">
                               <img
                                 src={getImageUrl(tour.images?.[0] || tour.image)}
                                 alt={tour.title}
-                                className="w-20 h-20 rounded-xl object-cover shadow-sm group-hover:scale-105 transition-transform"
+                                className="h-16 w-16 rounded-lg object-cover shadow-sm transition-transform group-hover:scale-105 sm:h-20 sm:w-20 sm:rounded-xl"
                                 onError={(e) => {
                                   e.target.src = "https://via.placeholder.com/150?text=No+Image";
                                 }}
                               />
                             </div>
-                            <div className="flex flex-col justify-center max-w-[320px]">
+                            <div className="flex min-w-0 max-w-[min(100%,20rem)] flex-col justify-center sm:max-w-[320px]">
                               <span className="text-[10px] font-bold text-blue-500 uppercase tracking-wider mb-1 flex items-center gap-1">
                                 <MapPin size={10} /> {tour.city}
                               </span>
@@ -262,7 +265,7 @@ const SearchResultList = () => {
                             </div>
                           </div>
                         </td>
-                        <td className="p-4 align-top pt-6">
+                        <td className="p-3 align-top pt-4 sm:p-4 sm:pt-6">
                           <div className="flex flex-col gap-1.5 text-xs font-bold text-slate-600">
                             <div className="flex items-center gap-1.5">
                               <span className="w-4 flex justify-center text-emerald-500"><Users size={14}/></span>
@@ -278,7 +281,7 @@ const SearchResultList = () => {
                             </div>
                           </div>
                         </td>
-                        <td className="p-4 align-top pt-6">
+                        <td className="p-3 align-top pt-4 sm:p-4 sm:pt-6">
                           <div className="flex flex-col gap-1.5 text-xs font-bold text-slate-600">
                             <div className="flex items-center gap-1.5">
                               <span className="w-4 flex justify-center text-emerald-500"><Calendar size={14}/></span>
@@ -291,8 +294,8 @@ const SearchResultList = () => {
                           </div>
                         </td>
 
-                        <td className="p-4 align-top pt-6 text-center">
-                          <div className="flex flex-col items-center justify-center h-full">
+                        <td className="p-3 align-top pt-4 text-center sm:p-4 sm:pt-6">
+                          <div className="flex h-full flex-col items-center justify-center">
                             {tour.isSaleActive ? (
                               <>
                                 <span className="text-red-500 font-black text-lg tracking-tight">
@@ -309,7 +312,7 @@ const SearchResultList = () => {
                             )}
                           </div>
                         </td>
-                        <td className="p-4 align-top pt-6 text-center">
+                        <td className="p-3 align-top pt-4 text-center sm:p-4 sm:pt-6">
                           <div className="flex flex-col items-center gap-2">
                             {isFull ? (
                               <span className="text-red-500 font-black text-xs uppercase bg-red-50 px-3 py-1.5 rounded-lg border border-red-100">
@@ -336,7 +339,7 @@ const SearchResultList = () => {
             </div>
           </motion.div>
         ) : (
-          <div className="bg-white rounded-[40px] p-20 text-center border border-slate-100 shadow-sm">
+          <div className="rounded-2xl border border-slate-100 bg-white px-4 py-12 text-center shadow-sm sm:rounded-[40px] sm:p-16 md:p-20">
             <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6">
               <SearchX size={48} className="text-slate-300" />
             </div>

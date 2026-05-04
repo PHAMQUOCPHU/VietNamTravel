@@ -9,6 +9,7 @@ import { AdminContext } from "../context/AdminContext";
 import { toast } from "react-toastify";
 import { Trash2, Edit, Eye, Search, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { getBlogPublicUrl } from "../config/publicSiteUrl";
 
 const ListBlog = () => {
   const [blogs, setBlogs] = useState([]);
@@ -177,7 +178,7 @@ const ListBlog = () => {
                     <td className="px-8 py-4">
                       <div className="relative z-50 flex justify-center gap-2">
                         <a
-                          href={`${import.meta.env.VITE_FRONTEND_URL || window.location.origin}/blog/${item._id}`}
+                          href={getBlogPublicUrl(item._id)}
                           target="_blank"
                           rel="noreferrer"
                           className="p-2.5 text-gray-400 hover:text-blue-600"

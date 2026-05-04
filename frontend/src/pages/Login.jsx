@@ -112,7 +112,7 @@ const LoginPage = () => {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-3 sm:p-4 font-sans">
-      <h1 className="text-2xl sm:text-3xl md:text-5xl font-bold text-center mb-6 sm:mb-10 text-gray-800">
+      <h1 className="mb-4 max-w-[min(100%,24rem)] text-center text-xl font-bold text-gray-800 sm:mb-6 sm:max-w-none sm:text-2xl md:mb-10 md:text-5xl dark:text-slate-100">
         Welcome to <span className="text-blue-500">VietNam Travel</span>
       </h1>
 
@@ -224,9 +224,9 @@ const LoginPage = () => {
               <label className="block text-sm font-medium text-gray-700">
                 Mã xác thực (Captcha)
               </label>
-              <div className="flex items-center gap-2 border rounded-lg overflow-hidden bg-white/50">
+              <div className="flex min-w-0 items-stretch overflow-hidden rounded-lg border bg-white/50 dark:border-slate-600">
                 <div
-                  className="cursor-pointer h-[42px] bg-white flex items-center justify-center px-2 border-r hover:bg-gray-100 transition"
+                  className="flex h-[42px] w-auto shrink-0 cursor-pointer items-center justify-center border-r bg-white px-2 hover:bg-gray-100 dark:border-slate-600 dark:bg-slate-900"
                   dangerouslySetInnerHTML={{ __html: captchaSvg }}
                   onClick={fetchCaptcha}
                   title="Nhấn để đổi mã khác"
@@ -235,7 +235,7 @@ const LoginPage = () => {
                   type="text"
                   value={userCaptchaInput}
                   onChange={(e) => setUserCaptchaInput(e.target.value)}
-                  className="flex-1 px-4 py-2 outline-none bg-transparent font-bold tracking-widest text-blue-700"
+                  className="min-w-0 flex-1 bg-transparent px-3 py-2 font-bold tracking-widest text-blue-700 outline-none sm:px-4 dark:text-blue-300"
                   placeholder="Nhập mã"
                 />
               </div>

@@ -483,7 +483,7 @@ const Invoice = () => {
               {({ loading }) => (
                 <button
                   type="button"
-                  className={`inline-flex min-w-[240px] items-center justify-center rounded-xl px-8 py-3.5 text-sm font-bold text-white shadow-lg transition hover:brightness-110 active:scale-[0.98] ${
+                  className={`mx-auto flex w-full max-w-xs items-center justify-center rounded-xl px-6 py-3.5 text-sm font-bold text-white shadow-lg transition hover:brightness-110 active:scale-[0.98] sm:mx-0 sm:inline-flex sm:max-w-none sm:min-w-[240px] sm:px-8 ${
                     loading
                       ? "cursor-wait bg-slate-400"
                       : "bg-gradient-to-r from-sky-600 to-indigo-700 shadow-sky-900/20"

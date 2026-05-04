@@ -34,7 +34,7 @@ export const getRankConfig = (rankName) => {
 
 export const buildNavLinks = (user) => [
   { to: "/", label: "Home", id: "nav-home" },
-  { to: "/about", label: "About", id: "nav-about" },
+  { to: "/about", label: "Liên hệ", id: "nav-about" },
   { to: "/blogs", label: "Blogs", id: "nav-blogs" },
   { to: "/tours", label: "Tours", id: "nav-tours" },
   ...(user ? [{ to: "/my-booking", label: "My Bookings", id: "nav-bookings" }] : []),

@@ -66,22 +66,24 @@ const Diaries = () => {
 
   if (!user) {
     return (
-      <div className="flex justify-center items-center h-screen bg-gray-50">
-        <p className="text-gray-500">Vui lòng đăng nhập để xem nhật ký.</p>
+      <div className="flex min-h-[50vh] items-center justify-center bg-gray-50 px-4 py-16 dark:bg-slate-950">
+        <p className="text-center text-sm text-gray-500 dark:text-slate-400 sm:text-base">
+          Vui lòng đăng nhập để xem nhật ký.
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="bg-slate-50 min-h-screen pb-20 pt-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-6xl mx-auto space-y-10">
+    <div className="min-h-screen bg-slate-50 px-3 pb-16 pt-6 dark:bg-slate-950 sm:px-4 sm:pb-20 sm:pt-8 md:px-6 lg:px-8">
+      <div className="mx-auto max-w-6xl space-y-8 sm:space-y-10">
         
         {/* Header */}
-        <div className="text-center space-y-4">
-          <h1 className="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500 font-serif italic tracking-wide">
+        <div className="space-y-3 text-center sm:space-y-4">
+          <h1 className="bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text font-serif text-3xl font-extrabold italic tracking-wide text-transparent sm:text-4xl md:text-5xl">
             Nhật Ký Hành Trình
           </h1>
-          <p className="text-gray-500 max-w-2xl mx-auto text-sm md:text-base">
+          <p className="mx-auto max-w-2xl px-1 text-sm text-gray-500 dark:text-slate-400 md:text-base">
             Lưu giữ những khoảnh khắc tuyệt vời nhất từ những chuyến đi của bạn. Khám phá lại những kỷ niệm đẹp đẽ qua từng khung hình và trang viết.
           </p>
         </div>
@@ -94,10 +96,10 @@ const Diaries = () => {
           <>
             {/* Eligible Bookings to Write */}
             {eligibleBookings.length > 0 && (
-              <div className="bg-white p-6 rounded-3xl shadow-sm border border-blue-50">
-                <div className="flex items-center justify-between mb-6">
-                  <div>
-                    <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+              <div className="rounded-2xl border border-blue-50 bg-white p-4 shadow-sm dark:border-blue-900/40 dark:bg-slate-900 sm:rounded-3xl sm:p-6">
+                <div className="mb-4 flex flex-col gap-2 sm:mb-6 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="min-w-0 text-left">
+                    <h2 className="flex items-center gap-2 text-lg font-bold text-gray-800 dark:text-slate-100 sm:text-xl">
                       <PenTool className="text-blue-500" size={24} />
                       Chuyến đi chờ kể chuyện
                     </h2>
@@ -134,7 +136,7 @@ const Diaries = () => {
 
             {/* Masonry Grid for Diaries */}
             {diaries.length > 0 ? (
-              <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-6 space-y-6 pt-6">
+              <div className="columns-1 gap-4 space-y-4 pt-4 sm:columns-2 sm:gap-5 sm:space-y-5 sm:pt-6 lg:columns-3 xl:columns-4">
                 {diaries.map(diary => (
                   <motion.div
                     key={diary._id}

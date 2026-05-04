@@ -8,6 +8,14 @@
   font-family: "Outfit", sans-serif;
 }
 
+html {
+  color-scheme: light;
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
 html,
 body,
 #root {
@@ -16,6 +24,15 @@ body,
 
 body {
   @apply bg-white text-slate-900 transition-colors duration-300 dark:bg-slate-950 dark:text-slate-100;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  body {
+    transition-duration: 0.01ms;
+  }
 }
 
 .prose img {
@@ -31,6 +48,15 @@ body {
   display: none;
 }
 .hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Alias dùng ở Blogs / TourDetails */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }

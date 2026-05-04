@@ -32,7 +32,7 @@ const VoucherCard = ({ voucher, isSidebar = false, onUseNow }) => {
   return (
     <motion.div
       whileHover={isDisabled ? {} : { scale: 1.02 }}
-      className={`relative flex ${isSidebar ? "flex-row items-stretch" : "items-center"} bg-white border ${isDisabled ? "border-gray-200 grayscale opacity-80" : "border-blue-100"} rounded-xl shadow-sm overflow-hidden min-w-[280px] w-full`}
+      className={`relative flex w-full min-w-0 overflow-hidden rounded-xl border bg-white shadow-sm ${isSidebar ? "flex-row items-stretch" : "items-center"} ${isDisabled ? "border-gray-200 grayscale opacity-80" : "border-blue-100"}`}
     >
       <div className={`${isDisabled ? "bg-gray-400" : "bg-blue-600"} text-white ${isSidebar ? "p-3 w-16" : "p-4"} flex flex-col justify-center items-center relative h-full`}>
         <TicketPercent size={isSidebar ? 24 : 28} />

@@ -23,7 +23,7 @@ const Home = () => {
         <AdvancedSearch />
       </div>
 
-      <div className="mt-20">
+      <div className="mt-12 sm:mt-16 md:mt-20">
         {" "}
         {/* Khoảng cách để các phần dưới không bị dính vào thanh search */}
         <Services />

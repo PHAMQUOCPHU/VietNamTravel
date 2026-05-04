@@ -7,7 +7,7 @@ const Header = () => {
     <motion.div
       // Thêm id="step-header-container" để làm điểm bắt đầu cho lời chào tổng quát
       id="step-header-container"
-      className="mt-16 md:mt-20 flex flex-col lg:flex-row items-center justify-between text-center lg:text-left py-10 md:py-20 px-4 md:px-6 relative overflow-hidden max-w-7xl mx-auto"
+      className="relative mx-auto mt-16 flex max-w-7xl flex-col items-center justify-between overflow-hidden px-4 py-10 text-center md:mt-20 md:px-6 md:py-16 lg:flex-row lg:items-center lg:py-20 lg:text-left"
       initial={{ opacity: 0.2, y: 100 }}
       transition={{ duration: 1, ease: "easeInOut" }}
       whileInView={{ opacity: 1, y: 0 }}
@@ -23,7 +23,7 @@ const Header = () => {
 
       {/* Left Section - Text Content */}
       <motion.div
-        className="relative z-10 flex-1 lg:pr-12 mb-8 lg:mb-0"
+        className="relative z-10 mb-8 min-w-0 flex-1 lg:mb-0 lg:pr-12"
         initial={{ opacity: 0, x: -50 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ delay: 0.2, duration: 1, ease: "easeOut" }}
@@ -76,7 +76,7 @@ const Header = () => {
 
       {/* Right Section - Image */}
       <motion.div
-        className="relative z-10 flex-1 flex justify-center lg:justify-end"
+        className="relative z-10 flex min-w-0 flex-1 justify-center lg:justify-end"
         initial={{ opacity: 0, x: 50 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ delay: 1, duration: 1 }}

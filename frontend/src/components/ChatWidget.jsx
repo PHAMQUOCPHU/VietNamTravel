@@ -17,6 +17,8 @@ const ChatWidget = ({ layout = "fixed" }) => {
   const backendUrl = BACKEND_URL;
 
   useEffect(() => {
+    let intervalId;
+
     const checkUser = () => {
       const stored = localStorage.getItem("user");
       if (stored) {
@@ -29,18 +31,33 @@ const ChatWidget = ({ layout = "fixed" }) => {
         } catch {
           setUserId(null);
         }
-      } else {
-        if (userId !== null) {
-          setUserId(null);
-          setIsOpen(false);
-          setChat([]);
-        }
+      } else if (userId !== null) {
+        setUserId(null);
+        setIsOpen(false);
+        setChat([]);
       }
     };
 
+    const schedule = () => {
+      clearInterval(intervalId);
+      if (document.visibilityState === "hidden") return;
+      intervalId = setInterval(checkUser, 6000);
+    };
+
     checkUser();
-    const interval = setInterval(checkUser, 3500);
-    return () => clearInterval(interval);
+    schedule();
+
+    const onVisibility = () => {
+      checkUser();
+      if (document.visibilityState === "visible") schedule();
+      else clearInterval(intervalId);
+    };
+
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibility);
+      clearInterval(intervalId);
+    };
   }, [userId]);
 
   useEffect(() => {
@@ -66,10 +83,12 @@ const ChatWidget = ({ layout = "fixed" }) => {
   }, [isOpen, userId, backendUrl]);
 
   useEffect(() => {
-    if (!userId) return;
+    if (!userId) return undefined;
     let mounted = true;
+    let intervalId;
 
     const fetchUnreadCount = async () => {
+      if (document.visibilityState === "hidden") return;
       const token = localStorage.getItem("token");
       if (!token) {
         if (mounted) setUnreadCount(0);
@@ -83,16 +102,31 @@ const ChatWidget = ({ layout = "fixed" }) => {
         if (mounted && data.success) {
           setUnreadCount(data.unreadCount || 0);
         }
-      } catch (error) {
+      } catch {
         if (mounted) setUnreadCount(0);
       }
     };
 
+    const schedule = () => {
+      clearInterval(intervalId);
+      if (document.visibilityState === "hidden") return;
+      intervalId = setInterval(fetchUnreadCount, 8000);
+    };
+
     fetchUnreadCount();
-    const timer = setInterval(fetchUnreadCount, 8000);
+    schedule();
+
+    const onVisibility = () => {
+      fetchUnreadCount();
+      if (document.visibilityState === "visible") schedule();
+      else clearInterval(intervalId);
+    };
+
+    document.addEventListener("visibilitychange", onVisibility);
     return () => {
       mounted = false;
-      clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVisibility);
+      clearInterval(intervalId);
     };
   }, [userId, backendUrl]);
 

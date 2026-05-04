@@ -90,7 +90,7 @@ const AdvancedSearch = () => {
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="absolute top-full left-0 mt-2 sm:mt-3 w-56 sm:w-72 bg-white dark:bg-slate-900 shadow-2xl rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-blue-100 dark:border-slate-600 z-50 flex flex-col gap-3 sm:gap-4"
+                className="absolute left-0 top-full z-50 mt-2 flex w-[min(100%,18rem)] max-w-[calc(100vw-1rem)] flex-col gap-3 rounded-xl border border-blue-100 bg-white p-3 shadow-2xl dark:border-slate-600 dark:bg-slate-900 sm:mt-3 sm:w-72 sm:max-w-none sm:rounded-2xl sm:p-4 sm:gap-4"
                 onClick={(e) => e.stopPropagation()}
               >
                 <div>
@@ -169,15 +169,15 @@ const AdvancedSearch = () => {
         </div>
 
         {/* 3. Loại hình */}
-        <div className="relative px-6 py-3 w-full md:w-auto flex-1 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-full cursor-pointer transition-colors">
-          <div className="flex items-center gap-3">
-            <Compass className="text-blue-600 shrink-0" size={20} />
-            <div className="flex flex-col min-w-0 w-full">
-              <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+        <div className="relative w-full flex-1 cursor-pointer rounded-lg px-3 py-2.5 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800 sm:px-4 sm:py-3 md:w-auto md:rounded-full md:px-6">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Compass className="h-4 w-4 shrink-0 text-blue-600 sm:h-5 sm:w-5" strokeWidth={2} />
+            <div className="flex min-w-0 w-full flex-col">
+              <span className="text-[8px] font-black uppercase tracking-widest text-gray-400 sm:text-[10px]">
                 Loại hình
               </span>
               <select
-                className="bg-transparent text-sm font-extrabold text-slate-800 dark:text-slate-100 outline-none w-full cursor-pointer appearance-none"
+                className="w-full cursor-pointer appearance-none bg-transparent text-xs font-extrabold text-slate-800 outline-none dark:text-slate-100 sm:text-sm"
                 value={searchData.preference}
                 onChange={(e) =>
                   setSearchData((prev) => ({
@@ -199,16 +199,16 @@ const AdvancedSearch = () => {
 
         {/* 4. Hành khách */}
         <div
-          className="relative px-6 py-3 w-full md:w-auto flex-1 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-full cursor-pointer transition-colors"
+          className="relative w-full flex-1 cursor-pointer rounded-lg px-3 py-2.5 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800 sm:px-4 sm:py-3 md:w-auto md:rounded-full md:px-6"
           onClick={() => setShowGuests(!showGuests)}
         >
-          <div className="flex items-center gap-3">
-            <Users className="text-blue-600 shrink-0" size={20} />
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Users className="h-4 w-4 shrink-0 text-blue-600 sm:h-5 sm:w-5" strokeWidth={2} />
             <div className="flex flex-col min-w-0">
-              <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+              <span className="text-[8px] font-black uppercase tracking-widest text-gray-400 sm:text-[10px]">
                 Khách
               </span>
-              <span className="text-sm font-extrabold text-slate-800 dark:text-slate-100">
+              <span className="text-xs font-extrabold text-slate-800 dark:text-slate-100 sm:text-sm">
                 {searchData.adults + searchData.children} người
               </span>
             </div>
@@ -218,7 +218,7 @@ const AdvancedSearch = () => {
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="absolute top-full right-0 mt-3 w-64 bg-white dark:bg-slate-900 shadow-2xl rounded-2xl p-4 border border-blue-100 dark:border-slate-600 z-50"
+                className="absolute right-0 top-full z-50 mt-3 w-[min(100%,16rem)] max-w-[calc(100vw-1.25rem)] rounded-2xl border border-blue-100 bg-white p-4 shadow-2xl dark:border-slate-600 dark:bg-slate-900 sm:w-64 sm:max-w-none"
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className="space-y-4">

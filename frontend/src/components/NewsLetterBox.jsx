@@ -36,12 +36,12 @@ const NewsLetterBox = () => {
       </motion.p>
       <form
         onSubmit={onSubmitHandler}
-        className="w-full sm:w-1/2 mx-auto flex flex-col sm:flex-row items-center gap-4 px-4"
+        className="mx-auto flex w-full max-w-lg flex-col items-stretch gap-3 px-4 sm:max-w-2xl sm:flex-row sm:items-center sm:gap-4"
       >
         <motion.input
           type="email"
           placeholder="Nhập email của bạn"
-          className="bg-inherit w-full py-3 px-4 border-2 border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="min-w-0 w-full rounded-lg border-2 border-gray-400 bg-inherit px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
           required
           initial={{ opacity: 0, x: -50 }}
           animate={{ opacity: 1, x: 0 }}
@@ -49,7 +49,7 @@ const NewsLetterBox = () => {
         />
         <motion.button
           type="submit"
-          className="bg-gradient-to-b from-sky-500 to-blue-500 text-white py-3 px-8 rounded-lg hover:from-sky-600 hover:to-blue-600 transition ease-in-out duration-200 whitespace-nowrap"
+          className="w-full shrink-0 rounded-lg bg-gradient-to-b from-sky-500 to-blue-500 px-6 py-3 text-white transition duration-200 ease-in-out hover:from-sky-600 hover:to-blue-600 sm:w-auto sm:px-8"
           initial={{ opacity: 0, x: 50 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 1, duration: 0.5 }}

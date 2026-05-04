@@ -66,9 +66,9 @@ const PaymentPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4 py-20">
-      <div className="bg-white p-8 rounded-[2.5rem] shadow-xl max-w-md w-full text-center border-4 border-blue-50">
-        <h2 className="text-2xl font-black text-[#005baa] mb-2 uppercase tracking-tighter">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-3 py-12 sm:p-4 sm:py-20">
+      <div className="w-full max-w-md rounded-2xl border-2 border-blue-50 bg-white p-5 text-center shadow-xl sm:rounded-[2.5rem] sm:border-4 sm:p-8">
+        <h2 className="mb-2 text-xl font-black uppercase tracking-tighter text-[#005baa] sm:text-2xl">
           Thanh Toán VNPay
         </h2>
         <p className="text-gray-500 text-sm mb-8 italic">
