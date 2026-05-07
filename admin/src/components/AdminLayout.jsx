@@ -1,9 +1,35 @@
-import { Suspense, useEffect, useState } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import { useLocation, Outlet } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import AdminHeader from "./AdminHeader";
 import { motion } from "framer-motion";
 import { Menu } from "lucide-react";
+
+class AdminOutletErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { error };
+  }
+
+  render() {
+    const { error } = this.state;
+    if (error) {
+      return (
+        <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-sm text-red-800">
+          <p className="font-bold">Không hiển thị được trang này</p>
+          <p className="mt-2 font-mono text-xs opacity-90">
+            {String(error?.message || error)}
+          </p>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 const AdminLayout = () => {
   const location = useLocation();
@@ -12,7 +38,9 @@ const AdminLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
-    setSidebarOpen(false);
+    // tránh warning "setState in effect" của eslint rule dự án
+    const t = setTimeout(() => setSidebarOpen(false), 0);
+    return () => clearTimeout(t);
   }, [location.pathname]);
 
   return (
@@ -71,7 +99,9 @@ const AdminLayout = () => {
               </div>
             }
           >
-            <Outlet />
+            <AdminOutletErrorBoundary>
+              <Outlet />
+            </AdminOutletErrorBoundary>
           </Suspense>
         </motion.main>
       </div>

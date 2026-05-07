@@ -1,15 +1,22 @@
 import React, { useEffect, useState, useCallback, useMemo } from "react";
 import DOMPurify from "dompurify";
 import { useParams, useNavigate } from "react-router-dom";
-import axios from "axios";
 import { Calendar, ArrowLeft, Loader2, User, Eye, MessageCircle } from "lucide-react";
 import { toast } from "react-toastify";
 import { useContext } from "react";
 import { AppContext } from "../context/AppContext";
 import { BACKEND_URL } from "../config/env";
+import { getBlogDetail, submitBlogComment } from "../services";
+import {
+  buildBlogSlug,
+  extractBlogIdFromSlug,
+  isMongoObjectId,
+} from "../lib/blogSlug";
 
 const BlogDetail = () => {
-  const { id } = useParams();
+  const params = useParams();
+  const rawParam = params.slug || params.id || "";
+  const blogId = extractBlogIdFromSlug(rawParam);
   const navigate = useNavigate();
   const { token, user } = useContext(AppContext);
   const [blogData, setBlogData] = useState(null);
@@ -31,6 +38,14 @@ const BlogDetail = () => {
     [blogData?.content],
   );
 
+  useEffect(() => {
+    // URL không hợp lệ (không tách được id) -> tránh spinner vô hạn
+    if (rawParam && !blogId) {
+      setLoading(false);
+      toast.error("Liên kết bài viết không hợp lệ.");
+    }
+  }, [rawParam, blogId]);
+
   const getViewerId = () => {
     const storedId = localStorage.getItem("blog_viewer_id");
     if (storedId) return storedId;
@@ -44,12 +59,26 @@ const BlogDetail = () => {
       try {
         setLoading(true);
         const viewerId = getViewerId();
-        const { data } = await axios.get(`${backendUrl}/api/blog/${id}`, {
-          params: { incrementView: true },
-          headers: { "x-viewer-id": viewerId },
+        const data = await getBlogDetail({
+          backendUrl,
+          blogId,
+          incrementView: true,
+          viewerId,
           signal,
         });
-        if (data.success) setBlogData(data.blog);
+        if (data.success) {
+          setBlogData(data.blog);
+          // Redirect legacy /blog/:id -> /blogs/<slug>-<id>
+          if (isMongoObjectId(rawParam)) {
+            const next = `/blogs/${buildBlogSlug(data.blog)}`;
+            navigate(next, { replace: true });
+          } else if (params.slug) {
+            const canonical = buildBlogSlug(data.blog);
+            if (canonical && params.slug !== canonical) {
+              navigate(`/blogs/${canonical}`, { replace: true });
+            }
+          }
+        }
       } catch (error) {
         if (
           error.code !== "ERR_CANCELED" &&
@@ -64,16 +93,16 @@ const BlogDetail = () => {
         }
       }
     },
-    [id, backendUrl],
+    [blogId, backendUrl, rawParam, navigate, params.slug],
   );
 
   useEffect(() => {
-    if (!id) return undefined;
+    if (!blogId) return undefined;
     const ac = new AbortController();
     fetchBlogDetail({ signal: ac.signal });
     window.scrollTo(0, 0);
     return () => ac.abort();
-  }, [id, fetchBlogDetail]);
+  }, [blogId, fetchBlogDetail]);
 
   const handleSubmitComment = async (e) => {
     e.preventDefault();
@@ -86,11 +115,12 @@ const BlogDetail = () => {
 
     try {
       setSubmitting(true);
-      const { data } = await axios.post(
-        `${backendUrl}/api/blog/${id}/comments`,
-        { content: comment },
-        { headers: { token } },
-      );
+      const data = await submitBlogComment({
+        backendUrl,
+        token,
+        blogId,
+        content: comment,
+      });
       if (data.success) {
         setBlogData((prev) => ({ ...prev, comments: data.comments }));
         setComment("");
@@ -109,6 +139,23 @@ const BlogDetail = () => {
       <div className="flex flex-col justify-center items-center h-screen gap-4">
         <Loader2 className="animate-spin text-blue-600" size={40} />
         <p className="text-gray-500 animate-pulse">Đang chuẩn bị bài viết...</p>
+      </div>
+    );
+  }
+
+  if (!blogId) {
+    return (
+      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3 px-4 pt-24">
+        <p className="text-sm font-semibold text-slate-500">
+          Không tìm thấy bài viết hoặc liên kết không hợp lệ.
+        </p>
+        <button
+          type="button"
+          onClick={() => navigate("/blogs")}
+          className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-bold text-white shadow hover:bg-blue-700"
+        >
+          Về danh sách bài viết
+        </button>
       </div>
     );
   }

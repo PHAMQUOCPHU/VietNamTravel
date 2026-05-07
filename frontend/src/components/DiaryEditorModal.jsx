@@ -10,8 +10,8 @@ import {
   BookImage,
 } from "lucide-react";
 import { AppContext } from "../context/AppContext";
-import axios from "axios";
 import { toast } from "react-toastify";
+import { createDiary } from "../services";
 
 const DiaryEditorModal = ({ booking, onClose, onSuccess }) => {
   const { backendUrl, user } = useContext(AppContext);
@@ -66,35 +66,33 @@ const DiaryEditorModal = ({ booking, onClose, onSuccess }) => {
 
     setLoading(true);
     try {
-      const formData = new FormData();
-      formData.append("userId", user._id);
-      formData.append("bookingId", booking._id);
-      formData.append("tourId", booking.tourId?._id || booking.tourId);
-      formData.append("tourTitle", booking.tourTitle);
-      formData.append("title", title);
-      formData.append("content", content);
-      formData.append("rating", rating);
-      formData.append("emotion", emotion);
+      const tokenLocal = localStorage.getItem("token");
+      if (!tokenLocal) {
+        toast.error("Bạn cần đăng nhập lại để lưu nhật ký.");
+        return;
+      }
 
-      // Lấy địa điểm ngẫu nhiên từ title (hoặc bạn có thể thêm field cho khách tự nhập)
+      // Lấy địa điểm ngẫu nhiên từ tourTitle (hoặc bạn có thể thêm field cho khách tự nhập)
       const location = booking.tourTitle.split("-")[0] || "Việt Nam";
-      formData.append("location", location);
-      formData.append("travelDate", booking.bookAt);
+      const payload = {
+        userId: user._id,
+        bookingId: booking._id,
+        tourId: booking.tourId?._id || booking.tourId,
+        tourTitle: booking.tourTitle,
+        title,
+        content,
+        rating,
+        emotion,
+        location,
+        travelDate: booking.bookAt,
+      };
 
-      images.forEach((img) => {
-        formData.append("images", img);
+      const data = await createDiary({
+        backendUrl,
+        token: tokenLocal,
+        payload,
+        images,
       });
-
-      const { data } = await axios.post(
-        `${backendUrl}/api/diaries/create`,
-        formData,
-        {
-          headers: {
-            token: localStorage.getItem("token"),
-            "Content-Type": "multipart/form-data",
-          },
-        },
-      );
 
       if (data.success) {
         toast.success(data.message);

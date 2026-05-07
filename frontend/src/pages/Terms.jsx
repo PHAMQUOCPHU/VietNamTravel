@@ -1,5 +1,12 @@
-import { useContext, useEffect, useMemo, useState, useRef, useCallback } from "react";
-import axios from "axios";
+import {
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  useRef,
+  useCallback,
+} from "react";
+import { Link } from "react-router-dom";
 import DOMPurify from "dompurify";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -10,20 +17,41 @@ import {
   Scale,
   RefreshCw,
   ClipboardList,
-  Sparkles,
-  ChevronDown,
   ScrollText,
-  CheckCircle2,
   Cloud,
+  ChevronDown,
+  Info,
+  UserCheck,
+  Copyright,
+  AlertTriangle,
+  CircleX,
 } from "lucide-react";
 import { AppContext } from "../context/AppContext";
+import { resolveSiteLogoSrc } from "../utils/siteLogo";
+import { getTerms } from "../services";
 
-const SCROLL_OFFSET = 112;
+const COMPANY_NAME = "VietNam Travel";
+/** Navbar h-16 sm:h-20 + khoảng đệm */
+const SCROLL_MARGIN_TOP = "7.5rem";
 
-/** Chọn icon theo tiêu đề (fallback theo chỉ số) */
+/** Chọn icon theo tiêu đề (fallback theo chỉ số) — palette teal #115e59 */
 function SectionIcon({ title, index }) {
   const Icon = useMemo(() => {
     const t = (title || "").toLowerCase();
+    if (t.includes("giới thiệu") || t.includes("thông tin chung"))
+      return Info;
+    if (
+      t.includes("điều kiện") ||
+      t.includes("sử dụng") ||
+      t.includes("đăng ký")
+    )
+      return UserCheck;
+    if (
+      t.includes("sở hữu") ||
+      t.includes("bản quyền") ||
+      t.includes("trí tuệ")
+    )
+      return Copyright;
     if (t.includes("thanh toán") || t.includes("payment") || t.includes("momo"))
       return CreditCard;
     if (
@@ -35,35 +63,45 @@ function SectionIcon({ title, index }) {
       return Shield;
     if (t.includes("hủy") || t.includes("hoàn") || t.includes("refund"))
       return Scale;
-    if (t.includes("trách nhiệm") || t.includes("khách hàng")) return ClipboardList;
+    if (t.includes("trách nhiệm") || t.includes("giới hạn"))
+      return AlertTriangle;
+    if (t.includes("chấm dứt") || t.includes("hủy dịch vụ")) return CircleX;
     if (t.includes("thay đổi") || t.includes("sửa đổi")) return RefreshCw;
     if (
       t.includes("thông tin") ||
       t.includes("xác nhận") ||
-      t.includes("chung")
+      t.includes("quyền") ||
+      t.includes("nghĩa vụ")
     )
-      return CheckCircle2;
-    if (t.includes("điều khoản") || t.includes("pháp lý")) return ScrollText;
+      return Scale;
+    if (t.includes("điều khoản") || t.includes("pháp lý") || t.includes("khác"))
+      return FileText;
     if (t.includes("cloud") || t.includes("ai")) return Cloud;
-    const fallbacks = [FileText, Sparkles, ClipboardList];
+    const fallbacks = [FileText, ClipboardList, ScrollText];
     return fallbacks[index % fallbacks.length];
   }, [title, index]);
 
-  return <Icon size={22} strokeWidth={2} className="shrink-0" aria-hidden />;
+  return (
+    <Icon
+      size={16}
+      strokeWidth={2}
+      className="shrink-0 text-[#115e59]"
+      aria-hidden
+    />
+  );
 }
 
-const proseTerms =
-  "terms-html prose prose-slate dark:prose-invert max-w-none min-w-0 prose-lg " +
-  "leading-relaxed prose-p:leading-[1.75] prose-li:leading-relaxed prose-headings:text-slate-900 " +
-  "dark:prose-headings:text-slate-50 prose-headings:font-semibold prose-a:text-blue-600 " +
-  "prose-strong:text-slate-900 dark:prose-strong:text-white prose-p:break-words prose-li:break-words " +
-  "[&_*]:max-w-full [&_p]:overflow-wrap-anywhere [&_li]:overflow-wrap-anywhere " +
-  "[&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-lg [&_svg]:max-w-full " +
-  "[&_video]:max-w-full [&_iframe]:max-w-full [&_pre]:max-w-full [&_pre]:overflow-x-auto " +
-  "[&_pre]:whitespace-pre-wrap [&_table]:block [&_table]:w-full [&_table]:max-w-full [&_table]:overflow-x-auto";
+const proseInCard =
+  "prose prose-stone prose-sm max-w-none min-w-0 leading-relaxed " +
+  "prose-p:text-stone-600 prose-p:leading-relaxed prose-li:text-stone-600 " +
+  "prose-headings:text-stone-900 prose-strong:text-stone-800 " +
+  "prose-a:text-teal-800 prose-a:no-underline hover:prose-a:underline " +
+  "prose-ul:list-none prose-ul:space-y-2 prose-ul:pl-0 " +
+  "[&_p]:break-words [&_li]:break-words [&_*]:max-w-full";
 
 export default function Terms() {
-  const { backendUrl } = useContext(AppContext);
+  const { backendUrl, siteConfig } = useContext(AppContext);
+  const siteLogoSrc = resolveSiteLogoSrc(siteConfig?.logoUrl);
   const [loading, setLoading] = useState(true);
   const [sections, setSections] = useState([]);
   const [lastUpdated, setLastUpdated] = useState(null);
@@ -76,7 +114,7 @@ export default function Terms() {
     const run = async () => {
       setLoading(true);
       try {
-        const { data } = await axios.get(`${backendUrl}/api/terms`);
+        const data = await getTerms({ backendUrl });
         if (!cancelled && data.success && data.terms?.sections) {
           const sorted = [...data.terms.sections].sort(
             (a, b) => (a.order ?? 0) - (b.order ?? 0),
@@ -96,12 +134,12 @@ export default function Terms() {
     };
   }, [backendUrl]);
 
-  const formatDateBadge = useCallback((v) => {
-    if (!v) return "";
+  const formatDateHeader = useCallback((v) => {
+    if (!v) return "—";
     try {
       return new Date(v).toLocaleDateString("vi-VN", {
         day: "2-digit",
-        month: "short",
+        month: "2-digit",
         year: "numeric",
       });
     } catch {
@@ -112,22 +150,20 @@ export default function Terms() {
   const scrollToSection = useCallback((index) => {
     const el = sectionRefs.current[index];
     if (!el) return;
-    const top = el.getBoundingClientRect().top + window.scrollY - SCROLL_OFFSET;
-    window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
     setMobileNavOpen(false);
   }, []);
 
-  /** Scrollspy: gắn mục khớp với vị trí cuộn */
   useEffect(() => {
     if (sections.length === 0) return undefined;
 
     const updateActive = () => {
       let next = 0;
+      const refY = 140;
       sectionRefs.current.forEach((node, idx) => {
         if (!node) return;
         const rect = node.getBoundingClientRect();
-        const ref = SCROLL_OFFSET + 24;
-        if (rect.top <= ref) next = idx;
+        if (rect.top <= refY) next = idx;
       });
       setActiveIndex((prev) => (prev === next ? prev : next));
     };
@@ -142,79 +178,70 @@ export default function Terms() {
   }, [sections.length]);
 
   return (
-    <div className="w-full min-w-0 max-w-full overflow-x-hidden bg-gradient-to-b from-slate-50 via-blue-50/40 to-white dark:from-slate-950 dark:via-slate-950 dark:to-slate-950">
-      {/* ========== Hero (glass + gradient glow) ========== */}
-      <div className="relative isolate overflow-hidden border-b border-blue-100/70 dark:border-slate-800">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 opacity-90 bg-[radial-gradient(ellipse_120%_80%_at_50%_-20%,rgba(37,99,235,0.22),transparent_52%),linear-gradient(105deg,rgba(59,130,246,0.08),transparent_40%),linear-gradient(-25deg,rgba(99,102,241,0.12),transparent_45%)] dark:opacity-60 dark:bg-[radial-gradient(ellipse_100%_80%_at_50%_-25%,rgba(59,130,246,0.35),transparent_55%)]"
-        />
-        <div className="relative mx-auto max-w-5xl px-4 pb-16 pt-14 sm:px-6 md:pb-20 md:pt-16">
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.55, ease: [0.25, 0.1, 0.25, 1] }}
-            className="mx-auto flex max-w-3xl flex-col items-center text-center"
-          >
-            <span className="mb-6 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/35 ring-4 ring-blue-500/15">
-              <ScrollText size={28} strokeWidth={2} />
+    <div className="terms-hero-pattern font-terms w-full min-w-0 overflow-x-hidden text-stone-800 dark:bg-stone-950 dark:text-stone-100">
+      {/* Header bar — giống mẫu Canva (sticky dưới Navbar cố định) */}
+      <header className="sticky top-16 z-40 w-full border-b border-stone-200 bg-white dark:border-stone-700 dark:bg-stone-950 sm:top-20">
+        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
+          <div className="flex items-center gap-3">
+            <img
+              src={siteLogoSrc}
+              alt={COMPANY_NAME}
+              width={36}
+              height={36}
+              className="h-9 w-9 shrink-0 rounded-lg object-cover ring-1 ring-sky-100 border border-sky-100/80 dark:border-slate-700 dark:ring-slate-700"
+            />
+            <span className="bg-gradient-to-r from-sky-600 to-blue-600 bg-clip-text text-lg font-extrabold tracking-tight text-transparent">
+              {COMPANY_NAME}
             </span>
-            <div className="w-full rounded-3xl border border-white/70 bg-white/65 px-6 py-8 shadow-xl shadow-blue-900/10 backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/55 md:px-10 md:py-10">
-              <p className="text-[11px] font-bold uppercase tracking-[0.35em] text-blue-700/85 dark:text-blue-300">
-                VietNam Travel
-              </p>
-              <h1 className="mt-2 text-3xl font-black tracking-tight text-[#0b2d5c] dark:text-white sm:text-4xl md:text-[2.65rem] md:leading-tight">
-                Điều khoản dịch vụ
-              </h1>
-              <p className="mx-auto mt-4 max-w-xl text-[15px] leading-relaxed text-slate-600 dark:text-slate-300">
-                Vui lòng đọc kỹ các điều khoản áp dụng khi sử dụng nền tảng đặt
-                tour và dịch vụ của chúng tôi.
-              </p>
-              {lastUpdated ? (
-                <div className="mt-7 flex justify-center">
-                  <span className="inline-flex items-center gap-2 rounded-full border border-blue-200/90 bg-blue-50/90 px-4 py-1.5 text-xs font-semibold text-blue-900 shadow-sm dark:border-blue-500/30 dark:bg-blue-950/60 dark:text-blue-100">
-                    <Sparkles size={13} className="text-blue-600 dark:text-blue-300" />
-                    Cập nhật {formatDateBadge(lastUpdated)}
-                  </span>
-                </div>
-              ) : null}
-            </div>
-          </motion.div>
+          </div>
+          <span className="text-xs text-stone-400">
+            Cập nhật: {formatDateHeader(lastUpdated)}
+          </span>
         </div>
-      </div>
+      </header>
 
       {loading ? (
-        <div className="flex justify-center gap-2 py-24 text-slate-500">
+        <div className="flex justify-center gap-2 py-24 text-stone-500">
           <Loader2 className="animate-spin" size={24} aria-hidden />
           <span className="font-medium">Đang tải điều khoản…</span>
         </div>
       ) : sections.length === 0 ? (
-        <p className="py-20 text-center text-slate-500">
+        <p className="py-20 text-center text-stone-500">
           Chưa có nội dung điều khoản. Vui lòng quay lại sau.
         </p>
       ) : (
         <>
-          {/* ========== Mobile: dropdown điều hướng cố định ========== */}
-          <div className="sticky top-[4rem] z-40 lg:hidden border-b border-slate-200/90 bg-white/90 px-4 py-2.5 shadow-sm backdrop-blur-md dark:border-slate-800 dark:bg-slate-950/90">
+          {/* Hero */}
+          <section className="mx-auto w-full max-w-5xl px-6 pb-10 pt-16 md:pt-20">
+            <h1 className="font-terms-display text-4xl font-bold leading-tight text-stone-900 dark:text-white md:text-5xl">
+              Điều khoản Dịch vụ
+            </h1>
+            <p className="mt-4 max-w-2xl text-base leading-relaxed text-stone-500 dark:text-stone-400">
+              Vui lòng đọc kỹ các điều khoản dưới đây trước khi sử dụng dịch vụ
+              của chúng tôi. Bằng việc truy cập và sử dụng, bạn đồng ý tuân thủ
+              các điều khoản này.
+            </p>
+          </section>
+
+          {/* Mobile TOC */}
+          <div className="sticky top-[7.25rem] z-30 border-b border-stone-200 bg-white/95 px-4 py-2.5 backdrop-blur-md dark:border-stone-700 dark:bg-stone-950/95 sm:top-[8.25rem] lg:hidden">
             <div className="relative mx-auto max-w-5xl">
               <button
                 type="button"
                 aria-expanded={mobileNavOpen}
                 onClick={() => setMobileNavOpen((v) => !v)}
-                className="flex w-full items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left text-sm font-bold text-slate-800 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                className="flex w-full items-center justify-between gap-3 rounded-xl border border-stone-200 bg-white px-4 py-3 text-left text-sm font-semibold text-stone-800 shadow-sm dark:border-stone-600 dark:bg-stone-900 dark:text-stone-100"
               >
                 <span className="line-clamp-2 min-w-0">
-                  <span className="text-xs font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-400">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-teal-800 dark:text-teal-300">
                     Mục {activeIndex + 1}
                   </span>
                   <br />
-                  <span className="text-[15px] font-bold">
-                    {sections[activeIndex]?.title}
-                  </span>
+                  <span>{sections[activeIndex]?.title}</span>
                 </span>
                 <ChevronDown
                   size={22}
-                  className={`shrink-0 text-slate-500 transition-transform ${mobileNavOpen ? "rotate-180" : ""}`}
+                  className={`shrink-0 text-stone-500 transition-transform ${mobileNavOpen ? "rotate-180" : ""}`}
                   aria-hidden
                 />
               </button>
@@ -225,7 +252,7 @@ export default function Terms() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -6 }}
                     transition={{ duration: 0.2 }}
-                    className="absolute left-0 right-0 mt-2 max-h-[min(52vh,320px)] overflow-y-auto rounded-2xl border border-slate-200 bg-white p-2 shadow-xl dark:border-slate-700 dark:bg-slate-900"
+                    className="absolute left-0 right-0 mt-2 max-h-[min(52vh,320px)] overflow-y-auto rounded-xl border border-stone-200 bg-white p-2 shadow-xl dark:border-stone-600 dark:bg-stone-900"
                     role="listbox"
                   >
                     {sections.map((s, i) => (
@@ -235,13 +262,13 @@ export default function Terms() {
                           role="option"
                           aria-selected={activeIndex === i}
                           onClick={() => scrollToSection(i)}
-                          className={`flex w-full gap-3 rounded-xl px-3 py-3 text-left text-sm transition-colors ${
+                          className={`flex w-full gap-3 rounded-lg px-3 py-3 text-left text-sm transition-colors ${
                             activeIndex === i
-                              ? "bg-blue-50 font-bold text-blue-900 dark:bg-blue-950/70 dark:text-blue-100"
-                              : "text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800"
+                              ? "bg-teal-50 font-semibold text-teal-900 dark:bg-teal-950/50 dark:text-teal-100"
+                              : "text-stone-700 hover:bg-stone-50 dark:text-stone-200 dark:hover:bg-stone-800"
                           }`}
                         >
-                          <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-[12px] font-black text-blue-700 dark:bg-blue-900/50 dark:text-blue-200">
+                          <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-teal-800/10 text-[12px] font-bold text-teal-800 dark:bg-teal-500/20 dark:text-teal-200">
                             {i + 1}
                           </span>
                           <span className="min-w-0 leading-snug">{s.title}</span>
@@ -254,95 +281,106 @@ export default function Terms() {
             </div>
           </div>
 
-          <div className="mx-auto max-w-6xl px-4 pb-16 pt-8 sm:px-6 sm:pb-24 sm:pt-10 lg:pb-28">
-            <div className="flex flex-col gap-10 lg:grid lg:grid-cols-[minmax(0,260px)_minmax(0,1fr)] lg:gap-12 xl:gap-14">
-              {/* ========== Desktop sticky sidebar ========== */}
+          <div className="mx-auto w-full max-w-5xl px-6 pb-20">
+            <div className="grid grid-cols-1 gap-10 lg:grid-cols-[240px_minmax(0,1fr)]">
+              {/* Desktop TOC */}
               <aside className="hidden lg:block">
                 <nav
-                  className="sticky top-28 rounded-3xl border border-slate-200/90 bg-white/90 p-4 shadow-lg shadow-slate-200/50 backdrop-blur-md dark:border-slate-700 dark:bg-slate-900/85 dark:shadow-black/40"
-                  aria-label="Điều khoản — điều hướng nhanh"
+                  className="sticky top-36"
+                  aria-label="Mục lục điều khoản"
                 >
-                  <p className="mb-4 px-2 text-[10px] font-black uppercase tracking-widest text-slate-400">
-                    Nội dung
+                  <p className="mb-4 text-xs font-semibold uppercase tracking-widest text-stone-400">
+                    Mục lục
                   </p>
-                  <ul className="space-y-1">
+                  <ul className="space-y-2 text-sm">
                     {sections.map((s, i) => (
-                      <li key={`d-${s.order}-${i}`}>
-                        <button
-                          type="button"
-                          onClick={() => scrollToSection(i)}
-                          className={`group flex w-full items-start gap-3 rounded-2xl px-3 py-2.5 text-left text-[13px] font-semibold leading-snug transition-all ${
+                      <li key={`toc-${s.order}-${i}`}>
+                        <a
+                          href={`#terms-section-${i}`}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            scrollToSection(i);
+                          }}
+                          className={`terms-toc-link block border-l-2 py-1 pl-3 ${
                             activeIndex === i
-                              ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/25"
-                              : "text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+                              ? "border-teal-800 font-medium text-teal-800 dark:border-teal-400 dark:text-teal-300"
+                              : "border-transparent text-stone-600 hover:border-teal-800 hover:text-teal-800 dark:text-stone-400 dark:hover:text-teal-300"
                           }`}
                         >
-                          <span
-                            className={`mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-[11px] font-black ${
-                              activeIndex === i
-                                ? "bg-white/20 text-white"
-                                : "bg-slate-100 text-blue-700 dark:bg-slate-700 dark:text-blue-300"
-                            }`}
-                          >
-                            {i + 1}
-                          </span>
-                          <span className="min-w-0 pt-0.5">{s.title}</span>
-                        </button>
+                          {i + 1}. {s.title}
+                        </a>
                       </li>
                     ))}
                   </ul>
                 </nav>
               </aside>
 
-              {/* ========== Sections + cards ========== */}
-              <div className="min-w-0 space-y-8 sm:space-y-10">
+              <main className="space-y-6">
                 {sections.map((section, i) => (
-                  <motion.article
+                  <article
                     key={`${section.order}-${i}`}
                     id={`terms-section-${i}`}
                     ref={(el) => {
                       sectionRefs.current[i] = el;
                     }}
-                    initial={{ opacity: 0, y: 36 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true, margin: "-80px" }}
-                    transition={{
-                      duration: 0.5,
-                      delay: Math.min(i * 0.05, 0.35),
-                      ease: [0.25, 0.1, 0.25, 1],
-                    }}
-                    className="scroll-mt-[7rem] lg:scroll-mt-[7.25rem]"
+                    style={{ scrollMarginTop: SCROLL_MARGIN_TOP }}
+                    className="terms-section-card rounded-2xl border border-stone-100 bg-white p-8 dark:border-stone-700 dark:bg-stone-900"
                   >
-                    <div className="overflow-hidden rounded-3xl border border-slate-200/95 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900/90">
-                      <div className="flex items-start gap-4 border-b border-slate-100 bg-gradient-to-r from-blue-50/90 via-white to-indigo-50/40 px-5 py-5 sm:px-7 sm:py-6 dark:border-slate-800 dark:from-blue-950/40 dark:via-slate-900 dark:to-indigo-950/30">
-                        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white text-blue-700 shadow-inner ring-1 ring-blue-100 dark:bg-slate-800 dark:text-blue-300 dark:ring-slate-600">
-                          <SectionIcon title={section.title} index={i} />
-                        </span>
-                        <div className="min-w-0 pt-0.5">
-                          <span className="text-[11px] font-bold uppercase tracking-wider text-blue-700/85 dark:text-blue-300">
-                            Mục {i + 1}
-                          </span>
-                          <h2 className="mt-1 break-words text-xl font-black tracking-tight text-slate-900 dark:text-white sm:text-2xl">
-                            {section.title}
-                          </h2>
-                        </div>
+                    <div className="mb-4 flex items-center gap-3">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-teal-50 dark:bg-teal-950/40">
+                        <SectionIcon title={section.title} index={i} />
                       </div>
-                      <div className="px-5 pb-7 pt-5 sm:px-8 sm:pb-10 sm:pt-7">
-                        <div
-                          className={`${proseTerms} text-[15px] text-slate-700 dark:text-slate-300`}
-                          dangerouslySetInnerHTML={{
-                            __html: DOMPurify.sanitize(section.content || "", {
-                              USE_PROFILES: { html: true },
-                            }),
-                          }}
-                        />
-                      </div>
+                      <h2 className="text-lg font-bold text-stone-900 dark:text-white">
+                        {i + 1}. {section.title}
+                      </h2>
                     </div>
-                  </motion.article>
+                    <div
+                      className={`${proseInCard} dark:prose-invert`}
+                      dangerouslySetInnerHTML={{
+                        __html: DOMPurify.sanitize(section.content || "", {
+                          USE_PROFILES: { html: true },
+                        }),
+                      }}
+                    />
+                  </article>
                 ))}
-              </div>
+              </main>
             </div>
           </div>
+
+          {/* Footer trong trang */}
+          <footer className="w-full border-t border-stone-200 bg-white dark:border-stone-700 dark:bg-stone-950">
+            <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-3 px-6 py-6 sm:flex-row">
+              <p className="flex items-center gap-2 text-xs text-stone-400">
+                <img
+                  src={siteLogoSrc}
+                  alt=""
+                  width={24}
+                  height={24}
+                  className="h-6 w-6 shrink-0 rounded-md object-cover opacity-90 ring-1 ring-stone-200 dark:ring-stone-700"
+                />
+                <span>
+                  © {new Date().getFullYear()} {COMPANY_NAME}. Tất cả quyền được bảo
+                  lưu.
+                </span>
+              </p>
+              <div className="flex flex-wrap items-center justify-center gap-4 text-xs text-stone-400">
+                <Link
+                  to="/about"
+                  className="transition-colors hover:text-teal-800 dark:hover:text-teal-400"
+                >
+                  Liên hệ
+                </Link>
+                <span className="hidden sm:inline text-stone-300">·</span>
+                <Link
+                  to="/blogs"
+                  className="transition-colors hover:text-teal-800 dark:hover:text-teal-400"
+                >
+                  Blog
+                </Link>
+              </div>
+            </div>
+          </footer>
         </>
       )}
     </div>

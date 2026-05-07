@@ -1,10 +1,11 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, EffectFade, Pagination } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/effect-fade";
 import "swiper/css/pagination";
+import { AppContext } from "../context/AppContext";
 
 const SLIDES = [
   {
@@ -22,8 +23,22 @@ const SLIDES = [
 ];
 
 const Services = () => {
+  const { siteConfig } = useContext(AppContext);
   const swiperRef = useRef(null);
   const [reduceMotion, setReduceMotion] = useState(false);
+
+  const slides = useMemo(() => {
+    const custom = siteConfig?.homeSlides;
+    if (Array.isArray(custom) && custom.length > 0) {
+      return custom
+        .filter((s) => s && typeof s.url === "string" && s.url.trim())
+        .map((s) => ({
+          src: s.url,
+          alt: s.alt || "VietNam Travel",
+        }));
+    }
+    return SLIDES;
+  }, [siteConfig?.homeSlides]);
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -69,7 +84,7 @@ const Services = () => {
       >
         <div className="relative group rounded-2xl overflow-hidden shadow-2xl shadow-slate-900/15 dark:shadow-black/40 ring-1 ring-slate-200/80 dark:ring-slate-700/80">
           <Swiper
-            className="home-showcase-swiper aspect-video min-h-[200px] max-h-[min(48vh,380px)] bg-slate-900 sm:max-h-[min(56vh,480px)] md:aspect-[21/9] md:max-h-[min(64vh,520px)] lg:max-h-[min(72vh,560px)]"
+            className="home-showcase-swiper aspect-video min-h-[240px] max-h-[min(52vh,440px)] bg-slate-900 sm:min-h-[280px] sm:max-h-[min(60vh,520px)] md:aspect-[21/9] md:min-h-[320px] md:max-h-[min(66vh,580px)] lg:max-h-[min(74vh,620px)]"
             modules={[Autoplay, EffectFade, Pagination]}
             effect="fade"
             fadeEffect={{ crossFade: true }}
@@ -89,20 +104,29 @@ const Services = () => {
               swiperRef.current = instance;
             }}
           >
-            {SLIDES.map((slide, index) => (
+            {slides.map((slide, index) => (
               <SwiperSlide key={slide.src} className="!flex">
                 <div className="relative w-full h-full overflow-hidden">
+                  {/* Background fill (blur) so object-contain still looks premium */}
+                  <img
+                    src={slide.src}
+                    alt=""
+                    aria-hidden
+                    className="absolute inset-0 h-full w-full scale-110 object-cover object-center blur-2xl opacity-60"
+                    loading={index === 0 ? "eager" : "lazy"}
+                    decoding="async"
+                  />
+                  <div
+                    className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/35 via-black/10 to-black/10"
+                    aria-hidden
+                  />
                   <img
                     src={slide.src}
                     alt={slide.alt}
-                    className="home-showcase-slide-img absolute inset-0 w-full h-full object-cover object-center"
+                    className="home-showcase-slide-img absolute inset-0 h-full w-full object-contain object-center"
                     loading={index === 0 ? "eager" : "lazy"}
                     decoding="async"
                     fetchPriority={index === 0 ? "high" : undefined}
-                  />
-                  <div
-                    className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-black/10"
-                    aria-hidden
                   />
                 </div>
               </SwiperSlide>

@@ -1,8 +1,8 @@
 import React, { useState, useContext, useEffect } from "react";
 import { X, Upload, AlertCircle, Loader2, CheckCircle2 } from "lucide-react";
 import { toast } from "react-toastify";
-import axios from "axios";
 import { AppContext } from "../context/AppContext";
+import { submitJobApplication } from "../services";
 
 const JobApplicationModal = ({ isOpen, job, onClose, onSuccess }) => {
   const { backendUrl } = useContext(AppContext);
@@ -102,24 +102,16 @@ const JobApplicationModal = ({ isOpen, job, onClose, onSuccess }) => {
 
     setLoading(true);
     try {
-      const form = new FormData();
-      form.append("fullName", formData.fullName);
-      form.append("email", formData.email);
-      form.append("phone", formData.phone);
-      form.append("jobId", String(job._id));
-      form.append("cv", cvFile);
+      const data = await submitJobApplication({
+        backendUrl,
+        fullName: formData.fullName,
+        email: formData.email,
+        phone: formData.phone,
+        jobId: job._id,
+        cvFile,
+      });
 
-      const response = await axios.post(
-        `${backendUrl}/api/job-applications/submit`,
-        form,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        },
-      );
-
-      if (response.data.success) {
+      if (data.success) {
         setSubmitted(true);
         setTimeout(() => {
           toast.success("Nộp hồ sơ thành công!");

@@ -1,4 +1,10 @@
-import React, { useEffect, useState, useContext, useCallback } from "react";
+import React, {
+  useEffect,
+  useState,
+  useContext,
+  useCallback,
+  useMemo,
+} from "react";
 import { AdminContext } from "../context/AdminContext";
 import {
   listToursApi,
@@ -16,15 +22,17 @@ import {
   EyeOff,
   Eye,
   CircleDollarSign,
+  Map,
+  TrendingUp,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { buildTourSlug } from "../utils/tourSlug";
 
 const priceFilters = [
-  { id: "all", label: "Tat ca muc gia" },
-  { id: "lt500", label: "Duoi 500k" },
-  { id: "gt1000", label: "Tren 1tr" },
-  { id: "gt2000", label: "Tren 2tr" },
+  { id: "all", label: "Tất cả mức giá" },
+  { id: "lt500", label: "Dưới 500k" },
+  { id: "gt1000", label: "Trên 1tr" },
+  { id: "gt2000", label: "Trên 2tr" },
 ];
 
 const TourManagement = () => {
@@ -120,16 +128,73 @@ const TourManagement = () => {
   );
   const totalPages = Math.ceil(filteredTours.length / toursPerPage);
 
+  const tourStats = useMemo(() => {
+    const total = tours.length;
+    const active = tours.filter((t) => t.isActive !== false).length;
+    const inactive = tours.filter((t) => t.isActive === false).length;
+    return { total, active, inactive };
+  }, [tours]);
+
   return (
-    <div className="m-5 w-full max-w-7xl animate-in fade-in duration-500 space-y-5">
-      <div className="rounded-3xl bg-gradient-to-r from-[#1e40af] via-[#2563eb] to-[#60a5fa] p-5 md:p-6 text-white shadow-md">
-        <h2 className="text-xl md:text-2xl font-extrabold uppercase tracking-tight">
-          Quản lý Tour{" "}
-          <span className="text-blue-100">({filteredTours.length})</span>
-        </h2>
-        <p className="text-blue-100/95 mt-1 text-sm">
-          Theo dõi trạng thái hoạt động và tối ưu danh mục tour theo giá bán.
-        </p>
+    <div className="m-5 w-full max-w-6xl animate-in fade-in duration-500 space-y-6">
+      <div className="overflow-hidden bg-gradient-to-r from-blue-700 via-blue-600 to-indigo-600 px-8 py-7 shadow-xl shadow-blue-100/60">
+        <div className="flex items-center justify-between gap-4">
+          <div className="min-w-0">
+            <h1 className="text-3xl font-extrabold tracking-tight text-white">
+              Quản lý Tour
+            </h1>
+            <p className="mt-1 text-sm font-semibold text-blue-100/90">
+              Theo dõi danh mục tour, trạng thái kinh doanh và mức giá
+            </p>
+          </div>
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center bg-white/15 ring-1 ring-white/20">
+            <Map className="text-white" size={22} strokeWidth={2} />
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <div className="border border-gray-100 bg-white p-5 shadow-sm">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-sm font-bold text-gray-600">Tổng số tour</p>
+              <p className="mt-2 text-3xl font-extrabold text-gray-900">
+                {tourStats.total.toLocaleString("vi-VN")}
+              </p>
+            </div>
+            <div className="flex h-11 w-11 items-center justify-center bg-blue-50 text-blue-700 ring-1 ring-blue-100">
+              <Map size={18} />
+            </div>
+          </div>
+        </div>
+        <div className="border border-gray-100 bg-white p-5 shadow-sm">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-sm font-bold text-gray-600">Đang hoạt động</p>
+              <p className="mt-2 text-3xl font-extrabold text-emerald-600">
+                {tourStats.active.toLocaleString("vi-VN")}
+              </p>
+            </div>
+            <div className="flex h-11 w-11 items-center justify-center bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100">
+              <TrendingUp size={18} />
+            </div>
+          </div>
+        </div>
+        <div className="border border-gray-100 bg-white p-5 shadow-sm">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-sm font-bold text-gray-600">
+                Ngưng kinh doanh
+              </p>
+              <p className="mt-2 text-3xl font-extrabold text-red-600">
+                {tourStats.inactive.toLocaleString("vi-VN")}
+              </p>
+            </div>
+            <div className="flex h-11 w-11 items-center justify-center bg-red-50 text-red-700 ring-1 ring-red-100">
+              <AlertCircle size={18} />
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">

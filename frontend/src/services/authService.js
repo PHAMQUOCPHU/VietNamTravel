@@ -1,4 +1,4 @@
-import { buildHttpClient, withTokenHeader } from "../api/httpClient";
+import { buildHttpClient, withTokenHeader } from "./httpClient";
 
 export const sendSignUpOtpRequest = async ({ backendUrl, email }) => {
   const client = buildHttpClient(backendUrl);

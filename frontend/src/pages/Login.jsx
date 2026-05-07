@@ -7,6 +7,7 @@ import { getCaptcha, loginUser, requestOtp } from "../services";
 const LoginPage = () => {
   // SỬA: Dùng setUser cho đúng với AppContext của Phú
   const { backendUrl, setToken, setUser } = useContext(AppContext);
+  const isDev = import.meta.env.DEV;
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
@@ -29,9 +30,9 @@ const LoginPage = () => {
         setServerCaptcha(data.text);
       }
     } catch (error) {
-      console.error("Lỗi lấy captcha:", error);
+      if (isDev) console.warn("[captcha] fetch failed", error);
     }
-  }, [backendUrl]);
+  }, [backendUrl, isDev]);
 
   useEffect(() => {
     if (isLogin) {

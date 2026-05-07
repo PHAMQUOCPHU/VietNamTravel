@@ -40,7 +40,9 @@ export const useBlogs = (filters = {}) => {
           error.code !== "ERR_CANCELED" &&
           error.name !== "CanceledError"
         ) {
-          console.error("Lỗi kết nối Backend:", error);
+          if (import.meta.env.DEV) {
+            console.warn("[blogs] fetch failed", error);
+          }
         }
       } finally {
         if (!signal?.aborted) {

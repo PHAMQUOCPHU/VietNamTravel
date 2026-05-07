@@ -112,3 +112,4 @@ export function resolveVisitedProvinces(citiesFromApi, allProvinceNames) {
 
   return { provinces, fillByNormKey };
 }
+

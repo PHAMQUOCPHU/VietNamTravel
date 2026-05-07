@@ -21,15 +21,45 @@ import { buildTourSlug } from "../lib/tourSlug";
 
 const EMPTY_SEARCH_FILTERS = {};
 
+function parseSearchParams(search) {
+  const sp = new URLSearchParams(search || "");
+  const region = String(sp.get("region") || "").trim();
+  const province = String(sp.get("province") || "").trim();
+  const preference = String(sp.get("preference") || "").trim();
+  const startDate = String(sp.get("startDate") || "").trim();
+  const endDate = String(sp.get("endDate") || "").trim();
+  const adults = Math.max(1, Number(sp.get("adults")) || 1);
+  const children = Math.max(0, Number(sp.get("children")) || 0);
+  return {
+    region,
+    province,
+    preference,
+    startDate,
+    endDate,
+    adults,
+    children,
+  };
+}
+
 const SearchResultList = () => {
   const { tours } = useContext(AppContext);
   const location = useLocation();
   const navigate = useNavigate();
 
-  const searchData = useMemo(
-    () => location.state ?? EMPTY_SEARCH_FILTERS,
-    [location.state],
-  );
+  const searchData = useMemo(() => {
+    // Ưu tiên state (điều hướng từ AdvancedSearch); fallback query để reload/share link không mất filter.
+    if (location.state && typeof location.state === "object") return location.state;
+    const parsed = parseSearchParams(location.search);
+    const hasAny =
+      parsed.region ||
+      parsed.province ||
+      parsed.preference ||
+      parsed.startDate ||
+      parsed.endDate ||
+      parsed.adults !== 1 ||
+      parsed.children !== 0;
+    return hasAny ? parsed : EMPTY_SEARCH_FILTERS;
+  }, [location.state, location.search]);
   const [filteredSchedules, setFilteredSchedules] = useState([]);
 
   useEffect(() => {
@@ -48,6 +78,11 @@ const SearchResultList = () => {
     };
 
     const results = [];
+    const today0 = (() => {
+      const d = new Date();
+      d.setHours(0, 0, 0, 0);
+      return d.getTime();
+    })();
 
     tours.forEach((tour) => {
       const prov = String(searchData.province ?? "").trim();
@@ -102,13 +137,27 @@ const SearchResultList = () => {
 
       if (hasDateFilter && matchedSlots.length === 0) return;
 
-      if (matchedSlots.length > 0) {
-        matchedSlots.forEach((slot) => {
-          results.push({ tour, slot });
-        });
-      } else {
-        results.push({ tour, slot: null });
+      if (hasDateFilter) {
+        if (matchedSlots.length > 0) {
+          matchedSlots.forEach((slot) => {
+            results.push({ tour, slot });
+          });
+        }
+        return;
       }
+
+      // Không lọc ngày: chỉ lấy 1 lịch gần nhất cho mỗi tour (giảm spam bảng).
+      const sorted = [...slots].sort((a, b) => {
+        const ta = slotDayStamp(a) ?? Number.POSITIVE_INFINITY;
+        const tb = slotDayStamp(b) ?? Number.POSITIVE_INFINITY;
+        return ta - tb;
+      });
+      const upcoming = sorted.find((s) => {
+        const t = slotDayStamp(s);
+        return t != null && t >= today0;
+      });
+      const nearest = upcoming || sorted[0] || null;
+      results.push({ tour, slot: nearest });
     });
 
     setFilteredSchedules(results);
@@ -194,6 +243,15 @@ const SearchResultList = () => {
                 <span className="text-[10px] font-black uppercase text-slate-600">
                   Từ ngày:{" "}
                   {new Date(searchData.startDate).toLocaleDateString("vi-VN")}
+                </span>
+              </div>
+            )}
+            {searchData.endDate && (
+              <div className="px-4 py-2 bg-white border border-slate-200 rounded-2xl shadow-sm flex items-center gap-2">
+                <Calendar size={14} className="text-orange-500" />
+                <span className="text-[10px] font-black uppercase text-slate-600">
+                  Đến ngày:{" "}
+                  {new Date(searchData.endDate).toLocaleDateString("vi-VN")}
                 </span>
               </div>
             )}

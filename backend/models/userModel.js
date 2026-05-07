@@ -23,10 +23,25 @@ const userSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    birthYear: {
+      type: Number,
+      default: null,
+      min: 1900,
+      max: 2200,
+    },
+    occupation: {
+      type: String,
+      default: "",
+    },
     gender: {
       type: String,
       enum: ["male", "female", "other"],
       default: "male",
+    },
+    maritalStatus: {
+      type: String,
+      enum: ["single", "married", "other"],
+      default: "other",
     },
     image: {
       type: String,
@@ -36,6 +51,11 @@ const userSchema = new mongoose.Schema(
       type: String,
       enum: ["user", "admin"],
       default: "user",
+    },
+    /** false = ngừng hoạt động (không đăng nhập được) */
+    isActive: {
+      type: Boolean,
+      default: true,
     },
 
     // --- THÊM PHẦN THÀNH VIÊN Ở ĐÂY ---

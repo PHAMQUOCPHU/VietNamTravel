@@ -14,13 +14,14 @@ import {
   AlertTriangle,
   Briefcase,
 } from "lucide-react";
-import axios from "axios";
 import VoucherCard from "./VoucherCard";
 import { AppContext } from "../context/AppContext";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { getPublicVouchers } from "../services";
+import { resolveSiteLogoSrc } from "../utils/siteLogo";
 
 const AppSidebar = ({ isOpen, onClose }) => {
-  const { backendUrl, user, token } = useContext(AppContext);
+  const { backendUrl, user, token, siteConfig } = useContext(AppContext);
   const [vouchers, setVouchers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [view, setView] = useState("menu"); // 'menu' | 'vouchers' | 'exchange'
@@ -39,7 +40,6 @@ const AppSidebar = ({ isOpen, onClose }) => {
     (parseFloat(exchangeAmount) || 0) * exchangeRates[exchangeCurrency];
 
   const navigate = useNavigate();
-  const location = useLocation();
 
   useEffect(() => {
     if (!isOpen) return;
@@ -48,9 +48,10 @@ const AppSidebar = ({ isOpen, onClose }) => {
     const load = async () => {
       setLoading(true);
       try {
-        const { data } = await axios.get(`${backendUrl}/api/vouchers/public`, {
+        const data = await getPublicVouchers({
+          backendUrl,
+          token,
           signal: ac.signal,
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
         if (!ac.signal.aborted && data.success) {
           setVouchers(data.vouchers);
@@ -79,6 +80,8 @@ const AppSidebar = ({ isOpen, onClose }) => {
     onClose();
     navigate(path);
   };
+
+  const logoSrc = resolveSiteLogoSrc(siteConfig?.logoUrl);
 
   const validVouchersCount = vouchers.filter((v) => {
     const limit = Math.max(1, Number(v.usageLimit) || 1);
@@ -123,7 +126,7 @@ const AppSidebar = ({ isOpen, onClose }) => {
                   <div className="bg-white px-5 py-5 flex items-center justify-between border-b border-gray-100 shadow-sm z-10 gap-3">
                     <div className="flex min-w-0 items-center gap-2.5">
                       <img
-                        src="/logo.png"
+                        src={logoSrc}
                         alt=""
                         width={36}
                         height={36}

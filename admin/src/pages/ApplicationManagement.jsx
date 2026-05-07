@@ -73,7 +73,7 @@ function StatusBadge({ status }) {
     APPLICATION_STATUSES.find((s) => s.key === status)?.label || status;
   return (
     <span
-      className={`inline-flex items-center rounded-lg px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider ${STATUS_BADGE_CLASS[status] || STATUS_BADGE_CLASS.submitted}`}
+      className={`inline-flex items-center rounded-none px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider ${STATUS_BADGE_CLASS[status] || STATUS_BADGE_CLASS.submitted}`}
     >
       {label}
     </span>
@@ -101,7 +101,7 @@ const RecruitmentPipelineBar = memo(function RecruitmentPipelineBar({
     !isRejected && idx >= 0 ? RECRUITMENT_PIPELINE[idx]?.key : null;
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-gradient-to-b from-slate-50/90 to-white p-4 ring-1 ring-slate-900/[0.03]">
+    <div className="rounded-none border border-slate-200 bg-gradient-to-b from-slate-50/90 to-white p-4 ring-1 ring-slate-900/[0.03]">
       <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">
         Quy trình: Tiếp nhận → Xét duyệt → HR xem CV → Phỏng vấn → Nhận việc
       </p>
@@ -124,7 +124,7 @@ const RecruitmentPipelineBar = memo(function RecruitmentPipelineBar({
           const isCurrent = currentKey === step.key;
 
           const base =
-            "flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-xl border px-2 py-2.5 text-center transition sm:min-w-[88px] sm:flex-none sm:px-3";
+            "flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-none border px-2 py-2.5 text-center transition sm:min-w-[88px] sm:flex-none sm:px-3";
           const cls =
             mode === "done"
               ? `${base} border-emerald-200/90 bg-emerald-50/90 text-emerald-900`
@@ -212,7 +212,7 @@ const RecruitmentPipelineBar = memo(function RecruitmentPipelineBar({
                 onReject(applicationId);
               }
             }}
-            className="rounded-xl border-2 border-red-200 bg-white px-4 py-2 text-sm font-semibold text-red-700 transition hover:border-red-400 hover:bg-red-50 disabled:opacity-50"
+            className="rounded-none border-2 border-red-200 bg-white px-4 py-2 text-sm font-semibold text-red-700 transition hover:border-red-400 hover:bg-red-50 disabled:opacity-50"
           >
             Từ chối hồ sơ
           </button>
@@ -226,7 +226,11 @@ function QuickNotePanel({ application, backendUrl, aToken, onSaved, busy }) {
   const [text, setText] = useState(application.adminNotes || "");
 
   useEffect(() => {
-    setText(application.adminNotes || "");
+    // tránh warning "setState in effect" của eslint rule dự án
+    const t = setTimeout(() => {
+      setText(application.adminNotes || "");
+    }, 0);
+    return () => clearTimeout(t);
   }, [application._id, application.adminNotes]);
 
   const save = async () => {
@@ -426,7 +430,7 @@ const ApplicationManagement = () => {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
-      <div className="relative mb-6 overflow-hidden rounded-[32px] border border-sky-500/25 bg-gradient-to-br from-slate-950 via-blue-950 to-sky-800 p-8 shadow-[0_30px_90px_rgba(30,58,138,0.28)]">
+      <div className="relative mb-6 overflow-hidden rounded-none border border-sky-500/25 bg-gradient-to-br from-slate-950 via-blue-950 to-sky-800 p-8 shadow-[0_30px_90px_rgba(30,58,138,0.28)]">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_55%_at_100%_0%,rgba(56,189,248,0.22),transparent)]" />
         <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
           <div className="max-w-3xl">
@@ -444,7 +448,7 @@ const ApplicationManagement = () => {
           <button
             type="button"
             onClick={fetchApplications}
-            className="inline-flex items-center gap-2 rounded-3xl border border-white/25 bg-white px-6 py-3 text-sm font-semibold text-blue-950 shadow-lg shadow-slate-900/15 transition hover:-translate-y-0.5 hover:bg-sky-50"
+            className="inline-flex items-center gap-2 rounded-none border border-white/25 bg-white px-6 py-3 text-sm font-semibold text-blue-950 shadow-lg shadow-slate-900/15 transition hover:-translate-y-0.5 hover:bg-sky-50"
           >
             <ArrowUpRight size={18} /> Tải lại hồ sơ
           </button>
@@ -491,7 +495,7 @@ const ApplicationManagement = () => {
         ].map((item) => (
           <div
             key={item.label}
-            className={`rounded-3xl border border-slate-200 p-5 shadow-sm ${item.color}`}
+            className={`rounded-none border border-slate-200 p-5 shadow-sm ${item.color}`}
           >
             <p className="text-sm text-slate-500">{item.label}</p>
             <p className="mt-3 text-3xl font-semibold text-slate-900">
@@ -508,7 +512,7 @@ const ApplicationManagement = () => {
             <button
               type="button"
               onClick={() => setFilterOpen(!filterOpen)}
-              className={`inline-flex items-center gap-2 rounded-2xl border px-4 py-2.5 text-sm font-semibold transition ${
+              className={`inline-flex items-center gap-2 rounded-none border px-4 py-2.5 text-sm font-semibold transition ${
                 selectedJob
                   ? "border-sky-400 bg-sky-50 text-sky-900"
                   : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
@@ -530,7 +534,7 @@ const ApplicationManagement = () => {
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="absolute left-0 top-full z-20 mt-2 w-72 max-w-[85vw] rounded-2xl border border-slate-200 bg-white p-2 shadow-lg"
+                  className="absolute left-0 top-full z-20 mt-2 w-72 max-w-[85vw] rounded-none border border-slate-200 bg-white p-2 shadow-lg"
                 >
                   <button
                     type="button"
@@ -538,7 +542,7 @@ const ApplicationManagement = () => {
                       setSelectedJob("");
                       setFilterOpen(false);
                     }}
-                    className={`w-full rounded-xl px-4 py-2.5 text-left text-sm font-medium transition ${
+                    className={`w-full rounded-none px-4 py-2.5 text-left text-sm font-medium transition ${
                       !selectedJob
                         ? "bg-sky-50 text-sky-900"
                         : "text-slate-700 hover:bg-slate-50"
@@ -554,7 +558,7 @@ const ApplicationManagement = () => {
                         setSelectedJob(job._id);
                         setFilterOpen(false);
                       }}
-                      className={`w-full rounded-xl px-4 py-2.5 text-left text-sm font-medium transition ${
+                      className={`w-full rounded-none px-4 py-2.5 text-left text-sm font-medium transition ${
                         selectedJob === job._id
                           ? "bg-sky-50 text-sky-900"
                           : "text-slate-700 hover:bg-slate-50"
@@ -581,7 +585,7 @@ const ApplicationManagement = () => {
               onChange={(e) => setSearchEmail(e.target.value)}
               placeholder="Tìm theo email…"
               autoComplete="off"
-              className="w-full rounded-2xl border border-slate-200 bg-white py-2.5 pl-10 pr-3 text-sm text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-sky-400 focus:ring-2 focus:ring-sky-200/70"
+              className="w-full rounded-none border border-slate-200 bg-white py-2.5 pl-10 pr-3 text-sm text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-sky-400 focus:ring-2 focus:ring-sky-200/70"
             />
           </label>
           <label className="relative flex min-w-[180px] flex-1 items-center">
@@ -596,7 +600,7 @@ const ApplicationManagement = () => {
               onChange={(e) => setSearchPhone(e.target.value)}
               placeholder="Tìm theo SĐT…"
               autoComplete="off"
-              className="w-full rounded-2xl border border-slate-200 bg-white py-2.5 pl-10 pr-3 text-sm text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-sky-400 focus:ring-2 focus:ring-sky-200/70"
+              className="w-full rounded-none border border-slate-200 bg-white py-2.5 pl-10 pr-3 text-sm text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-sky-400 focus:ring-2 focus:ring-sky-200/70"
             />
           </label>
         </div>
@@ -619,14 +623,14 @@ const ApplicationManagement = () => {
 
       <div className="mt-6 space-y-4">
         {loading ? (
-          <div className="rounded-[32px] bg-white p-10 text-center shadow-[0_24px_80px_rgba(15,23,42,0.08)]">
+          <div className="rounded-none bg-white p-10 text-center shadow-[0_24px_80px_rgba(15,23,42,0.08)]">
             <Loader2 className="mx-auto h-10 w-10 animate-spin text-slate-400" />
             <p className="mt-4 text-sm text-slate-500">
               Đang tải hồ sơ ứng tuyển...
             </p>
           </div>
         ) : filteredApplications.length === 0 ? (
-          <div className="rounded-[32px] bg-white p-10 text-center shadow-[0_24px_80px_rgba(15,23,42,0.08)]">
+          <div className="rounded-none bg-white p-10 text-center shadow-[0_24px_80px_rgba(15,23,42,0.08)]">
             <p className="text-lg font-semibold text-slate-900">
               {applications.length === 0
                 ? "Chưa có hồ sơ nào."

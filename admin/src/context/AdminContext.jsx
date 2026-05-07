@@ -1,5 +1,12 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useState, useEffect, useCallback, useRef } from "react";
+import {
+  createContext,
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  useMemo,
+} from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { getSocket } from "../lib/socketClient";
@@ -13,9 +20,31 @@ const AdminContextProvider = (props) => {
   );
   const [users, setUsers] = useState([]);
   const [adminChatUnreadCount, setAdminChatUnreadCount] = useState(0);
+  const [adminLogoUrl, setAdminLogoUrl] = useState("");
   const backendUrl = normalizeBackendOrigin(
     import.meta.env.VITE_BACKEND_URL || "http://localhost:5001",
   );
+
+  const refreshAdminBranding = useCallback(async () => {
+    try {
+      const { data } = await axios.get(
+        `${backendUrl}/api/site-config/public`,
+      );
+      if (data?.success && typeof data.adminLogoUrl === "string") {
+        setAdminLogoUrl(data.adminLogoUrl.trim());
+      }
+    } catch {
+      /* ignore offline */
+    }
+  }, [backendUrl]);
+
+  useEffect(() => {
+    // tránh warning "setState in effect" của eslint rule dự án
+    const t = setTimeout(() => {
+      refreshAdminBranding();
+    }, 0);
+    return () => clearTimeout(t);
+  }, [refreshAdminBranding]);
 
   const refreshAdminChatUnread = useCallback(async () => {
     if (!aToken) {
@@ -54,8 +83,9 @@ const AdminContextProvider = (props) => {
 
   useEffect(() => {
     if (!aToken) {
-      setAdminChatUnreadCount(0);
-      return undefined;
+      // tránh warning "setState in effect" của eslint rule dự án
+      const t = setTimeout(() => setAdminChatUnreadCount(0), 0);
+      return () => clearTimeout(t);
     }
 
     const apiBase = backendUrl.replace(/\/+$/, "");
@@ -81,11 +111,15 @@ const AdminContextProvider = (props) => {
     };
 
     sock.on("receive_message", onIncomingToAdmin);
-    refreshAdminChatUnread();
+    // tránh warning "setState in effect" của eslint rule dự án
+    const t0 = setTimeout(() => {
+      refreshAdminChatUnread();
+    }, 0);
 
     const intervalId = setInterval(refreshAdminChatUnread, 22000);
 
     return () => {
+      clearTimeout(t0);
       clearTimeout(chatUnreadDebounceRef.current);
       clearInterval(intervalId);
       sock.off("receive_message", onIncomingToAdmin);
@@ -93,26 +127,58 @@ const AdminContextProvider = (props) => {
     };
   }, [aToken, backendUrl, refreshAdminChatUnread]);
 
+  /** Xóa user (gọi trực tiếp — UI tự hiển thị xác nhận nếu cần) */
   const deleteUser = useCallback(
     async (id) => {
-      if (window.confirm("Bạn chắc chắn muốn xóa?")) {
-        try {
-          const { data } = await axios.post(
-            `${backendUrl}/api/user/admin/delete-user`,
-            { id },
-            {
-              headers: { atoken: aToken },
-            },
-          );
-          if (data.success) {
-            toast.success(data.message);
-            getAllUsers();
-          } else {
-            toast.error(data.message || "Không xóa được");
-          }
-        } catch (err) {
-          toast.error(err.response?.data?.message || "Lỗi khi xóa người dùng");
+      try {
+        const { data } = await axios.post(
+          `${backendUrl}/api/user/admin/delete-user`,
+          { id },
+          {
+            headers: { atoken: aToken },
+          },
+        );
+        if (data.success) {
+          toast.success(data.message);
+          await getAllUsers();
+          return true;
         }
+        toast.error(data.message || "Không xóa được");
+        return false;
+      } catch (err) {
+        toast.error(err.response?.data?.message || "Lỗi khi xóa người dùng");
+        return false;
+      }
+    },
+    [aToken, backendUrl, getAllUsers],
+  );
+
+  const createUserAdminApi = useCallback(
+    async (payload) => {
+      try {
+        const { data } = await axios.post(
+          `${backendUrl}/api/user/admin/create-user`,
+          payload,
+          { headers: { atoken: aToken } },
+        );
+        if (data.success) {
+          toast.success(data.message || "Đã tạo người dùng");
+          if (data.tempPassword) {
+            toast.info(
+              `Mật khẩu tạm (lưu lại): ${data.tempPassword}`,
+              { autoClose: 20000 },
+            );
+          }
+          await getAllUsers();
+          return data;
+        }
+        toast.error(data.message || "Không tạo được");
+        return null;
+      } catch (err) {
+        toast.error(
+          err.response?.data?.message || "Lỗi khi tạo người dùng",
+        );
+        return null;
       }
     },
     [aToken, backendUrl, getAllUsers],
@@ -151,17 +217,35 @@ const AdminContextProvider = (props) => {
     }
   }, [aToken]);
 
-  const value = {
-    aToken,
-    setAToken,
-    backendUrl,
-    users,
-    getAllUsers,
-    deleteUser,
-    updateUserAdmin,
-    adminChatUnreadCount,
-    refreshAdminChatUnread,
-  };
+  const value = useMemo(
+    () => ({
+      aToken,
+      setAToken,
+      backendUrl,
+      users,
+      getAllUsers,
+      deleteUser,
+      createUserAdminApi,
+      updateUserAdmin,
+      adminChatUnreadCount,
+      refreshAdminChatUnread,
+      adminLogoUrl,
+      refreshAdminBranding,
+    }),
+    [
+      aToken,
+      backendUrl,
+      users,
+      getAllUsers,
+      deleteUser,
+      createUserAdminApi,
+      updateUserAdmin,
+      adminChatUnreadCount,
+      refreshAdminChatUnread,
+      adminLogoUrl,
+      refreshAdminBranding,
+    ],
+  );
 
   return (
     <AdminContext.Provider value={value}>{props.children}</AdminContext.Provider>

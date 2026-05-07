@@ -1,4 +1,4 @@
-import { Suspense, lazy } from "react";
+import { Suspense, lazy, useContext, useEffect, useMemo } from "react";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import { Route, Routes, useLocation } from "react-router-dom";
@@ -7,6 +7,8 @@ import "react-toastify/dist/ReactToastify.css";
 import ScrollToTop from "./components/ScrollToTop";
 import ChatWidget from "./components/ChatWidget";
 import HomeFloatingDock from "./components/HomeFloatingDock";
+import { AppContext } from "./context/AppContext";
+import { applySiteBrandingIcons, resolveSiteLogoSrc } from "./utils/siteLogo";
 
 const Home = lazy(() => import("./pages/Home"));
 const Tour = lazy(() => import("./pages/Tour"));
@@ -34,6 +36,7 @@ const Careers = lazy(() => import("./pages/Careers"));
 const SearchResultList = lazy(() => import("./pages/SearchResultList"));
 const Terms = lazy(() => import("./pages/Terms.jsx"));
 const NotFound = lazy(() => import("./pages/NotFound.jsx"));
+const Maintenance = lazy(() => import("./pages/Maintenance.jsx"));
 
 function PageFallback() {
   return (
@@ -55,6 +58,28 @@ function PageFallback() {
 const App = () => {
   const location = useLocation();
   const isHome = location.pathname === "/";
+  const { user, siteConfig } = useContext(AppContext);
+
+  const maintenance = siteConfig?.maintenance;
+  const isMaintenanceEnabled = Boolean(maintenance?.enabled);
+  const isAdmin = user?.role === "admin";
+
+  const shouldShowMaintenance = useMemo(() => {
+    if (!isMaintenanceEnabled) return false;
+    if (isAdmin) return false;
+    // allow admin panel routes if any (frontend doesn't have them, but keep safe)
+    if (location.pathname.startsWith("/admin")) return false;
+    return true;
+  }, [isMaintenanceEnabled, isAdmin, location.pathname]);
+
+  const shouldHideFooter = useMemo(() => {
+    // Chỉ ẩn footer ở trang chi tiết tour: /tours/:slug
+    return /^\/tours\/[^/]+$/.test(location.pathname);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    applySiteBrandingIcons(resolveSiteLogoSrc(siteConfig?.logoUrl));
+  }, [siteConfig?.logoUrl]);
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -66,19 +91,27 @@ const App = () => {
         limit={4}
         newestOnTop
       />
-      <Navbar />
-      <ScrollToTop />
-
-      {isHome ? <HomeFloatingDock /> : <ChatWidget />}
+      {shouldShowMaintenance ? null : (
+        <>
+          <Navbar />
+          <ScrollToTop />
+          {isHome ? <HomeFloatingDock /> : <ChatWidget />}
+        </>
+      )}
 
       <main className="flex-1 min-w-0 overflow-x-hidden">
         <Suspense fallback={<PageFallback />}>
-          <Routes>
+          {shouldShowMaintenance ? (
+            <Maintenance maintenance={maintenance} />
+          ) : (
+            <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/tours" element={<Tour />} />
             <Route path="/tours/search" element={<SearchResultList />} />
             <Route path="/about" element={<About />} />
             <Route path="/blogs" element={<Blogs />} />
+            <Route path="/blogs/:slug" element={<BlogDetail />} />
+            {/* Legacy route: redirect /blog/:id -> /blogs/<slug>-<id> */}
             <Route path="/blog/:id" element={<BlogDetail />} />
             <Route path="/tours/:slug" element={<TourDetails />} />
             <Route path="/login" element={<Login />} />
@@ -100,10 +133,11 @@ const App = () => {
             <Route path="/diaries" element={<Diaries />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="*" element={<NotFound />} />
-          </Routes>
+            </Routes>
+          )}
         </Suspense>
       </main>
-      <Footer />
+      {shouldShowMaintenance || shouldHideFooter ? null : <Footer />}
     </div>
   );
 };

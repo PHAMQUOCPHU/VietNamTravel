@@ -19,7 +19,6 @@ export function getPublicSiteBaseUrl() {
 
   if (import.meta.env.PROD && typeof window !== "undefined" && !warnedMissingPublicSiteUrl) {
     warnedMissingPublicSiteUrl = true;
-    // eslint-disable-next-line no-console
     console.error(
       "[admin] Chưa cấu VITE_PUBLIC_SITE_URL (URL site khách, ví dụ https://vietnamtravel.com). " +
         "Link Xem bài viết đang dùng window.location.origin — sai nếu admin tách subdomain/port.",

@@ -1,37 +1,56 @@
-import {
-  getCaptchaApi,
-  getReviewedBookingIdsApi,
-  getUserProfileApi,
-  loginUserApi,
-  requestOtpApi,
-  toggleFavoriteTourApi,
-  toggleSavedJobApi,
-} from "../api";
+import { buildHttpClient, withTokenHeader } from "./httpClient";
 
 export const getUserProfile = async ({ backendUrl, token }) => {
-  return getUserProfileApi({ backendUrl, token });
+  const client = buildHttpClient(backendUrl);
+  const { data } = await client.get("/api/user/get-profile", withTokenHeader(token));
+  return data;
 };
 
 export const toggleFavoriteTour = async ({ backendUrl, token, tourId }) => {
-  return toggleFavoriteTourApi({ backendUrl, token, tourId });
+  const client = buildHttpClient(backendUrl);
+  const { data } = await client.post(
+    "/api/user/toggle-favorite",
+    { tourId },
+    withTokenHeader(token),
+  );
+  return data;
 };
 
 export const toggleSavedJob = async ({ backendUrl, token, jobId }) => {
-  return toggleSavedJobApi({ backendUrl, token, jobId });
+  const client = buildHttpClient(backendUrl);
+  const { data } = await client.post(
+    "/api/user/toggle-saved-job",
+    { jobId },
+    withTokenHeader(token),
+  );
+  return data;
 };
 
 export const getCaptcha = async ({ backendUrl }) => {
-  return getCaptchaApi({ backendUrl });
+  const client = buildHttpClient(backendUrl);
+  const { data } = await client.get("/api/user/captcha");
+  return data;
 };
 
 export const loginUser = async ({ backendUrl, email, password, userCaptcha, serverCaptcha }) => {
-  return loginUserApi({ backendUrl, email, password, userCaptcha, serverCaptcha });
+  const client = buildHttpClient(backendUrl);
+  const { data } = await client.post("/api/user/login", {
+    email,
+    password,
+    userCaptcha,
+    serverCaptcha,
+  });
+  return data;
 };
 
 export const requestOtp = async ({ backendUrl, email }) => {
-  return requestOtpApi({ backendUrl, email });
+  const client = buildHttpClient(backendUrl);
+  const { data } = await client.post("/api/user/send-otp", { email });
+  return data;
 };
 
 export const getReviewedBookingIds = async ({ backendUrl, token }) => {
-  return getReviewedBookingIdsApi({ backendUrl, token });
+  const client = buildHttpClient(backendUrl);
+  const { data } = await client.get("/api/reviews/my-bookings", withTokenHeader(token));
+  return data;
 };

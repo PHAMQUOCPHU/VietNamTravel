@@ -7,13 +7,12 @@ import { buildTourSlug } from "../lib/tourSlug";
 
 const TourCard = ({ tour }) => {
   // Lấy dữ liệu từ tour. Lưu ý: Thử cả duration và time để tránh lệch tên biến từ API
-  const { _id, title, image, images, price, oldPrice, featured, city, avgRating } =
-    tour;
+  const { _id, title, image, images, price, oldPrice, featured, city } = tour;
 
   // Kiểm tra tên biến thực tế từ Backend (thử cả hai trường hợp)
   const durationValue = tour.duration || tour.time || 0;
 
-  const { backendUrl, user, toggleFavorite } = useContext(AppContext);
+  const { user, toggleFavorite } = useContext(AppContext);
   const navigate = useNavigate();
 
   const coverImage = images?.[0] || image;

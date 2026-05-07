@@ -63,7 +63,7 @@ const toDateInputValue = (value) => {
 };
 
 const inputIconClass =
-  "h-11 w-full rounded-lg border border-gray-200 bg-white pl-10 pr-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-offset-0";
+  "h-11 w-full rounded-none border border-gray-200 bg-white pl-10 pr-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-offset-0";
 
 function IconInput({ icon, className = "", title, ...props }) {
   return (
@@ -90,7 +90,7 @@ function IconSelect({ icon, children, className = "", ...props }) {
       })}
       <select
         {...props}
-        className={`h-11 w-full cursor-pointer appearance-none rounded-lg border border-gray-200 bg-white pl-10 pr-10 text-sm text-gray-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-offset-0 ${className}`.trim()}
+        className={`h-11 w-full cursor-pointer appearance-none rounded-none border border-gray-200 bg-white pl-10 pr-10 text-sm text-gray-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-offset-0 ${className}`.trim()}
       >
         {children}
       </select>
@@ -123,7 +123,7 @@ function StringRowsField({ label, values, onChange, placeholder }) {
         <button
           type="button"
           onClick={add}
-          className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600"
+          className="inline-flex h-9 w-9 items-center justify-center rounded-none border border-gray-200 bg-white text-gray-500 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600"
           aria-label="Thêm dòng"
         >
           <Plus size={18} />
@@ -137,12 +137,12 @@ function StringRowsField({ label, values, onChange, placeholder }) {
               value={row}
               onChange={(e) => setRow(index, e.target.value)}
               placeholder={placeholder}
-              className="min-w-0 flex-1 rounded-lg border border-gray-200 px-3 py-2.5 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-offset-0"
+              className="min-w-0 flex-1 rounded-none border border-gray-200 px-3 py-2.5 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-offset-0"
             />
             <button
               type="button"
               onClick={() => remove(index)}
-              className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-400 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+              className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-none border border-gray-200 bg-white text-gray-400 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600"
               aria-label="Xóa dòng"
             >
               <X size={18} />
@@ -343,7 +343,7 @@ const JobManagement = () => {
 
   return (
     <div className="mx-auto max-w-7xl space-y-8 p-4 sm:p-6 lg:p-8">
-      <section className="relative overflow-hidden rounded-3xl border border-white/25 shadow-[0_24px_48px_-12px_rgba(0,53,128,0.45)]">
+      <section className="relative overflow-hidden rounded-none border border-white/25 shadow-[0_24px_48px_-12px_rgba(0,53,128,0.45)]">
         <div
           className="absolute inset-0 bg-gradient-to-br from-[#003580] via-[#004494] to-[#0052cc]"
           aria-hidden
@@ -377,7 +377,7 @@ const JobManagement = () => {
             <button
               type="button"
               onClick={openCreateForm}
-              className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-white px-6 py-3.5 text-sm font-semibold text-[#0052cc] shadow-lg shadow-black/20 ring-1 ring-white/60 transition hover:scale-105 hover:bg-white hover:shadow-xl active:scale-[0.99]"
+            className="inline-flex shrink-0 items-center justify-center gap-2 rounded-none bg-white px-6 py-3.5 text-sm font-semibold text-[#0052cc] shadow-lg shadow-black/20 ring-1 ring-white/60 transition hover:scale-105 hover:bg-white hover:shadow-xl active:scale-[0.99]"
             >
               <Plus className="h-5 w-5" strokeWidth={2.5} aria-hidden />
               Đăng bài tuyển dụng
@@ -387,7 +387,7 @@ const JobManagement = () => {
       </section>
 
       <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
-        <div className="relative overflow-hidden rounded-2xl border border-sky-100 bg-white p-6 shadow-sm transition hover:shadow-md">
+        <div className="relative overflow-hidden rounded-none border border-sky-100 bg-white p-6 shadow-sm transition hover:shadow-md">
           <Briefcase
             className="pointer-events-none absolute -bottom-3 -right-2 h-28 w-28 rotate-[-6deg] text-sky-500/[0.12]"
             strokeWidth={1.25}
@@ -398,7 +398,7 @@ const JobManagement = () => {
             {jobStats.total}
           </p>
         </div>
-        <div className="relative overflow-hidden rounded-2xl border border-emerald-100/90 bg-green-50 p-6 shadow-sm transition hover:shadow-md">
+        <div className="relative overflow-hidden rounded-none border border-emerald-100/90 bg-green-50 p-6 shadow-sm transition hover:shadow-md">
           <UserCheck
             className="pointer-events-none absolute -bottom-3 -right-2 h-28 w-28 rotate-[-6deg] text-emerald-600/[0.14]"
             strokeWidth={1.25}
@@ -411,7 +411,7 @@ const JobManagement = () => {
             {jobStats.active}
           </p>
         </div>
-        <div className="relative overflow-hidden rounded-2xl border border-red-100/90 bg-red-50 p-6 shadow-sm transition hover:shadow-md">
+        <div className="relative overflow-hidden rounded-none border border-red-100/90 bg-red-50 p-6 shadow-sm transition hover:shadow-md">
           <Ban
             className="pointer-events-none absolute -bottom-3 -right-2 h-28 w-28 rotate-[-6deg] text-red-600/[0.12]"
             strokeWidth={1.25}
@@ -426,14 +426,14 @@ const JobManagement = () => {
 
       <div className="grid gap-4">
         {loading ? (
-          <div className="rounded-[32px] bg-white p-10 text-center shadow-[0_24px_80px_rgba(15,23,42,0.08)]">
+          <div className="rounded-none bg-white p-10 text-center shadow-[0_24px_80px_rgba(15,23,42,0.08)]">
             <Loader2 className="mx-auto h-10 w-10 animate-spin text-slate-400" />
             <p className="mt-4 text-sm text-slate-500">
               Đang tải danh sách tuyển dụng...
             </p>
           </div>
         ) : jobs.length === 0 ? (
-          <div className="rounded-[32px] bg-white p-10 text-center shadow-[0_24px_80px_rgba(15,23,42,0.08)]">
+          <div className="rounded-none bg-white p-10 text-center shadow-[0_24px_80px_rgba(15,23,42,0.08)]">
             <p className="text-lg font-semibold text-slate-900">
               Chưa có bài tuyển dụng nào.
             </p>
@@ -472,12 +472,12 @@ const JobManagement = () => {
                     hidden: { opacity: 0, y: 10 },
                     show: { opacity: 1, y: 0, transition: { duration: 0.22 } },
                   }}
-                  className="relative overflow-hidden rounded-2xl border border-slate-200/90 bg-gradient-to-br from-white via-white to-slate-50/90 p-5 shadow-[0_8px_30px_rgba(15,23,42,0.08)] ring-1 ring-slate-900/[0.04] transition hover:border-sky-200/70 hover:shadow-[0_16px_40px_-8px_rgba(14,165,233,0.15)]"
+                  className="relative overflow-hidden rounded-none border border-slate-200/90 bg-gradient-to-br from-white via-white to-slate-50/90 p-5 shadow-[0_8px_30px_rgba(15,23,42,0.08)] ring-1 ring-slate-900/[0.04] transition hover:border-sky-200/70 hover:shadow-[0_16px_40px_-8px_rgba(14,165,233,0.15)]"
                 >
                   <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-sky-500 via-blue-500 to-indigo-500 opacity-80" />
                   <div className="flex items-start justify-between gap-3 pt-1">
                     <div className="flex min-w-0 flex-1 gap-3">
-                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-blue-600 text-white shadow-md shadow-sky-500/25">
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-none bg-gradient-to-br from-sky-500 to-blue-600 text-white shadow-md shadow-sky-500/25">
                         <Briefcase size={22} />
                       </div>
                       <div className="min-w-0">
@@ -501,8 +501,8 @@ const JobManagement = () => {
                   </div>
 
                   <div className="mt-4 grid grid-cols-1 gap-2.5 sm:grid-cols-3">
-                    <div className="flex items-center gap-2.5 rounded-xl border border-amber-100/90 bg-amber-50/50 px-3 py-2.5">
-                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-amber-600 shadow-sm">
+                    <div className="flex items-center gap-2.5 rounded-none border border-amber-100/90 bg-amber-50/50 px-3 py-2.5">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-none bg-white text-amber-600 shadow-sm">
                         <DollarSign size={18} />
                       </div>
                       <div className="min-w-0">
@@ -514,8 +514,8 @@ const JobManagement = () => {
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2.5 rounded-xl border border-sky-100/90 bg-sky-50/40 px-3 py-2.5">
-                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-sky-600 shadow-sm">
+                    <div className="flex items-center gap-2.5 rounded-none border border-sky-100/90 bg-sky-50/40 px-3 py-2.5">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-none bg-white text-sky-600 shadow-sm">
                         <Users size={18} />
                       </div>
                       <div className="min-w-0">
@@ -527,8 +527,8 @@ const JobManagement = () => {
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2.5 rounded-xl border border-rose-100/90 bg-rose-50/40 px-3 py-2.5">
-                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-rose-600 shadow-sm">
+                    <div className="flex items-center gap-2.5 rounded-none border border-rose-100/90 bg-rose-50/40 px-3 py-2.5">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-none bg-white text-rose-600 shadow-sm">
                         <Calendar size={18} />
                       </div>
                       <div className="min-w-0">
@@ -543,11 +543,11 @@ const JobManagement = () => {
                   </div>
 
                   <div className="mt-4 flex justify-end border-t border-slate-100/90 pt-3">
-                    <div className="flex items-center gap-0.5 rounded-xl border border-slate-200 bg-white/90 p-1 shadow-sm">
+                    <div className="flex items-center gap-0.5 rounded-none border border-slate-200 bg-white/90 p-1 shadow-sm">
                       <button
                         type="button"
                         onClick={() => openEditForm(job)}
-                        className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-600 transition hover:bg-sky-50 hover:text-sky-600"
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-none text-slate-600 transition hover:bg-sky-50 hover:text-sky-600"
                         title="Chỉnh sửa"
                       >
                         <Edit2 size={16} />
@@ -555,7 +555,7 @@ const JobManagement = () => {
                       <button
                         type="button"
                         onClick={() => handleDelete(job._id)}
-                        className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 transition hover:bg-red-50 hover:text-red-600"
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-none text-slate-500 transition hover:bg-red-50 hover:text-red-600"
                         title="Xóa"
                       >
                         <Trash2 size={16} />
@@ -579,7 +579,7 @@ const JobManagement = () => {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: 20 }}
             onClick={(event) => event.stopPropagation()}
-            className="w-full max-w-3xl max-h-[calc(100vh-3rem)] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_32px_80px_rgba(15,23,42,0.18)]"
+            className="w-full max-w-3xl max-h-[calc(100vh-3rem)] overflow-hidden rounded-none border border-slate-200 bg-white shadow-[0_32px_80px_rgba(15,23,42,0.18)]"
           >
             <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-8 py-6">
               <div>
@@ -606,7 +606,7 @@ const JobManagement = () => {
               onSubmit={handleSubmit}
               className="flex max-h-[calc(100vh-9rem)] flex-col gap-y-6 overflow-y-auto p-8"
             >
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <label className="block min-w-0">
                   <span className="mb-1.5 block text-sm font-medium text-gray-700">
                     Tiêu đề
@@ -756,7 +756,7 @@ const JobManagement = () => {
                       onChange={handleChange}
                       rows={5}
                       placeholder="Mỗi dòng là một nội dung mô tả"
-                      className="min-h-[140px] w-full resize-none rounded-lg border border-gray-200 bg-white px-3 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-offset-0"
+                      className="min-h-[140px] w-full resize-none rounded-none border border-gray-200 bg-white px-3 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-offset-0"
                     />
                   </label>
                 </div>
@@ -788,14 +788,14 @@ const JobManagement = () => {
                     setFormOpen(false);
                     resetForm();
                   }}
-                  className="h-11 rounded-lg border border-gray-200 px-6 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
+                  className="h-11 rounded-none border border-gray-200 px-6 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
                 >
                   Hủy
                 </button>
                 <button
                   type="submit"
                   disabled={saving}
-                  className="flex h-11 items-center justify-center gap-2 rounded-lg bg-blue-600 px-6 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:opacity-50"
+                  className="flex h-11 items-center justify-center gap-2 rounded-none bg-blue-600 px-6 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:opacity-50"
                 >
                   {saving ? (
                     <>

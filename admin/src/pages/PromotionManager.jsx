@@ -15,7 +15,6 @@ import {
   Clock3,
   Loader2,
   Search,
-  AlertTriangle,
 } from "lucide-react";
 import { toast } from "react-toastify";
 
@@ -268,7 +267,7 @@ const PromotionManager = () => {
 
   return (
     <div className="w-full max-w-7xl space-y-6 px-1 sm:px-0">
-      <div className="rounded-3xl bg-gradient-to-r from-[#1e3a8a] via-[#2563eb] to-sky-500 p-6 sm:p-8 text-white shadow-lg shadow-blue-900/10">
+      <div className="rounded-none bg-gradient-to-r from-[#1e3a8a] via-[#2563eb] to-sky-500 p-6 sm:p-8 text-white shadow-lg shadow-blue-900/10">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h2 className="text-xl font-black uppercase tracking-tight sm:text-2xl">
@@ -315,24 +314,7 @@ const PromotionManager = () => {
           </span>
         </div>
 
-        <div className="flex gap-2 rounded-2xl border border-amber-100 bg-amber-50/90 px-4 py-3 text-xs font-semibold text-amber-900">
-          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
-          <p>
-            «Áp dụng sale» với chế độ <strong>Tất cả tour</strong> sẽ ghi đè
-            cùng một mức % và khung giờ cho mọi tour. Hành động lớn — đã thêm
-            xác nhận trước khi gửi.
-          </p>
-        </div>
-
-        <div className="flex items-start gap-2 rounded-2xl border border-blue-100 bg-blue-50/80 px-4 py-2.5 text-xs font-semibold text-blue-900">
-          <Sparkles size={15} className="mt-0.5 shrink-0 text-blue-600" />
-          <p>
-            Tour có thể ở trạng thái <strong>chờ sale</strong>,{" "}
-            <strong>đang sale</strong> hoặc <strong>hết hạn</strong> tùy ngày
-            giờ so với máy chủ.
-          </p>
-        </div>
-
+        
         {applyMode === "selected" && (
           <div className="space-y-2">
             <div className="relative">

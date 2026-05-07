@@ -2,8 +2,8 @@ import React, { useState, useEffect, useContext } from "react";
 import { motion } from "framer-motion";
 import { Copy, Check, TicketPercent, Clock } from "lucide-react";
 import { toast } from "react-toastify";
-import axios from "axios";
 import { AppContext } from "../context/AppContext";
+import { getPublicVouchers } from "../services";
 
 const VoucherWallet = () => {
   const { backendUrl, token } = useContext(AppContext);
@@ -15,10 +15,7 @@ const VoucherWallet = () => {
     const ac = new AbortController();
     (async () => {
       try {
-        const { data } = await axios.get(`${backendUrl}/api/vouchers/public`, {
-          signal: ac.signal,
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        });
+        const data = await getPublicVouchers({ backendUrl, token, signal: ac.signal });
         if (!ac.signal.aborted && data.success) {
           setVouchers(data.vouchers);
         }

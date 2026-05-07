@@ -6,6 +6,7 @@ import {
   trySendDepartureReminderIfDue,
 } from "../services/userNotifications.js";
 import { sendBookingTicketEmail } from "../services/bookingTicketEmail.js";
+import { notifyAdminPaymentSuccess } from "../services/adminNotifications.js";
 
 export const createVnpayPayment = async (req, res) => {
   try {
@@ -98,6 +99,11 @@ export const verifyVnpayPayment = async (req, res) => {
           await notifyPaymentSuccess(updated, tourTitle);
         } catch (e) {
           console.error("[vnpay] notify payment:", e.message);
+        }
+        try {
+          await notifyAdminPaymentSuccess(updated);
+        } catch (e) {
+          console.error("[vnpay] admin notify payment:", e.message);
         }
         try {
           await sendBookingTicketEmail(updated);

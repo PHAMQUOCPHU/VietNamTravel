@@ -1,6 +1,7 @@
 import React from "react";
 import { Calendar, Eye, MessageCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { buildBlogSlug } from "../lib/blogSlug";
 const BlogCard = ({ blog }) => {
   const navigate = useNavigate();
   const imageUrl =
@@ -23,7 +24,7 @@ const BlogCard = ({ blog }) => {
 
   return (
     <div
-      onClick={() => navigate(`/blog/${blog._id}`)}
+      onClick={() => navigate(`/blogs/${buildBlogSlug(blog)}`)}
       className="group bg-white rounded-3xl overflow-hidden border border-slate-200 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-500 cursor-pointer"
     >
       <div className="relative h-64 overflow-hidden">

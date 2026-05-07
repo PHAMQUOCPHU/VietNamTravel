@@ -45,7 +45,7 @@ const EditTour = () => {
         if (url) URL.revokeObjectURL(url);
       });
     };
-  }, []);
+  }, [newImagePreviews]);
 
   const [title, setTitle] = useState("");
   const [city, setCity] = useState("");

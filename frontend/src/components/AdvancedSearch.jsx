@@ -1,11 +1,10 @@
-import React, { useState, useMemo, useEffect, useContext } from "react";
+import React, { useState, useMemo, useEffect, useContext, useRef } from "react";
 import {
   MapPin,
   Calendar,
   Compass,
   Users,
   Search,
-  Navigation,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
@@ -27,6 +26,17 @@ const AdvancedSearch = () => {
   const { tours } = useContext(AppContext);
   const [showDest, setShowDest] = useState(false);
   const [showGuests, setShowGuests] = useState(false);
+  const containerRef = useRef(null);
+
+  const [searchData, setSearchData] = useState({
+    region: "",
+    province: "",
+    startDate: "",
+    endDate: "",
+    preference: "",
+    adults: 1,
+    children: 0,
+  });
 
   const citiesInSystem = useMemo(() => {
     if (!Array.isArray(tours)) return [];
@@ -38,15 +48,18 @@ const AdvancedSearch = () => {
     return [...set].sort((a, b) => a.localeCompare(b, "vi"));
   }, [tours]);
 
-  const [searchData, setSearchData] = useState({
-    region: "",
-    province: "",
-    startDate: "",
-    endDate: "",
-    preference: "",
-    adults: 1,
-    children: 0,
-  });
+  const provincesByRegion = useMemo(() => {
+    if (!Array.isArray(tours)) return [];
+    const want = String(searchData.region || "").trim();
+    const set = new Set();
+    for (const t of tours) {
+      if (!t) continue;
+      if (want && String(t.region || "").trim() !== want) continue;
+      const c = t?.city;
+      if (c && String(c).trim()) set.add(String(c).trim());
+    }
+    return [...set].sort((a, b) => a.localeCompare(b, "vi"));
+  }, [tours, searchData.region]);
 
   const regionDisplayLabel = useMemo(() => {
     const found = REGION_OPTIONS.find((o) => o.value === searchData.region);
@@ -60,12 +73,60 @@ const AdvancedSearch = () => {
     }
   }, [searchData.startDate, searchData.endDate]);
 
+  useEffect(() => {
+    // Nếu đang chọn tỉnh nhưng đổi vùng miền khiến tỉnh đó không còn phù hợp → reset.
+    const prov = String(searchData.province || "").trim();
+    if (!prov) return;
+    if (searchData.region && provincesByRegion.length > 0 && !provincesByRegion.includes(prov)) {
+      setSearchData((prev) => ({ ...prev, province: "" }));
+    }
+  }, [searchData.region, searchData.province, provincesByRegion]);
+
   const handleSearch = () => {
-    navigate("/tours/search", { state: searchData });
+    const normalized = {
+      ...searchData,
+      adults: Math.max(1, Number(searchData.adults) || 1),
+      children: Math.max(0, Number(searchData.children) || 0),
+      region: String(searchData.region || "").trim(),
+      province: String(searchData.province || "").trim(),
+      preference: String(searchData.preference || "").trim(),
+      startDate: String(searchData.startDate || "").trim(),
+      endDate: String(searchData.endDate || "").trim(),
+    };
+
+    const params = new URLSearchParams();
+    if (normalized.region) params.set("region", normalized.region);
+    if (normalized.province) params.set("province", normalized.province);
+    if (normalized.startDate) params.set("startDate", normalized.startDate);
+    if (normalized.endDate) params.set("endDate", normalized.endDate);
+    if (normalized.preference) params.set("preference", normalized.preference);
+    params.set("adults", String(normalized.adults));
+    params.set("children", String(normalized.children));
+
+    navigate(`/tours/search?${params.toString()}`, { state: normalized });
   };
 
+  useEffect(() => {
+    const onDocDown = (e) => {
+      const root = containerRef.current;
+      if (!root) return;
+      if (root.contains(e.target)) return;
+      setShowDest(false);
+      setShowGuests(false);
+    };
+    document.addEventListener("mousedown", onDocDown);
+    document.addEventListener("touchstart", onDocDown, { passive: true });
+    return () => {
+      document.removeEventListener("mousedown", onDocDown);
+      document.removeEventListener("touchstart", onDocDown);
+    };
+  }, []);
+
   return (
-    <div className="max-w-5xl mx-auto px-2 sm:px-4 mt-6 sm:mt-8 md:-mt-10 relative z-50">
+    <div
+      ref={containerRef}
+      className="max-w-5xl mx-auto px-2 sm:px-4 mt-6 sm:mt-8 md:-mt-10 relative z-50"
+    >
       <div className="bg-white/95 backdrop-blur-md md:rounded-full rounded-2xl sm:rounded-3xl shadow-[0_22px_55px_rgba(30,58,138,0.18)] p-1.5 sm:p-2 border border-blue-100 flex flex-col md:flex-row items-center divide-y md:divide-y-0 md:divide-x divide-gray-100 dark:bg-slate-900/95 dark:border-slate-700 dark:divide-slate-700 w-full gap-1 md:gap-0">
         {/* 1. Điểm đến (Kết hợp Region & Province) */}
         <div
@@ -131,7 +192,7 @@ const AdvancedSearch = () => {
                     }}
                   >
                     <option value="">Tất cả tỉnh thành</option>
-                    {citiesInSystem.map((p) => (
+                    {(searchData.region ? provincesByRegion : citiesInSystem).map((p) => (
                       <option key={p} value={p}>
                         {p}
                       </option>
@@ -143,7 +204,7 @@ const AdvancedSearch = () => {
           </AnimatePresence>
         </div>
 
-        {/* 2. Ngày khởi hành */}
+        {/* 2. Thời gian */}
         <div className="relative px-3 sm:px-4 md:px-6 py-2.5 sm:py-3 w-full md:w-auto flex-1 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg md:rounded-full cursor-pointer transition-colors">
           <div className="flex items-center gap-2 sm:gap-3">
             <Calendar className="text-blue-600 shrink-0 w-4 h-4 sm:w-5 sm:h-5" />
@@ -160,6 +221,21 @@ const AdvancedSearch = () => {
                     setSearchData((prev) => ({
                       ...prev,
                       startDate: e.target.value,
+                    }))
+                  }
+                />
+                <span className="text-xs font-black text-slate-300 dark:text-slate-600">
+                  –
+                </span>
+                <input
+                  type="date"
+                  value={searchData.endDate}
+                  min={searchData.startDate || undefined}
+                  className="bg-transparent text-xs sm:text-sm font-extrabold text-slate-800 dark:text-slate-100 outline-none cursor-pointer"
+                  onChange={(e) =>
+                    setSearchData((prev) => ({
+                      ...prev,
+                      endDate: e.target.value,
                     }))
                   }
                 />

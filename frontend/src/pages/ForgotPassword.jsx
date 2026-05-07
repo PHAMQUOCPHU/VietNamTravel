@@ -1,8 +1,8 @@
 import React, { useState, useContext } from "react";
 import { AppContext } from "../context/AppContext";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import { forgotPasswordRequest } from "../services/authService";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
@@ -16,11 +16,8 @@ const ForgotPassword = () => {
 
     setIsLoading(true);
     try {
-      const response = await axios.post(
-        `${backendUrl}/api/user/forgot-password`,
-        { email },
-      );
-      if (response.data.success) {
+      const data = await forgotPasswordRequest({ backendUrl, email });
+      if (data.success) {
         toast.success("Mã OTP đã được gửi!");
         navigate("/verify-otp", { state: { email } });
       }

@@ -1,8 +1,37 @@
-import React, { useState, useEffect, useRef } from "react";
-import { MessageCircle, X, Send, ImagePlus, Loader2 } from "lucide-react";
-import axios from "axios";
+import { useState, useEffect, useRef, useCallback } from "react";
+import {
+  MessageCircle,
+  X,
+  Send,
+  Image as ImageIcon,
+  Loader2,
+  Headphones,
+  MoreVertical,
+  Bot,
+} from "lucide-react";
 import { getSocket } from "../lib/socketClient";
 import { BACKEND_URL } from "../config/env";
+import {
+  getUnreadCountForUser,
+  getUserMessages,
+  markMessagesReadForUser,
+  uploadChatImageForUser,
+} from "../services";
+
+function formatMsgTime(createdAt) {
+  if (!createdAt) return "";
+  try {
+    const d = createdAt instanceof Date ? createdAt : new Date(createdAt);
+    if (Number.isNaN(d.getTime())) return "";
+    return d.toLocaleTimeString("vi-VN", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
+  } catch {
+    return "";
+  }
+}
 
 const ChatWidget = ({ layout = "fixed" }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -63,20 +92,18 @@ const ChatWidget = ({ layout = "fixed" }) => {
   useEffect(() => {
     if (!isOpen || !userId) return undefined;
     const token = localStorage.getItem("token");
-    const authHeaders = token ? { token } : {};
 
-    axios
-      .get(`${backendUrl}/api/messages/${userId}`, { headers: authHeaders })
-      .then(async (res) => {
-        if (res.data.success) setChat(res.data.messages);
-        await axios.post(
-          `${backendUrl}/api/messages/user/mark-read/${userId}`,
-          {},
-          { headers: authHeaders },
-        );
+    (async () => {
+      try {
+        if (!token) return;
+        const res = await getUserMessages({ backendUrl, userId, token });
+        if (res.success) setChat(res.messages);
+        await markMessagesReadForUser({ backendUrl, userId, token });
         setUnreadCount(0);
-      })
-      .catch((err) => console.error("Lỗi fetch tin nhắn:", err));
+      } catch (err) {
+        console.error("Lỗi fetch tin nhắn:", err);
+      }
+    })();
 
     getSocket(backendUrl).emit("join_room", userId);
     return undefined;
@@ -95,10 +122,7 @@ const ChatWidget = ({ layout = "fixed" }) => {
         return;
       }
       try {
-        const { data } = await axios.get(
-          `${backendUrl}/api/messages/user/unread-count/${userId}`,
-          { headers: { token } },
-        );
+        const data = await getUnreadCountForUser({ backendUrl, userId, token });
         if (mounted && data.success) {
           setUnreadCount(data.unreadCount || 0);
         }
@@ -144,14 +168,11 @@ const ChatWidget = ({ layout = "fixed" }) => {
         if (data.senderId === "ADMIN" && data.receiverId === userId) {
           if (isOpen) {
             const token = localStorage.getItem("token");
-            axios
-              .post(
-                `${backendUrl}/api/messages/user/mark-read/${userId}`,
-                {},
-                { headers: token ? { token } : {} },
-              )
-              .then(() => setUnreadCount(0))
-              .catch(() => {});
+            if (token) {
+              markMessagesReadForUser({ backendUrl, userId, token })
+                .then(() => setUnreadCount(0))
+                .catch(() => {});
+            }
           } else {
             setUnreadCount((prev) => prev + 1);
           }
@@ -164,7 +185,7 @@ const ChatWidget = ({ layout = "fixed" }) => {
   }, [userId, isOpen, backendUrl]);
 
   useEffect(() => {
-    scrollRef.current?.scrollIntoView({ behavior: "auto", block: "end" });
+    scrollRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [chat]);
 
   const handlePickImage = () => fileInputRef.current?.click();
@@ -177,18 +198,7 @@ const ChatWidget = ({ layout = "fixed" }) => {
     if (!token) return;
     setUploadingImage(true);
     try {
-      const fd = new FormData();
-      fd.append("image", file);
-      const { data } = await axios.post(
-        `${backendUrl}/api/messages/chat-image/user`,
-        fd,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-            token,
-          },
-        },
-      );
+      const data = await uploadChatImageForUser({ backendUrl, token, file });
       if (data.success && data.imageUrl) {
         setPendingImageUrl(data.imageUrl);
       }
@@ -199,7 +209,7 @@ const ChatWidget = ({ layout = "fixed" }) => {
     }
   };
 
-  const sendMsg = () => {
+  const sendMsg = useCallback(() => {
     const text = message.trim();
     const img = pendingImageUrl.trim();
     if ((!text && !img) || !userId) return;
@@ -214,81 +224,143 @@ const ChatWidget = ({ layout = "fixed" }) => {
     getSocket(backendUrl).emit("send_message", data);
     setMessage("");
     setPendingImageUrl("");
-  };
+  }, [message, pendingImageUrl, userId, backendUrl]);
 
   if (!userId) return null;
 
   const containerClass =
     layout === "dock"
       ? "relative z-[99999]"
-      : "fixed bottom-10 right-10 z-[99999]";
+      : "fixed bottom-10 right-4 z-[99999] sm:right-10";
 
   return (
     <div className={containerClass}>
       <button
+        type="button"
         id="chat-button"
+        aria-expanded={isOpen}
+        aria-haspopup="dialog"
         onClick={() => setIsOpen(!isOpen)}
-        className="bg-blue-600 p-4 rounded-full text-white shadow-2xl hover:scale-110 transition-all border-2 border-white flex items-center justify-center"
+        className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-indigo-600 to-violet-600 text-white shadow-xl shadow-indigo-600/25 ring-2 ring-white transition hover:scale-[1.05] hover:shadow-2xl motion-reduce:transition-none"
       >
-        {isOpen ? <X size={28} /> : <MessageCircle size={28} />}
+        {isOpen ? (
+          <X className="h-7 w-7" strokeWidth={2} />
+        ) : (
+          <MessageCircle className="h-7 w-7" strokeWidth={2} />
+        )}
       </button>
       {!isOpen && unreadCount > 0 && (
-        <span className="absolute -top-1 -right-1 min-w-6 h-6 px-1 rounded-full bg-red-500 text-white text-[11px] font-bold flex items-center justify-center shadow-lg border-2 border-white">
+        <span className="absolute -right-0.5 -top-0.5 flex h-6 min-w-6 items-center justify-center rounded-full border-2 border-white bg-red-500 px-1 text-[11px] font-bold text-white shadow-lg">
           {unreadCount > 99 ? "99+" : unreadCount}
         </span>
       )}
 
       {isOpen && (
-        <div className="absolute bottom-20 right-0 w-[85vw] sm:w-80 max-h-[70vh] sm:max-h-[450px] bg-white shadow-2xl rounded-2xl flex flex-col border border-gray-300 overflow-hidden animate-in fade-in zoom-in duration-200">
-          <div className="bg-blue-600 p-3 sm:p-4 text-white font-bold text-xs sm:text-sm shadow-md flex justify-between items-center">
-            <span>Hỗ trợ VN Travel</span>
-            <div
-              className="w-2 h-2 bg-green-400 rounded-full animate-pulse"
-              title="Online"
-            ></div>
-          </div>
-
-          <div className="flex-1 p-2 sm:p-3 overflow-y-auto space-y-2 sm:space-y-3 bg-gray-50 flex flex-col">
-            <div className="text-[9px] sm:text-[10px] text-center text-gray-400 mb-2 uppercase tracking-widest line-clamp-1">
-              Đang chat: {userId}
-            </div>
-
-            {chat.map((msg) => (
-              <div
-                key={msg._id || `${msg.createdAt}-${msg.senderId}`}
-                className={`flex ${msg.senderId === userId ? "justify-end" : "justify-start"}`}
-              >
-                <div
-                  className={`max-w-[80%] p-2 sm:p-2.5 rounded-2xl text-xs shadow-sm ${
-                    msg.senderId === userId
-                      ? "bg-blue-600 text-white rounded-tr-none"
-                      : "bg-white text-gray-800 border border-gray-200 rounded-tl-none"
-                  }`}
-                >
-                  {msg.imageUrl ? (
-                    <a
-                      href={msg.imageUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={
-                        msg.senderId === userId ? "text-blue-100" : ""
-                      }
-                    >
-                      <img
-                        src={msg.imageUrl}
-                        alt=""
-                        className="max-h-40 w-full rounded-lg object-contain bg-black/10"
-                      />
-                    </a>
-                  ) : null}
-                  {msg.message ? (
-                    <div className={msg.imageUrl ? "mt-1.5" : ""}>
-                      {msg.message}
-                    </div>
-                  ) : null}
-                </div>
+        <div
+          role="dialog"
+          aria-label="Hỗ trợ khách hàng"
+          className="chat-widget-shell absolute bottom-[4.75rem] right-0 flex max-h-[min(700px,82vh)] w-[min(100vw-1.5rem,28rem)] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl motion-reduce:animate-none animate-in fade-in zoom-in duration-200"
+        >
+          <header className="flex shrink-0 items-center gap-3 bg-gradient-to-r from-indigo-600 to-violet-600 px-5 py-4">
+            <div className="relative shrink-0">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20">
+                <Headphones className="h-5 w-5 text-white" strokeWidth={2} />
               </div>
-            ))}
+              <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-indigo-600 bg-emerald-400" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <h1 className="text-sm font-semibold text-white">
+                Hỗ trợ khách hàng
+              </h1>
+              <p className="text-xs text-indigo-200">Đang hoạt động</p>
+            </div>
+            <button
+              type="button"
+              className="rounded-lg p-1.5 text-white/70 transition hover:bg-white/10 hover:text-white"
+              title="Tuỳ chọn"
+            >
+              <MoreVertical className="h-5 w-5" />
+            </button>
+          </header>
+
+          <div className="chat-widget-scroll flex flex-1 flex-col space-y-3 overflow-y-auto bg-slate-50 px-4 py-4">
+            {chat.map((msg) => {
+              const isMine = msg.senderId === userId;
+              const time = formatMsgTime(msg.createdAt);
+
+              if (isMine) {
+                return (
+                  <div
+                    key={msg._id || `${msg.createdAt}-${msg.senderId}`}
+                    className="motion-reduce:animate-none flex items-end justify-end gap-2 animate-chat-msg-in"
+                  >
+                    <div className="max-w-[75%] rounded-2xl rounded-br-md bg-indigo-600 px-4 py-2.5 shadow-sm">
+                      {msg.imageUrl ? (
+                        <a
+                          href={msg.imageUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block overflow-hidden rounded-xl rounded-br-md"
+                        >
+                          <img
+                            src={msg.imageUrl}
+                            alt="Ảnh đính kèm"
+                            className="max-h-56 w-full bg-black/10 object-contain"
+                          />
+                        </a>
+                      ) : null}
+                      {msg.message ? (
+                        <p
+                          className={`text-sm text-white ${msg.imageUrl ? "mt-2" : ""}`}
+                        >
+                          {msg.message}
+                        </p>
+                      ) : null}
+                      <span className="mt-1 block text-right text-[10px] text-indigo-200">
+                        {time}
+                      </span>
+                    </div>
+                  </div>
+                );
+              }
+
+              return (
+                <div
+                  key={msg._id || `${msg.createdAt}-${msg.senderId}`}
+                  className="motion-reduce:animate-none flex items-end gap-2 animate-chat-msg-in"
+                >
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-indigo-100">
+                    <Bot className="h-4 w-4 text-indigo-600" strokeWidth={2} />
+                  </div>
+                  <div className="max-w-[75%] rounded-2xl rounded-bl-md border border-slate-200 bg-white px-4 py-2.5 shadow-sm">
+                    {msg.imageUrl ? (
+                      <a
+                        href={msg.imageUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block overflow-hidden rounded-xl rounded-bl-md"
+                      >
+                        <img
+                          src={msg.imageUrl}
+                          alt="Ảnh từ hỗ trợ"
+                          className="max-h-56 w-full bg-slate-100 object-contain"
+                        />
+                      </a>
+                    ) : null}
+                    {msg.message ? (
+                      <p
+                        className={`text-sm text-slate-700 ${msg.imageUrl ? "mt-2" : ""}`}
+                      >
+                        {msg.message}
+                      </p>
+                    ) : null}
+                    <span className="mt-1 block text-[10px] text-slate-400">
+                      {time}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
             <div ref={scrollRef} />
           </div>
 
@@ -300,59 +372,66 @@ const ChatWidget = ({ layout = "fixed" }) => {
             onChange={handleImageFile}
           />
 
-          <div className="p-2 sm:p-3 border-t bg-white flex flex-col gap-2">
+          <div className="shrink-0 border-t border-slate-200 bg-white px-4 py-3">
             {pendingImageUrl ? (
-              <div className="flex items-center gap-2 rounded-lg border border-blue-100 bg-blue-50/60 p-1.5 pr-2">
+              <div className="mb-3 flex items-center gap-2 rounded-xl border border-indigo-100 bg-indigo-50/80 p-2 pr-2">
                 <img
                   src={pendingImageUrl}
                   alt=""
-                  className="h-12 w-12 rounded object-cover"
+                  className="h-12 w-12 rounded-lg object-cover"
                 />
-                <span className="flex-1 text-[10px] text-blue-900 truncate">
+                <span className="min-w-0 flex-1 truncate text-xs text-indigo-950">
                   Ảnh sẵn sàng gửi
                 </span>
                 <button
                   type="button"
                   onClick={() => setPendingImageUrl("")}
-                  className="shrink-0 rounded p-1 text-blue-800 hover:bg-blue-100"
+                  className="shrink-0 rounded-lg p-1 text-indigo-700 hover:bg-indigo-100"
+                  title="Bỏ ảnh"
                 >
-                  <X size={16} />
+                  <X size={18} />
                 </button>
               </div>
             ) : null}
-            <div className="flex gap-2 items-center">
-              <input
-                className="flex-1 text-xs border border-gray-200 p-2 sm:p-2.5 rounded-xl outline-none focus:border-blue-500 transition-all"
-                placeholder="Nhập tin nhắn…"
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && sendMsg()}
-              />
+            <form
+              className="flex items-center gap-2"
+              onSubmit={(e) => {
+                e.preventDefault();
+                sendMsg();
+              }}
+            >
               <button
                 type="button"
                 onClick={handlePickImage}
                 disabled={uploadingImage}
-                title="Đính ảnh"
-                className="border border-gray-200 bg-gray-50 p-2 sm:p-2.5 rounded-lg text-gray-700 hover:bg-blue-50 hover:border-blue-200 disabled:opacity-50"
+                className="shrink-0 p-1 text-slate-400 transition hover:text-indigo-600 disabled:opacity-50"
+                title="Gửi ảnh"
               >
                 {uploadingImage ? (
-                  <Loader2 size={14} className="animate-spin" />
+                  <Loader2 className="h-5 w-5 animate-spin" />
                 ) : (
-                  <ImagePlus size={14} className="sm:w-4 sm:h-4" />
+                  <ImageIcon className="h-5 w-5" strokeWidth={2} />
                 )}
               </button>
+              <input
+                type="text"
+                autoComplete="off"
+                placeholder="Nhập tin nhắn..."
+                className="min-w-0 flex-1 rounded-full border-0 bg-slate-100 px-4 py-2.5 text-sm text-slate-800 outline-none ring-0 transition focus:ring-2 focus:ring-indigo-300"
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+              />
               <button
-                type="button"
-                onClick={sendMsg}
+                type="submit"
                 disabled={
-                  (!message.trim() && !pendingImageUrl.trim()) ||
-                  uploadingImage
+                  (!message.trim() && !pendingImageUrl.trim()) || uploadingImage
                 }
-                className="bg-blue-600 text-white p-2 sm:p-2.5 rounded-lg sm:rounded-xl hover:bg-blue-700 disabled:opacity-50 transition-colors shadow-md active:scale-95 flex-shrink-0"
+                className="flex shrink-0 items-center justify-center rounded-full bg-indigo-600 p-2.5 text-white shadow-md transition hover:bg-indigo-700 hover:shadow-lg disabled:opacity-50 motion-reduce:transition-none"
+                title="Gửi"
               >
-                <Send size={14} className="sm:w-4 sm:h-4" />
+                <Send className="h-4 w-4" strokeWidth={2} />
               </button>
-            </div>
+            </form>
           </div>
         </div>
       )}

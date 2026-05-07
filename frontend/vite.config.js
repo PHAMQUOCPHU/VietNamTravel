@@ -1,5 +1,6 @@
 import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
+import process from "node:process";
 
 /** Tách React, router và thư viện nặng (map, pdf, swiper, markdown, …). */
 function manualChunks(id) {
@@ -17,40 +18,8 @@ function manualChunks(id) {
   if (id.includes("framer-motion")) return "framer-motion";
   if (id.includes("socket.io-client")) return "socket-io";
 
-  // react-leaflet + @react-leaflet/core gọi React.createContext khi khởi tạo module.
-  // Nếu cho vào chunk "maps-leaflet" tách khỏi "react-core", production có thể lỗi:
-  // "Cannot read properties of undefined (reading 'createContext')".
-  if (id.includes("@react-leaflet") || id.includes("/react-leaflet/"))
-    return "react-core";
-
-  // Thư viện bản đồ thuần (không phụ thuộc React)
-  if (id.includes("/node_modules/leaflet/")) return "maps-leaflet";
-  if (
-    id.includes("@react-google-maps") ||
-    id.includes("react-simple-maps") ||
-    id.includes("d3-geo") ||
-    id.includes("topojson-client")
-  ) {
-    return "maps-geo";
-  }
   if (id.includes("@react-pdf") || id.includes("/jspdf") || id.includes("/pdfjs"))
     return "pdf";
-  if (id.includes("swiper")) return "swiper";
-  if (
-    id.includes("react-markdown") ||
-    id.includes("/remark") ||
-    id.includes("/unified") ||
-    id.includes("/micromark")
-  ) {
-    return "markdown";
-  }
-  if (id.includes("react-datepicker")) return "datepicker";
-  if (id.includes("react-icons")) return "icons-react";
-  if (id.includes("lucide-react")) return "icons-lucide";
-  if (id.includes("driver.js")) return "driver-js";
-  if (id.includes("react-tooltip")) return "tooltip";
-  if (id.includes("canvas-confetti")) return "confetti";
-  if (id.includes("qrcode")) return "qrcode";
 
   return "vendor";
 }

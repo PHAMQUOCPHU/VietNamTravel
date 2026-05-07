@@ -12,11 +12,11 @@ import {
   TicketPercent,
   X,
 } from "lucide-react";
-import axios from "axios";
 import { toast } from "react-toastify";
 import { AppContext } from "../context/AppContext";
 import useBooking from "../hooks/useCreateBooking";
 import PaymentMethod from "../components/PaymentMethod";
+import { applyVoucher } from "../services";
 
 const Booking = () => {
   const location = useLocation();
@@ -76,16 +76,12 @@ const Booking = () => {
         tourPrice * guestSizeFromState.adult +
         tourPrice * 0.6 * guestSizeFromState.children;
       const token = localStorage.getItem("token");
-      const { data } = await axios.post(
-        `${backendUrl}/api/vouchers/apply`,
-        {
-          code: voucherCode,
-          orderValue: basePrice,
-        },
-        {
-          headers: { token },
-        },
-      );
+      const data = await applyVoucher({
+        backendUrl,
+        token,
+        code: voucherCode,
+        orderValue: basePrice,
+      });
       if (data.success) {
         setDiscountAmount(data.discountAmount);
         setAppliedVoucherCode(data.code);
@@ -93,7 +89,7 @@ const Booking = () => {
       } else {
         setVoucherError(data.message);
       }
-    } catch (error) {
+    } catch (_error) {
       setVoucherError("Lỗi kết nối máy chủ");
     } finally {
       setIsApplyingVoucher(false);

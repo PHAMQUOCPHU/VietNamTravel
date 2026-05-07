@@ -1,11 +1,11 @@
 import { useState, useContext } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { motion } from "framer-motion";
 import { Mail, Lock, LogIn, ShieldCheck } from "lucide-react";
-import logo from "../assets/images/logo.png";
 import { toast } from "react-toastify";
 import { AdminContext } from "../context/AdminContext.jsx";
+import { resolveAdminPanelLogoSrc } from "../utils/adminBranding";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -14,7 +14,8 @@ const Login = () => {
   const navigate = useNavigate();
 
   // Lấy giá trị từ Context
-  const { setAToken, backendUrl } = useContext(AdminContext);
+  const { setAToken, backendUrl, adminLogoUrl } = useContext(AdminContext);
+  const loginLogoSrc = resolveAdminPanelLogoSrc(adminLogoUrl);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -66,7 +67,7 @@ const Login = () => {
         <div className="text-center mb-10">
           <div className="inline-block p-4 bg-blue-50 rounded-2xl mb-4 shadow-inner">
             <img
-              src={logo}
+              src={loginLogoSrc}
               alt="VN Travel"
               className="w-16 h-12 object-cover rounded-md shadow-sm"
             />
@@ -113,6 +114,15 @@ const Login = () => {
                 required
               />
             </div>
+          </div>
+
+          <div className="flex justify-end">
+            <Link
+              to="/admin/forgot-password"
+              className="text-sm font-semibold text-blue-600 transition-colors hover:text-blue-800 hover:underline"
+            >
+              Quên mật khẩu?
+            </Link>
           </div>
 
           <motion.button

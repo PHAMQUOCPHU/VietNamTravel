@@ -1,8 +1,8 @@
 import React, { useState, useContext } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { AppContext } from "../context/AppContext";
-import axios from "axios";
 import { toast } from "react-toastify";
+import { resetPasswordRequest } from "../services/authService";
 
 const ResetPassword = () => {
   const [newPassword, setNewPassword] = useState("");
@@ -13,11 +13,12 @@ const ResetPassword = () => {
   const handleReset = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post(`${backendUrl}/api/user/reset-password`, {
+      const data = await resetPasswordRequest({
+        backendUrl,
         email: state.email,
-        newPassword
+        newPassword,
       });
-      if (response.data.success) {
+      if (data.success) {
         toast.success("Đã đổi mật khẩu thành công!");
         navigate("/login");
       }

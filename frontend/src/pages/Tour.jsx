@@ -23,7 +23,7 @@ import {
 import TourCard from "../components/TourCard";
 import VoucherCard from "../components/VoucherCard";
 import { AppContext } from "../context/AppContext";
-import axios from "axios";
+import { getPublicVouchers } from "../services/voucherService";
 import {
   TOUR_CATEGORY_LABELS,
   normalizeTourCategory,
@@ -269,19 +269,19 @@ const Tour = () => {
     const ac = new AbortController();
     (async () => {
       try {
-        const { data } = await axios.get(`${backendUrl}/api/vouchers/public`, {
+        const data = await getPublicVouchers({
+          backendUrl,
+          token,
           signal: ac.signal,
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
         if (!ac.signal.aborted && data.success) {
           setVouchers(data.vouchers);
         }
       } catch (error) {
-        if (
-          error.code !== "ERR_CANCELED" &&
-          error.name !== "CanceledError"
-        ) {
-          console.error("Error fetching vouchers:", error);
+        if (error.code !== "ERR_CANCELED" && error.name !== "CanceledError") {
+          if (import.meta.env.DEV) {
+            console.warn("[vouchers] fetch failed", error);
+          }
         }
       }
     })();
@@ -336,8 +336,12 @@ const Tour = () => {
     if (searchQuery.trim()) {
       const q = searchQuery.trim().toLowerCase();
       list = list.filter((t) => {
-        const titleMatch = String(t.title || "").toLowerCase().includes(q);
-        const cityMatch = String(t.city || "").toLowerCase().includes(q);
+        const titleMatch = String(t.title || "")
+          .toLowerCase()
+          .includes(q);
+        const cityMatch = String(t.city || "")
+          .toLowerCase()
+          .includes(q);
         return titleMatch || cityMatch;
       });
     }
@@ -352,7 +356,14 @@ const Tour = () => {
       );
     }
     return arr;
-  }, [toursByCategory, priceMin, priceMax, selectedRegions, sortBy, searchQuery]);
+  }, [
+    toursByCategory,
+    priceMin,
+    priceMax,
+    selectedRegions,
+    sortBy,
+    searchQuery,
+  ]);
 
   const emptyLabel = selectedCategory
     ? TOUR_CATEGORY_LABELS[selectedCategory] || selectedCategory
@@ -402,10 +413,12 @@ const Tour = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-12">
           <div className="flex items-center gap-2 mb-4">
             <TicketPercent className="text-orange-500" size={24} />
-            <h2 className="text-lg font-black text-slate-800 uppercase tracking-tight">Mã Giảm Giá Dành Cho Bạn</h2>
+            <h2 className="text-lg font-black text-slate-800 uppercase tracking-tight">
+              Mã Giảm Giá Dành Cho Bạn
+            </h2>
           </div>
           <div className="flex gap-4 overflow-x-auto pb-4 snap-x hide-scrollbar">
-            {vouchers.map(v => (
+            {vouchers.map((v) => (
               <div key={v._id} className="snap-start shrink-0">
                 <VoucherCard voucher={v} />
               </div>
@@ -463,7 +476,10 @@ const Tour = () => {
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full min-w-0 max-w-full rounded-xl border border-slate-200 bg-white py-2 pl-4 pr-10 text-sm font-semibold text-slate-700 shadow-sm outline-none focus:border-blue-400 sm:max-w-md sm:min-w-[12rem] md:min-w-[220px] dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200"
                   />
-                  <Search size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <Search
+                    size={16}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"
+                  />
                 </div>
                 <div className="flex items-center gap-2">
                   <label className="text-xs font-bold uppercase text-slate-400">

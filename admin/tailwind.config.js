@@ -5,7 +5,18 @@ export default {
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
-    extend: {},
+    extend: {
+      fontFamily: {
+        sans: ["DM Sans", "system-ui", "sans-serif"],
+        display: ["Playfair Display", "Georgia", "serif"],
+      },
+      colors: {
+        brand: {
+          DEFAULT: "#105551",
+          dark: "#0d4542",
+        },
+      },
+    },
   },
   plugins: [],
 }

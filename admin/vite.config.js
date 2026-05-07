@@ -1,5 +1,6 @@
-import { defineConfig } from "vite";
+import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
+import process from "node:process";
 
 /** Tách vendor / thư viện lớn để giữ chunk chính gọn và tận dụng cache HTTP. */
 function manualChunks(id) {
@@ -26,19 +27,40 @@ function manualChunks(id) {
   return "vendor";
 }
 
+function resolveBackendProxyTarget(env) {
+  let t =
+    String(env?.VITE_BACKEND_URL ?? "")
+      .trim()
+      .replace(/\/api\/?$/i, "")
+      .replace(/\/+$/, "") || "http://localhost:5001";
+  if (/:(5173|5174|4173)(\/|$)/i.test(t)) {
+    return "http://localhost:5001";
+  }
+  return t || "http://localhost:5001";
+}
+
 // https://vite.dev/config/
-export default defineConfig({
-  plugins: [react()],
-  server: {
-    port: 5173,
-    strictPort: true,
-  },
-  build: {
-    rollupOptions: {
-      output: {
-        manualChunks,
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), "");
+  return {
+    plugins: [react()],
+    server: {
+      port: 5173,
+      strictPort: true,
+      proxy: {
+        "/api": {
+          target: resolveBackendProxyTarget(env),
+          changeOrigin: true,
+        },
       },
     },
-    chunkSizeWarningLimit: 600,
-  },
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks,
+        },
+      },
+      chunkSizeWarningLimit: 600,
+    },
+  };
 });

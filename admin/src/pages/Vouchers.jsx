@@ -3,6 +3,7 @@ import React, {
   useEffect,
   useContext,
   useCallback,
+  useMemo,
   memo,
 } from "react";
 import { motion } from "framer-motion";
@@ -15,10 +16,26 @@ import {
   Clock,
   AlertCircle,
   X,
+  Download,
+  Search,
+  TrendingUp,
 } from "lucide-react";
 import { toast } from "react-toastify";
 import axios from "axios";
 import { AdminContext } from "../context/AdminContext";
+
+const formatVndInput = (value) => {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return "";
+  return n.toLocaleString("vi-VN");
+};
+
+const parseVndInput = (raw) => {
+  const digits = String(raw || "").replace(/[^\d]/g, "");
+  if (!digits) return 0;
+  const n = Number(digits);
+  return Number.isFinite(n) ? n : 0;
+};
 
 function resolveDisplayStatus(voucher) {
   let currentStatus = voucher.status || "active";
@@ -139,6 +156,7 @@ const Vouchers = () => {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [query, setQuery] = useState("");
 
   const [formData, setFormData] = useState({
     _id: null,
@@ -149,6 +167,10 @@ const Vouchers = () => {
     expiryDate: "",
     isActive: true,
   });
+
+  const minOrderDisplay = useMemo(() => {
+    return formatVndInput(formData.minOrderValue);
+  }, [formData.minOrderValue]);
 
   const refreshVouchers = useCallback(async () => {
     if (!backendUrl || !aToken) return;
@@ -319,31 +341,188 @@ const Vouchers = () => {
     [backendUrl, aToken, refreshVouchers],
   );
 
+  const filteredVouchers = useMemo(() => {
+    const q = String(query || "").trim().toLowerCase();
+    if (!q) return vouchers;
+    return vouchers.filter((v) => {
+      const code = String(v?.code || "").toLowerCase();
+      return code.includes(q);
+    });
+  }, [vouchers, query]);
+
+  const stats = useMemo(() => {
+    const total = vouchers.length;
+    let active = 0;
+    let exhausted = 0;
+    let expired = 0;
+    vouchers.forEach((v) => {
+      const s = resolveDisplayStatus(v)?.statusText;
+      if (s === "Hoạt động") active += 1;
+      else if (s === "Hết lượt") exhausted += 1;
+      else if (s === "Hết hạn") expired += 1;
+    });
+    return { total, active, exhausted, expired };
+  }, [vouchers]);
+
+  const exportCsv = useCallback(() => {
+    const rows = [
+      [
+        "code",
+        "discountValue",
+        "minOrderValue",
+        "usageLimit",
+        "usedCount",
+        "expiryDate",
+        "status",
+        "isActive",
+      ],
+      ...filteredVouchers.map((v) => [
+        String(v?.code ?? ""),
+        String(v?.discountValue ?? ""),
+        String(v?.minOrderValue ?? ""),
+        String(v?.usageLimit ?? ""),
+        String(v?.usedCount ?? ""),
+        v?.expiryDate ? new Date(v.expiryDate).toISOString() : "",
+        String(v?.status ?? ""),
+        String(Boolean(v?.isActive)),
+      ]),
+    ];
+
+    const csv = rows
+      .map((cols) =>
+        cols
+          .map((c) => {
+            const s = String(c ?? "");
+            if (/[",\n]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+            return s;
+          })
+          .join(","),
+      )
+      .join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `vouchers-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }, [filteredVouchers]);
+
+  const modalTitle = formData._id ? "Cập nhật Voucher" : "Thêm Voucher";
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       className="max-w-6xl space-y-6"
     >
-      <div className="flex items-center justify-between rounded-3xl border border-gray-100 bg-white p-6 shadow-sm">
-        <div>
-          <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-800">
-            <Ticket className="text-blue-600" /> Quản lý Voucher
-          </h1>
-          <p className="mt-1 text-sm font-medium text-gray-500">
-            Quản lý các mã giảm giá và ưu đãi cho khách hàng
-          </p>
+      <div className="overflow-hidden bg-gradient-to-r from-blue-700 via-blue-600 to-indigo-600 px-8 py-7 shadow-xl shadow-blue-100/60">
+        <div className="flex items-center justify-between gap-4">
+          <div className="min-w-0">
+            <h1 className="text-3xl font-extrabold tracking-tight text-white">
+              Quản lý Voucher
+            </h1>
+            <p className="mt-1 text-sm font-semibold text-blue-100/90">
+              Quản lý tất cả voucher khuyến mãi
+            </p>
+          </div>
+          <div className="flex h-11 w-11 items-center justify-center bg-white/15 ring-1 ring-white/20">
+            <Ticket className="text-white" />
+          </div>
         </div>
-        <button
-          type="button"
-          onClick={() => openModal()}
-          className="flex items-center gap-2 rounded-2xl bg-blue-600 px-6 py-3 font-bold text-white shadow-lg shadow-blue-200 transition-all hover:bg-blue-700 active:scale-95"
-        >
-          <Plus size={20} /> Thêm Voucher mới
-        </button>
       </div>
 
-      <div className="overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-xl shadow-gray-100/50">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+        <div className="border border-gray-100 bg-white p-5 shadow-sm">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-sm font-bold text-gray-600">Tổng Voucher</p>
+              <p className="mt-2 text-3xl font-extrabold text-gray-900">
+                {stats.total}
+              </p>
+            </div>
+            <div className="flex h-11 w-11 items-center justify-center bg-blue-50 text-blue-700 ring-1 ring-blue-100">
+              <Ticket size={18} />
+            </div>
+          </div>
+        </div>
+        <div className="border border-gray-100 bg-white p-5 shadow-sm">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-sm font-bold text-gray-600">Đang Hoạt Động</p>
+              <p className="mt-2 text-3xl font-extrabold text-emerald-600">
+                {stats.active}
+              </p>
+            </div>
+            <div className="flex h-11 w-11 items-center justify-center bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100">
+              <TrendingUp size={18} />
+            </div>
+          </div>
+        </div>
+        <div className="border border-gray-100 bg-white p-5 shadow-sm">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-sm font-bold text-gray-600">Đã Sử Dụng</p>
+              <p className="mt-2 text-3xl font-extrabold text-orange-500">
+                {stats.exhausted}
+              </p>
+            </div>
+            <div className="flex h-11 w-11 items-center justify-center bg-orange-50 text-orange-700 ring-1 ring-orange-100">
+              <Percent size={18} />
+            </div>
+          </div>
+        </div>
+        <div className="border border-gray-100 bg-white p-5 shadow-sm">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-sm font-bold text-gray-600">Hết Hạn</p>
+              <p className="mt-2 text-3xl font-extrabold text-red-600">
+                {stats.expired}
+              </p>
+            </div>
+            <div className="flex h-11 w-11 items-center justify-center bg-red-50 text-red-700 ring-1 ring-red-100">
+              <AlertCircle size={18} />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={() => openModal()}
+            className="inline-flex items-center gap-2 bg-blue-600 px-6 py-3 text-sm font-extrabold text-white shadow-lg shadow-blue-100 transition hover:bg-blue-700 active:scale-[0.98]"
+          >
+            <Plus size={18} /> Thêm Voucher
+          </button>
+          <button
+            type="button"
+            onClick={exportCsv}
+            className="inline-flex items-center gap-2 bg-emerald-600 px-6 py-3 text-sm font-extrabold text-white shadow-lg shadow-emerald-100 transition hover:bg-emerald-700 active:scale-[0.98]"
+          >
+            <Download size={18} /> Xuất CSV
+          </button>
+        </div>
+
+        <div className="relative w-full sm:w-[360px]">
+          <Search
+            size={18}
+            className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+          />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Tìm kiếm voucher..."
+            className="w-full border border-gray-200 bg-white py-3 pl-12 pr-4 text-sm font-semibold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+      </div>
+
+      <div className="overflow-hidden border border-gray-100 bg-white shadow-xl shadow-gray-100/50">
         <div className="overflow-x-auto">
           <table className="w-full border-collapse text-left">
             <thead>
@@ -378,17 +557,17 @@ const Vouchers = () => {
                     Đang tải dữ liệu...
                   </td>
                 </tr>
-              ) : vouchers.length === 0 ? (
+              ) : filteredVouchers.length === 0 ? (
                 <tr>
                   <td colSpan="7" className="p-8 text-center font-medium text-gray-500">
                     <div className="flex flex-col items-center gap-2">
                       <AlertCircle size={32} className="text-gray-300" />
-                      Chưa có mã giảm giá nào
+                      Không có voucher phù hợp
                     </div>
                   </td>
                 </tr>
               ) : (
-                vouchers.map((voucher) => (
+                filteredVouchers.map((voucher) => (
                   <VoucherAdminRow
                     key={String(voucher._id)}
                     voucher={voucher}
@@ -407,78 +586,56 @@ const Vouchers = () => {
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="w-full max-w-2xl overflow-hidden rounded-3xl bg-white shadow-2xl"
+            className="w-full max-w-xl overflow-hidden bg-white shadow-2xl"
           >
             <div className="flex items-center justify-between border-b border-gray-100 bg-gray-50/50 px-8 py-6">
-              <h2 className="flex items-center gap-2 text-xl font-bold text-gray-800">
-                <Ticket className="text-blue-600" />
-                {formData._id ? "Cập nhật Voucher" : "Thêm Voucher mới"}
+              <h2 className="text-xl font-extrabold text-gray-900">
+                {modalTitle}
               </h2>
               <button
                 type="button"
                 onClick={closeModal}
-                className="rounded-full p-2 text-gray-400 transition-colors hover:bg-gray-100"
+                className="p-2 text-gray-400 transition-colors hover:bg-gray-100"
               >
                 <X size={20} />
               </button>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6 p-8">
-              <div className="grid grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
-                    Mã Voucher
-                  </label>
-                  <input
-                    type="text"
-                    name="code"
-                    value={formData.code}
-                    onChange={handleChange}
-                    placeholder="Ví dụ: VNTRAVEL2026"
-                    className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 font-bold uppercase text-gray-800 outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
-                    Giá trị giảm (VNĐ)
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="number"
-                      name="discountValue"
-                      min={0}
-                      value={formData.discountValue}
-                      onChange={handleChange}
-                      placeholder="500000"
-                      className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 font-bold text-orange-500 outline-none focus:ring-2 focus:ring-blue-500"
-                      required
-                    />
-                    <Percent
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400"
-                      size={16}
-                    />
-                  </div>
-                </div>
+              <div className="space-y-2">
+                <label className="text-xs font-extrabold text-gray-500">
+                  Mã Voucher *
+                </label>
+                <input
+                  type="text"
+                  name="code"
+                  value={formData.code}
+                  onChange={handleChange}
+                  placeholder="VCH2024001"
+                  className="w-full border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-800 outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
 
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <label className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
-                    Đơn tối thiểu (VNĐ)
+                  <label className="text-xs font-extrabold text-gray-500">
+                    Giảm (VNĐ) *
                   </label>
                   <input
                     type="number"
-                    name="minOrderValue"
+                    name="discountValue"
                     min={0}
-                    value={formData.minOrderValue}
+                    value={formData.discountValue}
                     onChange={handleChange}
-                    placeholder="2000000"
-                    className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 font-semibold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="150000"
+                    className="w-full border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-800 outline-none focus:ring-2 focus:ring-blue-500"
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
-                    Giới hạn sử dụng
+                  <label className="text-xs font-extrabold text-gray-500">
+                    Lượt sử dụng tối đa *
                   </label>
                   <input
                     type="number"
@@ -487,64 +644,84 @@ const Vouchers = () => {
                     value={formData.usageLimit}
                     onChange={handleChange}
                     placeholder="100"
-                    className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 font-semibold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-800 outline-none focus:ring-2 focus:ring-blue-500"
                     required
                   />
                 </div>
+              </div>
 
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <label className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
-                    Ngày hết hạn
+                  <label className="text-xs font-extrabold text-gray-500">
+                    Ngày hết hạn *
                   </label>
                   <input
                     type="date"
                     name="expiryDate"
                     value={formData.expiryDate}
                     onChange={handleChange}
-                    className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 font-semibold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-800 outline-none focus:ring-2 focus:ring-blue-500"
                     required
                   />
                 </div>
-                <div className="flex flex-col justify-center space-y-2 pt-6">
-                  <label className="flex cursor-pointer items-center gap-3">
-                    <div className="relative">
-                      <input
-                        type="checkbox"
-                        name="isActive"
-                        checked={formData.isActive}
-                        onChange={handleChange}
-                        className="sr-only"
-                      />
-                      <div
-                        className={`block h-8 w-14 rounded-full transition-colors ${formData.isActive ? "bg-blue-500" : "bg-gray-300"}`}
-                      />
-                      <div
-                        className={`absolute left-1 top-1 h-6 w-6 rounded-full bg-white transition-transform ${formData.isActive ? "translate-x-6" : ""}`}
-                      />
-                    </div>
-                    <span className="font-bold text-gray-700">Kích hoạt</span>
+                <div className="space-y-2">
+                  <label className="text-xs font-extrabold text-gray-500">
+                    Trạng thái *
                   </label>
+                  <select
+                    name="isActive"
+                    value={formData.isActive ? "active" : "disabled"}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        isActive: e.target.value === "active",
+                      }))
+                    }
+                    className="w-full border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-800 outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="active">Hoạt động</option>
+                    <option value="disabled">Tạm tắt</option>
+                  </select>
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-extrabold text-gray-500">
+                  Đơn tối thiểu (VNĐ) *
+                </label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  name="minOrderValue"
+                  value={minOrderDisplay}
+                  onChange={(e) => {
+                    const next = parseVndInput(e.target.value);
+                    setFormData((prev) => ({ ...prev, minOrderValue: next }));
+                  }}
+                  placeholder="2.000.000"
+                  className="w-full border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-800 outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
               </div>
 
               <div className="flex justify-end gap-3 border-t border-gray-100 pt-6">
                 <button
                   type="button"
                   onClick={closeModal}
-                  className="rounded-xl bg-gray-100 px-6 py-3 font-bold text-gray-600 transition-colors hover:bg-gray-200"
+                  className="w-32 border border-gray-200 bg-white px-6 py-3 text-sm font-extrabold text-gray-700 transition hover:bg-gray-50"
                 >
-                  Hủy bỏ
+                  Hủy
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="rounded-xl bg-blue-600 px-8 py-3 font-bold text-white shadow-lg shadow-blue-200 transition-all active:scale-95 hover:bg-blue-700 disabled:opacity-70"
+                  className="w-32 bg-blue-600 px-8 py-3 text-sm font-extrabold text-white shadow-lg shadow-blue-100 transition active:scale-[0.98] hover:bg-blue-700 disabled:opacity-70"
                 >
                   {isSubmitting
                     ? "Đang xử lý..."
                     : formData._id
-                      ? "Cập nhật"
-                      : "Tạo Voucher"}
+                      ? "Lưu"
+                      : "Thêm"}
                 </button>
               </div>
             </form>

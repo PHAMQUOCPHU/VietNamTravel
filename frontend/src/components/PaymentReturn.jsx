@@ -1,10 +1,10 @@
-import React, { useEffect, useState, useContext, useRef } from "react";
+import React, { useCallback, useEffect, useState, useContext, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import axios from "axios";
 import { motion } from "framer-motion";
 import { AppContext } from "../context/AppContext";
 import { CheckCircle, XCircle, Loader, Download } from "lucide-react";
 import confetti from "canvas-confetti";
+import { getBookings, verifyVnPayPayment } from "../services";
 
 const PaymentReturn = () => {
   const [searchParams] = useSearchParams();
@@ -46,6 +46,20 @@ const PaymentReturn = () => {
     frame();
   };
 
+  // Fetch booking details
+  const fetchBookingDetails = useCallback(async () => {
+    try {
+      const data = await getBookings({ backendUrl, token });
+      if (data.success && data.bookings.length > 0) {
+        // Lấy booking mới nhất (đã được xác nhận)
+        const latestBooking = data.bookings[0];
+        setBookingData(latestBooking);
+      }
+    } catch (error) {
+      console.error("Fetch booking error:", error);
+    }
+  }, [backendUrl, token]);
+
   useEffect(() => {
     const verifyPayment = async () => {
       try {
@@ -63,15 +77,13 @@ const PaymentReturn = () => {
             return;
           }
 
-          const response = await axios.post(
-            `${backendUrl}/api/payment/vnpay-verify`,
-            {
-              vnp_TxnRef,
-              vnp_ResponseCode,
-            },
-          );
+          const data = await verifyVnPayPayment({
+            backendUrl,
+            vnp_TxnRef,
+            vnp_ResponseCode,
+          });
 
-          if (response.data.success) {
+          if (data.success) {
             if (dedupeKey) sessionStorage.setItem(dedupeKey, "1");
             setStatus("success");
             await fetchBookingDetails();
@@ -89,24 +101,7 @@ const PaymentReturn = () => {
     };
 
     verifyPayment();
-  }, [searchParams, backendUrl]);
-
-  // Fetch booking details
-  const fetchBookingDetails = async () => {
-    try {
-      const response = await axios.get(`${backendUrl}/api/bookings`, {
-        headers: { token },
-      });
-
-      if (response.data.success && response.data.bookings.length > 0) {
-        // Lấy booking mới nhất (đã được xác nhận)
-        const latestBooking = response.data.bookings[0];
-        setBookingData(latestBooking);
-      }
-    } catch (error) {
-      console.error("Fetch booking error:", error);
-    }
-  };
+  }, [searchParams, backendUrl, fetchBookingDetails, token]);
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat("vi-VN", {

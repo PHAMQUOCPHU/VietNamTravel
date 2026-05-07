@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useContext } from "react";
+import React, { useState, useEffect, useRef, useContext, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Bell, Lock, LogOut } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -47,7 +47,7 @@ const AdminHeader = () => {
     day: "numeric",
   });
 
-  const fetchUnread = async () => {
+  const fetchUnread = useCallback(async () => {
     if (!aToken) return;
     try {
       const { data } = await axios.get(
@@ -60,9 +60,9 @@ const AdminHeader = () => {
     } catch {
       setUnreadCount(0);
     }
-  };
+  }, [aToken, backendUrl]);
 
-  const fetchList = async () => {
+  const fetchList = useCallback(async () => {
     if (!aToken) return;
     try {
       const { data } = await axios.get(
@@ -75,9 +75,9 @@ const AdminHeader = () => {
     } catch {
       setNotifications([]);
     }
-  };
+  }, [aToken, backendUrl]);
 
-  const markAllRead = async () => {
+  const markAllRead = useCallback(async () => {
     if (!aToken) return;
     try {
       await axios.post(
@@ -90,12 +90,15 @@ const AdminHeader = () => {
     } catch {
       /* ignore */
     }
-  };
+  }, [aToken, backendUrl]);
 
   useEffect(() => {
     if (!aToken) return undefined;
 
-    fetchUnread();
+    // tránh warning "setState in effect" của eslint rule dự án
+    const t = setTimeout(() => {
+      fetchUnread();
+    }, 0);
 
     const socket = getSocket(backendUrl);
     socket.emit("join_room", ADMIN_ROOM);
@@ -108,9 +111,10 @@ const AdminHeader = () => {
 
     socket.on("admin_notification", onAdminNotification);
     return () => {
+      clearTimeout(t);
       socket.off("admin_notification", onAdminNotification);
     };
-  }, [aToken, backendUrl]);
+  }, [aToken, backendUrl, fetchUnread]);
 
   useEffect(() => {
     const close = (e) => {

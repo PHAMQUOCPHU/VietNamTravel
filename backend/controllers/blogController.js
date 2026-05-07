@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import blogModel from "../models/blogModel.js";
 import userModel from "../models/userModel.js";
+import { notifyAdminBlogComment } from "../services/adminNotifications.js";
 import axios from "axios";
 import {
   uploadBufferToCloudinary,
@@ -249,6 +250,11 @@ const addBlogComment = async (req, res) => {
       content,
     });
     await blog.save();
+    try {
+      await notifyAdminBlogComment({ blog, comment: blog.comments?.[0] });
+    } catch {
+      // ignore
+    }
 
     res.json({ success: true, message: "Đã thêm bình luận", comments: blog.comments });
   } catch (error) {

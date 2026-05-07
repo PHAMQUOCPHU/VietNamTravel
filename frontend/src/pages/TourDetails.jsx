@@ -12,15 +12,17 @@ import {
 } from "lucide-react";
 import { AppContext } from "../context/AppContext";
 import { toast } from "react-toastify";
-import axios from "axios";
 import TourMap from "../components/TourMap";
 import TourCardStackGallery from "../components/TourCardStackGallery";
+import TourSuggestions from "../components/TourSuggestions";
 import { buildTourSlug, isMongoObjectId } from "../lib/tourSlug";
 import {
   getBookings,
   getReviewStats,
   getSchedulesByTour,
   getTourById,
+  fetchOpenWeatherForecast,
+  fetchOpenWeatherGeo,
 } from "../services";
 import {
   TOUR_AMENITIES,
@@ -116,6 +118,7 @@ const TourDetails = () => {
   useEffect(() => {
     const fetchWeather = async () => {
       if (!tour?.city) return;
+      const ac = new AbortController();
       try {
         setLoadingWeather(true);
         const API_KEY = import.meta.env.VITE_WEATHER_API_KEY;
@@ -130,9 +133,13 @@ const TourDetails = () => {
 
         let foundCoord = null;
         for (const q of candidates) {
-          const geoUrl = `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(q)}&limit=5&appid=${API_KEY}`;
-          const geoRes = await axios.get(geoUrl);
-          const picked = pickGeoResult(geoRes.data);
+          const geoData = await fetchOpenWeatherGeo({
+            q,
+            limit: 5,
+            apiKey: API_KEY,
+            signal: ac.signal,
+          });
+          const picked = pickGeoResult(geoData);
           if (picked) {
             foundCoord = picked;
             break;
@@ -147,11 +154,19 @@ const TourDetails = () => {
 
         const { lat, lon } = foundCoord;
         setCoords({ lat, lon });
-        const weatherUrl = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=metric&lang=vi&appid=${API_KEY}`;
-        const weatherRes = await axios.get(weatherUrl);
-        setWeather(weatherRes.data);
+        const weatherData = await fetchOpenWeatherForecast({
+          lat,
+          lon,
+          apiKey: API_KEY,
+          units: "metric",
+          lang: "vi",
+          signal: ac.signal,
+        });
+        setWeather(weatherData);
       } catch (error) {
-        console.error("Weather API Error:", error);
+        if (error?.name !== "AbortError") {
+          console.error("Weather API Error:", error);
+        }
       } finally {
         setLoadingWeather(false);
       }
@@ -725,6 +740,8 @@ const TourDetails = () => {
                     ? "Ngày này đã đủ người"
                     : "Xác nhận đặt tour"}
             </button>
+
+            <TourSuggestions tours={tours} currentTour={tour} />
           </div>
 
           <div className="md:col-span-4">

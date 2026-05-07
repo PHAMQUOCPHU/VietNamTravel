@@ -8,6 +8,7 @@ import userModel from "../models/userModel.js";
 import bookingModel from "../models/bookingModel.js"; // NHỚ KIỂM TRA ĐƯỜNG DẪN NÀY
 import jobModel from "../models/jobModel.js";
 import { uploadBufferToCloudinary, CLOUDINARY_FOLDERS } from "../services/cloudinaryUpload.js";
+import { notifyAdminAccountCreated } from "../services/adminNotifications.js";
 
 // Hàm tạo Token
 const createToken = (id, role) => {
@@ -58,6 +59,11 @@ export const registerUser = async (req, res) => {
     });
 
     const user = await newUser.save();
+    try {
+      await notifyAdminAccountCreated(user);
+    } catch {
+      // ignore
+    }
     const token = createToken(user._id, user.role);
 
     res.json({
@@ -89,6 +95,13 @@ export const loginUser = async (req, res) => {
     const user = await userModel.findOne({ email }).populate("favorites");
     if (!user) {
       return res.json({ success: false, message: "Người dùng không tồn tại" });
+    }
+
+    if (user.isActive === false) {
+      return res.json({
+        success: false,
+        message: "Tài khoản đã ngừng hoạt động. Liên hệ quản trị viên.",
+      });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
@@ -157,6 +170,44 @@ export const forgotPassword = async (req, res) => {
   }
 };
 
+/** Quên MK từ trang đăng nhập admin — chỉ gửi OTP nếu email là tài khoản admin (ẩn thông tin tồn tại). */
+export const adminForgotPassword = async (req, res) => {
+  const genericOk = {
+    success: true,
+    message:
+      "Nếu email thuộc tài khoản quản trị, chúng tôi đã gửi mã OTP (6 ký tự). Vui lòng kiểm tra hộp thư và thư rác.",
+  };
+  try {
+    const email = String(req.body?.email || "").trim();
+    if (!email) {
+      return res.json({ success: false, message: "Vui lòng nhập email." });
+    }
+    const user = await userModel.findOne({ email });
+    if (!user || user.role !== "admin" || user.isActive === false) {
+      return res.json(genericOk);
+    }
+
+    const otp = cryptoRandomString({ length: 6, type: "distinguishable" });
+    await otpModel.findOneAndDelete({ email });
+    await new otpModel({ email, otp }).save();
+
+    await transporter.sendMail({
+      from: process.env.SENDER_EMAIL,
+      to: email,
+      subject: "[VN Travel Admin] Mã khôi phục mật khẩu",
+      text: [
+        `Bạn đã yêu cầu đặt lại mật khẩu trang quản trị.`,
+        `Mã OTP (có hiệu lực ngắn): ${otp}`,
+        `Không chia sẻ mã với ai. Nếu không phải bạn thực hiện, bỏ qua email này.`,
+      ].join("\n"),
+    });
+
+    return res.json(genericOk);
+  } catch (error) {
+    return res.json({ success: false, message: error.message });
+  }
+};
+
 // 5. Xác thực OTP
 export const verifyOtp = async (req, res) => {
   try {
@@ -194,7 +245,17 @@ export const verifyOtp = async (req, res) => {
 // 6. Reset Password
 export const resetPassword = async (req, res) => {
   try {
-    const { email, newPassword } = req.body;
+    const email = String(req.body?.email || "").trim();
+    const newPassword = String(req.body?.newPassword || "").trim();
+    if (!email) {
+      return res.json({ success: false, message: "Thiếu email." });
+    }
+    if (newPassword.length < 6) {
+      return res.json({
+        success: false,
+        message: "Mật khẩu mới phải tối thiểu 6 ký tự.",
+      });
+    }
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(newPassword, salt);
     await userModel.findOneAndUpdate({ email }, { password: hashedPassword });
@@ -240,7 +301,8 @@ export const getProfile = async (req, res) => {
 export const updateProfile = async (req, res) => {
   try {
     const userId = req.userId;
-    const { name, phone, dob, gender } = req.body;
+    const { name, phone, dob, gender, birthYear, occupation, maritalStatus } =
+      req.body;
     const imageFile = req.file;
 
     if (!name || !phone) {
@@ -260,6 +322,34 @@ export const updateProfile = async (req, res) => {
       dob: dob || null,
       gender: gender || "male",
     };
+
+    if (birthYear !== undefined && birthYear !== null && String(birthYear).trim() !== "") {
+      const y = Number(birthYear);
+      const nowYear = new Date().getFullYear();
+      if (!Number.isFinite(y) || y < 1900 || y > nowYear) {
+        return res.json({ success: false, message: "Năm sinh không hợp lệ" });
+      }
+      updateData.birthYear = Math.trunc(y);
+    } else if (birthYear === "" || birthYear === null) {
+      // allow clearing
+      updateData.birthYear = null;
+    }
+
+    if (occupation !== undefined) {
+      updateData.occupation = String(occupation || "").trim().slice(0, 80);
+    }
+
+    if (maritalStatus !== undefined && maritalStatus !== null) {
+      const ms = String(maritalStatus).trim();
+      const allowed = new Set(["single", "married", "other"]);
+      if (ms && !allowed.has(ms)) {
+        return res.json({
+          success: false,
+          message: "Tình trạng hôn nhân không hợp lệ",
+        });
+      }
+      updateData.maritalStatus = ms || "other";
+    }
 
     if (imageFile) {
       updateData.image = await uploadBufferToCloudinary(
@@ -340,10 +430,23 @@ export const deleteUser = async (req, res) => {
 const RANKS = ["Bạc", "Vàng", "Kim cương"];
 const ROLES = ["user", "admin"];
 
-// 11b. Cập nhật vai trò / hạng (Admin)
+// 11b. Cập nhật vai trò / hạng / hồ sơ / trạng thái (Admin)
 export const updateUserAdmin = async (req, res) => {
   try {
-    const { userId, role, rank, totalSpent } = req.body;
+    const {
+      userId,
+      role,
+      rank,
+      totalSpent,
+      name,
+      phone,
+      email,
+      isActive,
+      birthYear,
+      occupation,
+      gender,
+      maritalStatus,
+    } = req.body;
     const adminId = req.userId;
 
     if (!userId) {
@@ -356,6 +459,36 @@ export const updateUserAdmin = async (req, res) => {
     }
 
     const update = {};
+
+    if (name !== undefined && name !== null && String(name).trim() !== "") {
+      update.name = String(name).trim();
+    }
+
+    if (phone !== undefined) {
+      update.phone = String(phone || "").trim();
+    }
+
+    if (email !== undefined && email !== null && String(email).trim() !== "") {
+      const em = String(email).trim().toLowerCase();
+      if (em !== String(target.email || "").toLowerCase()) {
+        const dup = await userModel.findOne({ email: em });
+        if (dup && String(dup._id) !== String(userId)) {
+          return res.json({ success: false, message: "Email đã được sử dụng" });
+        }
+        update.email = em;
+      }
+    }
+
+    if (isActive !== undefined && isActive !== null) {
+      const next = Boolean(isActive);
+      if (String(target._id) === String(adminId) && next === false) {
+        return res.json({
+          success: false,
+          message: "Không thể tự chuyển tài khoản của bạn sang ngừng hoạt động.",
+        });
+      }
+      update.isActive = next;
+    }
 
     if (role !== undefined && role !== null && role !== "") {
       if (!ROLES.includes(role)) {
@@ -404,6 +537,45 @@ export const updateUserAdmin = async (req, res) => {
       });
     }
 
+    if (birthYear !== undefined) {
+      const raw = String(birthYear ?? "").trim();
+      if (!raw) {
+        update.birthYear = null;
+      } else {
+        const y = Number(raw);
+        const nowYear = new Date().getFullYear();
+        if (!Number.isFinite(y) || y < 1900 || y > nowYear) {
+          return res.json({ success: false, message: "Năm sinh không hợp lệ" });
+        }
+        update.birthYear = Math.trunc(y);
+      }
+    }
+
+    if (occupation !== undefined) {
+      update.occupation = String(occupation || "").trim().slice(0, 80);
+    }
+
+    if (gender !== undefined && gender !== null && String(gender).trim() !== "") {
+      const g = String(gender).trim();
+      const allowedG = new Set(["male", "female", "other"]);
+      if (!allowedG.has(g)) {
+        return res.json({ success: false, message: "Giới tính không hợp lệ" });
+      }
+      update.gender = g;
+    }
+
+    if (maritalStatus !== undefined && maritalStatus !== null) {
+      const ms = String(maritalStatus).trim();
+      const allowed = new Set(["single", "married", "other"]);
+      if (ms && !allowed.has(ms)) {
+        return res.json({
+          success: false,
+          message: "Tình trạng hôn nhân không hợp lệ",
+        });
+      }
+      update.maritalStatus = ms || "other";
+    }
+
     await userModel.findByIdAndUpdate(userId, update);
     const updated = await userModel.findById(userId).select("-password");
 
@@ -411,6 +583,110 @@ export const updateUserAdmin = async (req, res) => {
       success: true,
       message: "Cập nhật người dùng thành công",
       user: updated,
+    });
+  } catch (error) {
+    res.json({ success: false, message: error.message });
+  }
+};
+
+// 11b+. Tạo người dùng (Admin)
+export const createUserAdmin = async (req, res) => {
+  try {
+    const {
+      name,
+      email,
+      phone = "",
+      role: roleIn,
+      rank: rankIn,
+      isActive,
+      password,
+      birthYear,
+      occupation,
+      gender,
+      maritalStatus,
+    } = req.body;
+
+    const n = name != null ? String(name).trim() : "";
+    const emRaw = email != null ? String(email).trim().toLowerCase() : "";
+    if (!n || !emRaw) {
+      return res.json({
+        success: false,
+        message: "Thiếu họ tên hoặc email",
+      });
+    }
+
+    const exists = await userModel.findOne({ email: emRaw });
+    if (exists) {
+      return res.json({ success: false, message: "Email đã tồn tại" });
+    }
+
+    const role =
+      roleIn === "admin" || roleIn === "Admin" ? "admin" : "user";
+    if (!ROLES.includes(role)) {
+      return res.json({ success: false, message: "Vai trò không hợp lệ" });
+    }
+
+    const rank =
+      rankIn != null && String(rankIn).trim() !== ""
+        ? String(rankIn).trim()
+        : "Bạc";
+    if (!RANKS.includes(rank)) {
+      return res.json({ success: false, message: "Hạng không hợp lệ" });
+    }
+
+    const rawPwd =
+      password != null && String(password).trim() !== ""
+        ? String(password).trim()
+        : cryptoRandomString({ length: 14, type: "alphanumeric" });
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(rawPwd, salt);
+
+    const newUser = new userModel({
+      name: n,
+      email: emRaw,
+      phone: String(phone || "").trim(),
+      password: hashedPassword,
+      role,
+      rank,
+      isActive: isActive === false ? false : true,
+      favorites: [],
+      savedJobs: [],
+      ...(occupation !== undefined ? { occupation: String(occupation || "").trim().slice(0, 80) } : {}),
+      ...(gender !== undefined && ["male", "female", "other"].includes(String(gender))
+        ? { gender: String(gender) }
+        : {}),
+      ...(maritalStatus !== undefined && ["single", "married", "other"].includes(String(maritalStatus))
+        ? { maritalStatus: String(maritalStatus) }
+        : {}),
+    });
+
+    if (birthYear !== undefined) {
+      const raw = String(birthYear ?? "").trim();
+      if (raw) {
+        const y = Number(raw);
+        const nowYear = new Date().getFullYear();
+        if (!Number.isFinite(y) || y < 1900 || y > nowYear) {
+          return res.json({ success: false, message: "Năm sinh không hợp lệ" });
+        }
+        newUser.birthYear = Math.trunc(y);
+      }
+    }
+
+    await newUser.save();
+    const user = await userModel.findById(newUser._id).select("-password");
+    try {
+      await notifyAdminAccountCreated(user);
+    } catch {
+      // ignore
+    }
+
+    const generated = !password || String(password).trim() === "";
+
+    res.json({
+      success: true,
+      message: "Đã tạo người dùng",
+      user,
+      ...(generated ? { tempPassword: rawPwd } : {}),
     });
   } catch (error) {
     res.json({ success: false, message: error.message });

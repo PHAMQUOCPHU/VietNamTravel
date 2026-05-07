@@ -1,17 +1,26 @@
-import {
-  getNotificationsApi,
-  getUnreadNotificationCountApi,
-  readAllNotificationsApi,
-} from "../api";
+import { buildHttpClient, withTokenHeader } from "./httpClient";
 
 export const getUnreadNotificationCount = async ({ backendUrl, token }) => {
-  return getUnreadNotificationCountApi({ backendUrl, token });
+  const client = buildHttpClient(backendUrl);
+  const { data } = await client.get(
+    "/api/notifications/unread-count",
+    withTokenHeader(token),
+  );
+  return data;
 };
 
 export const getNotifications = async ({ backendUrl, token }) => {
-  return getNotificationsApi({ backendUrl, token });
+  const client = buildHttpClient(backendUrl);
+  const { data } = await client.get("/api/notifications", withTokenHeader(token));
+  return data;
 };
 
 export const readAllNotifications = async ({ backendUrl, token }) => {
-  return readAllNotificationsApi({ backendUrl, token });
+  const client = buildHttpClient(backendUrl);
+  const { data } = await client.post(
+    "/api/notifications/read-all",
+    {},
+    withTokenHeader(token),
+  );
+  return data;
 };

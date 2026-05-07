@@ -22,7 +22,8 @@ import {
   FileQuestion,
 } from "lucide-react";
 import { toast } from "react-toastify";
-import axios from "axios";
+import { getJobs, searchJobApplicationByEmail } from "../services";
+
 import JobCard from "../components/JobCard";
 import JobApplicationModal from "../components/JobApplicationModal";
 import JobApplicationStepper from "../components/JobApplicationStepper";
@@ -78,12 +79,14 @@ const Careers = () => {
     if (!backendUrl) return;
     try {
       setLoadingJobs(true);
-      const response = await axios.get(`${backendUrl}/api/jobs`);
-      if (response.data.success) {
-        setJobs(response.data.jobs || []);
+      const data = await getJobs({ backendUrl });
+      if (data.success) {
+        setJobs(data.jobs || []);
       }
     } catch (error) {
-      console.error(error);
+      if (import.meta.env.DEV) {
+        console.warn("[jobs] fetch failed", error);
+      }
       toast.error("Không thể tải danh sách tuyển dụng");
     } finally {
       setLoadingJobs(false);
@@ -95,22 +98,20 @@ const Careers = () => {
   }, [fetchJobs]);
 
   const fetchApplicationStatus = useCallback(
-    async (
-      email,
-      { fromManualSearch = false, signal } = {},
-    ) => {
+    async (email, { fromManualSearch = false, signal } = {}) => {
       const trimmed = String(email || "").trim();
       if (!trimmed || !backendUrl) return;
       try {
         setLoadingApplication(true);
         if (fromManualSearch) setShowSearchEmpty(false);
-        const response = await axios.get(
-          `${backendUrl}/api/job-applications/search?email=${encodeURIComponent(trimmed)}`,
-          { signal },
-        );
+        const data = await searchJobApplicationByEmail({
+          backendUrl,
+          email: trimmed,
+          signal,
+        });
 
-        if (response.data.success && response.data.application) {
-          setApplication(response.data.application);
+        if (data.success && data.application) {
+          setApplication(data.application);
           setShowSearchEmpty(false);
         }
       } catch (err) {
@@ -282,7 +283,9 @@ const Careers = () => {
                   <p className="text-xl font-black text-gray-900 sm:text-2xl md:text-3xl">
                     {stat.value}
                   </p>
-                  <p className="mt-1 text-xs text-gray-600 sm:text-sm">{stat.label}</p>
+                  <p className="mt-1 text-xs text-gray-600 sm:text-sm">
+                    {stat.label}
+                  </p>
                 </motion.div>
               );
             })}

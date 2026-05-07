@@ -5,6 +5,7 @@ import {
   sendOtp,
   verifyOtp,
   forgotPassword,
+  adminForgotPassword,
   resetPassword,
   changePassword,
   updateProfile,
@@ -12,6 +13,7 @@ import {
   getAllUsers,
   deleteUser,
   updateUserAdmin,
+  createUserAdmin,
   getUserDetailAdmin,
   toggleFavorite,
   toggleSavedJob,
@@ -30,6 +32,7 @@ userRouter.post("/send-otp", sendOtp);
 userRouter.post("/verify-otp", verifyOtp);
 userRouter.post("/verify-otp-forgot", verifyOtp);
 userRouter.post("/forgot-password", forgotPassword);
+userRouter.post("/admin/forgot-password", adminForgotPassword);
 userRouter.post("/reset-password", resetPassword);
 
 // --- 2. CÁC ROUTE CẦN ĐĂNG NHẬP (Sử dụng authMiddleware) ---
@@ -54,8 +57,10 @@ userRouter.post(
 
 // --- 3. CÁC ROUTE ADMIN (bắt buộc JWT + role admin) ---
 userRouter.get("/admin/users", adminAuth, getAllUsers);
+userRouter.post("/admin/create-user", adminAuth, createUserAdmin);
 userRouter.post("/admin/delete-user", adminAuth, deleteUser);
 userRouter.post("/admin/update-user", adminAuth, updateUserAdmin);
+userRouter.post("/admin/change-password", adminAuth, changePassword);
 // Đường dự phòng (cùng handler) — tránh 404 nếu client/proxy khác phiên bản
 userRouter.post("/admin/users/update", adminAuth, updateUserAdmin);
 userRouter.get("/admin/users/:id/detail", adminAuth, getUserDetailAdmin);

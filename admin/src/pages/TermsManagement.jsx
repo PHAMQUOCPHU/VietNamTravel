@@ -333,7 +333,7 @@ const TermsManagement = () => {
           onClick={handleAddSection}
           disabled={!canAddMore}
           className={`
-            inline-flex shrink-0 items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold border shadow-sm transition-colors
+            inline-flex shrink-0 items-center justify-center gap-2 px-4 py-2.5 rounded-none text-sm font-bold border shadow-sm transition-colors
             ${
               canAddMore
                 ? "border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:border-blue-300"
@@ -354,7 +354,7 @@ const TermsManagement = () => {
             <div
               key={`section-${index}`}
               className={`
-                rounded-2xl border bg-white shadow-md shadow-gray-100/70 overflow-hidden transition-shadow duration-200
+                rounded-none border bg-white shadow-md shadow-gray-100/70 overflow-hidden transition-shadow duration-200
                 ${open ? "border-blue-200 ring-1 ring-blue-100 shadow-blue-50/80" : "border-gray-100 hover:border-blue-100/80 hover:shadow-lg"}
               `}
             >
@@ -365,7 +365,7 @@ const TermsManagement = () => {
                   onClick={() => handleCardActivate(index)}
                   className="min-w-0 flex-1 flex items-center gap-3 sm:gap-4 px-4 py-4 sm:px-5 sm:py-4 text-left transition-colors hover:bg-blue-50/40"
                 >
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-[13px] font-black text-white shadow-sm">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-none bg-blue-600 text-[13px] font-black text-white shadow-sm">
                     {index + 1}
                   </span>
                   <span className="min-w-0 flex-1 font-bold text-[15px] text-gray-800 leading-snug line-clamp-2">
@@ -396,7 +396,7 @@ const TermsManagement = () => {
                         : "Phải giữ ít nhất một mục"
                     }
                     className={`
-                      p-2.5 rounded-xl transition-colors
+                      p-2.5 rounded-none transition-colors
                       ${
                         canDelete
                           ? "text-gray-400 hover:text-red-600 hover:bg-red-50"
@@ -446,7 +446,7 @@ const TermsManagement = () => {
           onClick={handleSaveAll}
           disabled={!canSave}
           className={`
-            order-1 sm:order-2 inline-flex shrink-0 items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold
+            order-1 sm:order-2 inline-flex shrink-0 items-center justify-center gap-2 px-6 py-2.5 rounded-none text-sm font-bold
             shadow-sm border transition-colors active:scale-[0.98]
             ${
               !canSave
@@ -472,12 +472,12 @@ const TermsManagement = () => {
       <style>{`
         .terms-quill .ql-toolbar.ql-snow {
           border-color: rgb(243 244 246);
-          border-radius: 0.75rem 0.75rem 0 0;
+          border-radius: 0;
           background: rgb(249 250 251);
         }
         .terms-quill .ql-container.ql-snow {
           border-color: rgb(243 244 246);
-          border-radius: 0 0 0.75rem 0.75rem;
+          border-radius: 0;
         }
         .terms-quill .ql-container {
           min-height: 220px;

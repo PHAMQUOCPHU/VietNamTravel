@@ -1,4 +1,4 @@
-import { useContext, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { MapContainer, TileLayer, Marker, Popup, Circle } from "react-leaflet";
 import L from "leaflet";
@@ -124,7 +124,7 @@ const DisasterMap = () => {
   const [mapInstance, setMapInstance] = useState(null);
   const markerRefs = useRef({});
 
-  const loadData = async (region) => {
+  const loadData = useCallback(async (region) => {
     setLoading(true);
     setError(null);
     try {
@@ -155,11 +155,11 @@ const DisasterMap = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [backendUrl]);
 
   useEffect(() => {
     loadData(regionFilter);
-  }, [backendUrl, regionFilter]);
+  }, [loadData, regionFilter]);
 
   useEffect(() => {
     if (!mapInstance || !activeId) return;

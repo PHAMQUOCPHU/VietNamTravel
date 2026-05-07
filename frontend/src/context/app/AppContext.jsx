@@ -12,6 +12,7 @@ import { getSocket } from "../../lib/socketClient";
 import { BACKEND_URL } from "../../config/env";
 import {
   getNotifications,
+  getPublicSiteConfig,
   getTours,
   getUnreadNotificationCount,
   getUserBookings as getUserBookingsApi,
@@ -52,6 +53,13 @@ const writeToursCache = (tours) => {
 const AppContextProvider = (props) => {
   const navigate = useNavigate();
   const backendUrl = BACKEND_URL;
+  const isDev = import.meta.env.DEV;
+  const warnDev = useCallback(
+    (...args) => {
+      if (isDev) console.warn(...args);
+    },
+    [isDev],
+  );
 
   const [token, setToken] = useState(localStorage.getItem("token") || "");
   const [user, setUser] = useState(null);
@@ -61,6 +69,23 @@ const AppContextProvider = (props) => {
   const [bookingRefreshTick, setBookingRefreshTick] = useState(0);
   const [notificationUnreadCount, setNotificationUnreadCount] = useState(0);
   const [notifications, setNotifications] = useState([]);
+  const [siteConfig, setSiteConfig] = useState({ homeSlides: null, logoUrl: "" });
+
+  const refreshSiteConfig = useCallback(async () => {
+    try {
+      const data = await getPublicSiteConfig({ backendUrl });
+      if (data?.success) {
+        setSiteConfig({
+          homeSlides: data.homeSlides || null,
+          maintenance: data.maintenance || null,
+          logoUrl:
+            typeof data.logoUrl === "string" ? data.logoUrl.trim() : "",
+        });
+      }
+    } catch (error) {
+      warnDev("[site-config] load failed", error);
+    }
+  }, [backendUrl, warnDev]);
 
   const loadUserProfileData = useCallback(async () => {
     if (!token) return;
@@ -75,9 +100,9 @@ const AppContextProvider = (props) => {
         localStorage.setItem("user", JSON.stringify(data.user));
       }
     } catch (error) {
-      console.log("Error loading profile:", error);
+      warnDev("[profile] load failed", error);
     }
-  }, [token, backendUrl]);
+  }, [token, backendUrl, warnDev]);
 
   const getUserBookings = useCallback(async () => {
     if (!token) return;
@@ -97,9 +122,9 @@ const AppContextProvider = (props) => {
         );
       }
     } catch (error) {
-      console.log("Error loading bookings:", error);
+      warnDev("[bookings] load failed", error);
     }
-  }, [token, backendUrl]);
+  }, [token, backendUrl, warnDev]);
 
   const getToursData = useCallback(async () => {
     const cachedTours = readToursCache();
@@ -115,10 +140,10 @@ const AppContextProvider = (props) => {
         toast.error(data.message);
       }
     } catch (error) {
-      console.log(error);
+      warnDev("[tours] load failed", error);
       toast.error("Không thể kết nối đến server");
     }
-  }, [backendUrl]);
+  }, [backendUrl, warnDev]);
 
   const toggleFavorite = useCallback(
     async (tourId) => {
@@ -135,11 +160,11 @@ const AppContextProvider = (props) => {
           toast.success(data.message);
         }
       } catch (error) {
-        console.error("Toggle Favorite Error:", error);
+        warnDev("[favorites] toggle failed", error);
         toast.error("Không thể cập nhật yêu thích");
       }
     },
-    [token, backendUrl, navigate, loadUserProfileData],
+    [token, backendUrl, navigate, loadUserProfileData, warnDev],
   );
 
   const toggleSavedJob = useCallback(
@@ -165,16 +190,20 @@ const AppContextProvider = (props) => {
           toast.error(data.message);
         }
       } catch (error) {
-        console.error("Toggle saved job error:", error);
+        warnDev("[jobs] toggle saved failed", error);
         toast.error("Không thể cập nhật vị trí đã lưu");
       }
     },
-    [token, backendUrl, navigate, loadUserProfileData],
+    [token, backendUrl, navigate, loadUserProfileData, warnDev],
   );
 
   useEffect(() => {
     getToursData();
   }, [getToursData]);
+
+  useEffect(() => {
+    refreshSiteConfig();
+  }, [refreshSiteConfig]);
 
   useEffect(() => {
     if (token) {
@@ -296,10 +325,13 @@ const AppContextProvider = (props) => {
       fetchNotifications,
       fetchNotificationUnreadCount,
       markAllNotificationsRead,
+      siteConfig,
+      refreshSiteConfig,
     }),
     [
       user,
       token,
+      backendUrl,
       tours,
       bookings,
       getToursData,
@@ -316,6 +348,8 @@ const AppContextProvider = (props) => {
       fetchNotifications,
       fetchNotificationUnreadCount,
       markAllNotificationsRead,
+      siteConfig,
+      refreshSiteConfig,
     ],
   );
 

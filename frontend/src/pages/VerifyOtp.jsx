@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import axios from "axios";
 import { useContext } from "react";
 import { AppContext } from "../context/AppContext";
+import {
+  verifyAndRegisterRequest,
+  verifyForgotOtpRequest,
+} from "../services/authService";
 
 const VerifyOtp = () => {
   const [otp, setOtp] = useState("");
@@ -25,13 +28,16 @@ const VerifyOtp = () => {
 
       // 2. PHÂN LUỒNG XỬ LÝ
       if (state?.name) {
-        // LUỒNG ĐĂNG KÝ: Gọi api/user/verify-otp
-        const { data } = await axios.post(`${backendUrl}/api/user/verify-otp`, {
+        // LUỒNG ĐĂNG KÝ
+        const data = await verifyAndRegisterRequest({
+          backendUrl,
           email: state.email,
           otp: cleanOtp,
-          name: state.name,
-          phone: state.phone,
-          password: state.password,
+          fullData: {
+            name: state.name,
+            phone: state.phone,
+            password: state.password,
+          },
         });
 
         if (data.success) {
@@ -41,14 +47,12 @@ const VerifyOtp = () => {
           toast.error(data.message);
         }
       } else {
-        // LUỒNG QUÊN MẬT KHẨU: Gọi api/user/verify-otp-forgot (Phải khớp với routes/userRoutes.js)
-        const { data } = await axios.post(
-          `${backendUrl}/api/user/verify-otp-forgot`,
-          {
-            email: state.email,
-            otp: cleanOtp,
-          },
-        );
+        // LUỒNG QUÊN MẬT KHẨU
+        const data = await verifyForgotOtpRequest({
+          backendUrl,
+          email: state.email,
+          otp: cleanOtp,
+        });
 
         if (data.success) {
           toast.success("Xác thực thành công!");

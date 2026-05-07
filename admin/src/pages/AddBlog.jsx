@@ -32,10 +32,6 @@ const AddBlog = () => {
   const [aiTone, setAiTone] = useState("thân thiện");
   const [aiKeywords, setAiKeywords] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
-  const [aiOfflineMode, setAiOfflineMode] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return window.localStorage.getItem("aiOfflineMode") === "true";
-  });
 
   // Cleanup image preview URL to prevent memory leak
   useEffect(() => {
@@ -110,7 +106,7 @@ const AddBlog = () => {
           tone: aiTone,
           keywords: aiKeywords,
           length: "vua",
-          offlineMode: aiOfflineMode,
+          offlineMode: false,
         },
         { headers: { atoken: aToken } },
       );
@@ -120,9 +116,7 @@ const AddBlog = () => {
         setExcerpt(data.data.excerpt || "");
         setContent(data.data.contentHtml || "");
         toast.success(
-          data.source === "offline-demo"
-            ? "Offline demo mode: da tao ban nhap local"
-            : "AI da tao noi dung nhap",
+          "AI da tao noi dung nhap",
         );
       } else {
         toast.error(data.message || "Khong tao duoc noi dung AI");
@@ -131,13 +125,6 @@ const AddBlog = () => {
       toast.error(error.response?.data?.message || "Loi ket noi AI");
     } finally {
       setAiLoading(false);
-    }
-  };
-
-  const handleToggleOfflineMode = (checked) => {
-    setAiOfflineMode(checked);
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem("aiOfflineMode", String(checked));
     }
   };
 
@@ -153,7 +140,7 @@ const AddBlog = () => {
         </div>
         <button
           onClick={handleSubmit}
-          className="flex items-center gap-2 bg-blue-600 text-white px-8 py-3 rounded-2xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 active:scale-95"
+          className="flex items-center gap-2 bg-blue-600 text-white px-8 py-3 rounded-none font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 active:scale-95"
         >
           <Save size={20} /> Lưu bài viết
         </button>
@@ -163,29 +150,6 @@ const AddBlog = () => {
         <div className="flex items-center gap-2 mb-4">
           <Sparkles className="text-blue-600" size={18} />
           <h3 className="font-black text-slate-800">AI Viết bài giúp</h3>
-        </div>
-        <div className="mb-4 flex items-center justify-between rounded-2xl border border-blue-100 bg-blue-50/60 px-4 py-3">
-          <div>
-            <p className="text-sm font-bold text-slate-800">
-              Offline demo mode
-            </p>
-            <p className="text-xs text-slate-600">Offline</p>
-          </div>
-          <label className="relative inline-block w-12 h-6 transition duration-200 ease-in-out">
-            <input
-              type="checkbox"
-              checked={aiOfflineMode}
-              onChange={(e) => handleToggleOfflineMode(e.target.checked)}
-              className="opacity-0 w-0 h-0"
-            />
-            <span
-              className={`absolute cursor-pointer inset-0 rounded-full transition-all duration-300 ${aiOfflineMode ? "bg-blue-600" : "bg-gray-300"}`}
-            >
-              <span
-                className={`absolute left-1 bottom-1 bg-white w-4 h-4 rounded-full transition-transform duration-300 ${aiOfflineMode ? "translate-x-6" : ""}`}
-              ></span>
-            </span>
-          </label>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
           <input

@@ -53,7 +53,7 @@ const AddTour = () => {
         if (url) URL.revokeObjectURL(url);
       });
     };
-  }, []);
+  }, [imagePreviews]);
 
   const [autoSchedule, setAutoSchedule] = useState({
     startDate: "",

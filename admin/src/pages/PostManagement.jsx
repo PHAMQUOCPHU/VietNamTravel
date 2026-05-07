@@ -158,7 +158,7 @@ const PostManagement = () => {
         </div>
         <button
           onClick={() => navigate("/admin/add-blog")}
-          className="bg-blue-600 text-white px-6 py-3 rounded-2xl font-bold shadow-lg shadow-blue-100 flex items-center gap-2 hover:bg-blue-700 transition-all active:scale-95 whitespace-nowrap"
+          className="bg-blue-600 text-white px-6 py-3 rounded-none font-bold shadow-lg shadow-blue-100 flex items-center gap-2 hover:bg-blue-700 transition-all active:scale-95 whitespace-nowrap"
         >
           <Plus size={20} /> Viết bài mới
         </button>
@@ -174,7 +174,7 @@ const PostManagement = () => {
             type="text"
             placeholder="Tìm tiêu đề bài viết..."
             value={searchTerm}
-            className="w-full rounded-2xl border border-gray-100 bg-white py-3 pl-12 pr-4 shadow-sm outline-none transition-all focus:ring-2 focus:ring-blue-500"
+            className="w-full rounded-none border border-gray-100 bg-white py-3 pl-12 pr-4 shadow-sm outline-none transition-all focus:ring-2 focus:ring-blue-500"
             onChange={(e) => {
               setSearchTerm(e.target.value);
             }}
@@ -191,7 +191,7 @@ const PostManagement = () => {
             onChange={(e) => {
               setSelectedDate(e.target.value);
             }}
-            className="w-full pl-12 pr-4 py-3 rounded-2xl border border-gray-100 outline-none focus:ring-2 focus:ring-blue-500 bg-white shadow-sm transition-all font-semibold text-slate-600"
+            className="w-full pl-12 pr-4 py-3 rounded-none border border-gray-100 outline-none focus:ring-2 focus:ring-blue-500 bg-white shadow-sm transition-all font-semibold text-slate-600"
           />
         </div>
       </div>

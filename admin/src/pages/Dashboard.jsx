@@ -82,14 +82,34 @@ const Dashboard = () => {
     return () => controller.abort();
   }, [aToken, backendUrl, startDate, endDate]);
 
+  const FALLBACK_MONTHS = [
+    "Tháng 1",
+    "Tháng 2",
+    "Tháng 3",
+    "Tháng 4",
+    "Tháng 5",
+    "Tháng 6",
+  ];
+  const FALLBACK_WEEKDAYS = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
+
+  const monthlyLabels =
+    stats.monthlyLabels?.length > 0 ? stats.monthlyLabels : FALLBACK_MONTHS;
+  const monthlyDataAligned = monthlyLabels.map(
+    (_, i) => Number(stats.monthlyData?.[i]) || 0,
+  );
+
+  const weeklyLabels =
+    stats.weeklyLabels?.length > 0 ? stats.weeklyLabels : FALLBACK_WEEKDAYS;
+  const weeklyDataAligned = weeklyLabels.map(
+    (_, i) => Number(stats.weeklyData?.[i]) || 0,
+  );
+
   const monthlyRevenueData = {
-    labels: stats.monthlyLabels?.length
-      ? stats.monthlyLabels
-      : ["Thang 1", "Thang 2", "Thang 3", "Thang 4", "Thang 5", "Thang 6"],
+    labels: monthlyLabels,
     datasets: [
       {
         label: "Doanh thu (VNĐ)",
-        data: stats.monthlyData || [0, 0, 0, 0, 0, 0],
+        data: monthlyDataAligned,
         fill: true,
         backgroundColor: "rgba(59, 130, 246, 0.15)",
         borderColor: "#3b82f6",
@@ -100,25 +120,26 @@ const Dashboard = () => {
   };
 
   const weeklyRevenueData = {
-    labels: stats.weeklyLabels?.length ? stats.weeklyLabels : [],
+    labels: weeklyLabels,
     datasets: [
       {
-        label: "Doanh thu theo tuan (VNĐ)",
-        data: stats.weeklyData || [],
+        label: "Doanh thu theo tuần (VNĐ)",
+        data: weeklyDataAligned,
         borderRadius: 10,
         backgroundColor: "rgba(16, 185, 129, 0.75)",
       },
     ],
   };
 
+  const paymentCash = Number(stats.paymentBreakdown?.cash) || 0;
+  const paymentOnline = Number(stats.paymentBreakdown?.online) || 0;
+  const paymentPieHasData = paymentCash + paymentOnline > 0;
+
   const paymentPieData = {
-    labels: ["Tien mat", "Thanh toan online"],
+    labels: ["Tiền mặt", "Thanh toán online"],
     datasets: [
       {
-        data: [
-          stats.paymentBreakdown?.cash || 0,
-          stats.paymentBreakdown?.online || 0,
-        ],
+        data: [paymentCash, paymentOnline],
         backgroundColor: ["#f59e0b", "#3b82f6"],
         borderColor: ["#ffffff", "#ffffff"],
         borderWidth: 2,
@@ -126,15 +147,16 @@ const Dashboard = () => {
     ],
   };
 
+  const regionBac = Number(stats.regionBreakdown?.bac) || 0;
+  const regionTrung = Number(stats.regionBreakdown?.trung) || 0;
+  const regionNam = Number(stats.regionBreakdown?.nam) || 0;
+  const regionPieHasData = regionBac + regionTrung + regionNam > 0;
+
   const regionPieData = {
-    labels: ["Mien Bac", "Mien Trung", "Mien Nam"],
+    labels: ["Miền Bắc", "Miền Trung", "Miền Nam"],
     datasets: [
       {
-        data: [
-          stats.regionBreakdown?.bac || 0,
-          stats.regionBreakdown?.trung || 0,
-          stats.regionBreakdown?.nam || 0,
-        ],
+        data: [regionBac, regionTrung, regionNam],
         backgroundColor: ["#2563eb", "#14b8a6", "#f97316"],
         borderColor: ["#ffffff", "#ffffff", "#ffffff"],
         borderWidth: 2,
@@ -142,8 +164,7 @@ const Dashboard = () => {
     ],
   };
 
-  const totalPaymentCount =
-    (stats.paymentBreakdown?.cash || 0) + (stats.paymentBreakdown?.online || 0);
+  const totalPaymentCount = paymentCash + paymentOnline;
   const onlinePaymentPercent = totalPaymentCount
     ? Math.round(
         ((stats.paymentBreakdown?.online || 0) / totalPaymentCount) * 100,
@@ -152,11 +173,11 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-8">
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#1d4ed8] via-[#2563eb] to-[#3b82f6] p-6 md:p-8 text-white shadow-xl">
+      <div className="relative overflow-hidden rounded-none bg-gradient-to-r from-[#1d4ed8] via-[#2563eb] to-[#3b82f6] p-6 md:p-8 text-white shadow-xl">
         <div className="pointer-events-none absolute -top-14 -right-10 h-44 w-44 rounded-full bg-white/15 blur-2xl"></div>
         <div className="pointer-events-none absolute -bottom-16 left-16 h-40 w-40 rounded-full bg-white/10 blur-2xl"></div>
         <h2 className="text-2xl md:text-3xl font-black">
-          Tong quan kinh doanh
+          Tổng quan kinh doanh
         </h2>
         <p className="text-blue-100 mt-2 font-medium">
           Theo dõi doanh thu, hành vi thanh toán và xu hướng đặt tour theo khu
@@ -183,18 +204,18 @@ const Dashboard = () => {
             }}
             className="rounded-xl border border-white/30 px-4 py-2.5 font-bold hover:bg-white/10"
           >
-            Xoá
+            Xóa
           </button>
         </div>
 
         {(startDate || endDate) && (
           <div className="mt-4 rounded-2xl bg-white/10 border border-white/20 px-4 py-3">
             <p className="text-sm font-bold">
-              Doanh thu trong khoang chon: {stats.rangeRevenue.toLocaleString()}
+              Doanh thu trong khoảng chọn: {stats.rangeRevenue.toLocaleString()}
               đ
             </p>
             <p className="text-xs text-blue-100 mt-1">
-              Tong don da thanh toan: {stats.rangeBookingCount}
+              Tổng đơn đã thanh toán: {stats.rangeBookingCount}
             </p>
           </div>
         )}
@@ -269,10 +290,16 @@ const Dashboard = () => {
             Tỉ lệ phương thức thanh toán của các đơn đã thanh toán.
           </p>
           <div className="h-64 md:h-72 w-full flex items-center justify-center">
-            <Pie
-              data={paymentPieData}
-              options={{ responsive: true, maintainAspectRatio: false }}
-            />
+            {paymentPieHasData ? (
+              <Pie
+                data={paymentPieData}
+                options={{ responsive: true, maintainAspectRatio: false }}
+              />
+            ) : (
+              <p className="text-sm font-medium text-slate-400">
+                Chưa có dữ liệu thanh toán trong khoảng thống kê.
+              </p>
+            )}
           </div>
         </div>
 
@@ -285,10 +312,16 @@ const Dashboard = () => {
             Tỷ trọng đặt tour theo 3 miền Bắc - Trung - Nam.
           </p>
           <div className="h-64 md:h-72 w-full flex items-center justify-center">
-            <Pie
-              data={regionPieData}
-              options={{ responsive: true, maintainAspectRatio: false }}
-            />
+            {regionPieHasData ? (
+              <Pie
+                data={regionPieData}
+                options={{ responsive: true, maintainAspectRatio: false }}
+              />
+            ) : (
+              <p className="text-sm font-medium text-slate-400">
+                Chưa có dữ liệu đặt tour theo miền.
+              </p>
+            )}
           </div>
         </div>
       </div>

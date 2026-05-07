@@ -24,11 +24,13 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import AppSidebar from "./AppSidebar";
 import { TicketPercent } from "lucide-react";
+import { resolveSiteLogoSrc } from "../utils/siteLogo";
 
 const Navbar = () => {
   const {
     user,
     logout,
+    siteConfig,
     notificationUnreadCount,
     fetchNotifications,
     markAllNotificationsRead,
@@ -122,6 +124,7 @@ const Navbar = () => {
   };
 
   const navLinks = buildNavLinks(user);
+  const logoSrc = resolveSiteLogoSrc(siteConfig?.logoUrl);
 
   const isActive = (path) => location.pathname === path;
 
@@ -150,7 +153,7 @@ const Navbar = () => {
               >
                 <div className="flex items-center">
                   <img
-                    src="/logo.png"
+                    src={logoSrc}
                     alt="VietNam Travel"
                     width={40}
                     height={40}

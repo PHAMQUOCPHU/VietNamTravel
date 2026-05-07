@@ -1,4 +1,4 @@
-import axios from "axios";
+import { buildHttpClient } from "./httpClient";
 
 /**
  * @param {{ backendUrl: string, region?: "all" | "vn" }} opts
@@ -12,7 +12,8 @@ export const fetchSafetyAlerts = async ({ backendUrl, region = "all" }) => {
   const params = {};
   if (region === "vn") params.region = "vn";
 
-  const response = await axios.get(`${backendUrl}/api/safety/alerts`, {
+  const client = buildHttpClient(backendUrl);
+  const response = await client.get("/api/safety/alerts", {
     params,
   });
   return response.data;

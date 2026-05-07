@@ -1,9 +1,11 @@
-import React, { useState, useRef, useEffect } from "react";
-import axios from "axios";
+import React, { useState, useRef, useEffect, useMemo, useContext } from "react";
 import ReactMarkdown from "react-markdown";
 import { Link } from "react-router-dom";
 import { Sparkles, Send, Loader2, X, Bot } from "lucide-react";
 import { BACKEND_BASE_URL } from "../config/env";
+import { askTourAdvisor } from "../services";
+import { AppContext } from "../context/AppContext";
+import { buildTourSlug } from "../lib/tourSlug";
 
 const TourAdvisorChat = () => {
   const [open, setOpen] = useState(false);
@@ -20,6 +22,36 @@ const TourAdvisorChat = () => {
     },
   ]);
   const bottomRef = useRef(null);
+  const { tours } = useContext(AppContext);
+
+  const tourBySlugOrId = useMemo(() => {
+    const map = new Map();
+    (Array.isArray(tours) ? tours : []).forEach((t) => {
+      if (!t) return;
+      const id = t._id != null ? String(t._id) : "";
+      if (id) map.set(id, t);
+      try {
+        const slug = buildTourSlug(t);
+        if (slug) map.set(slug, t);
+      } catch {
+        // ignore
+      }
+    });
+    return map;
+  }, [tours]);
+
+  const formatVnd = (value) => {
+    const n = Number(value);
+    if (!Number.isFinite(n) || n <= 0) return "Liên hệ";
+    return `${Math.round(n).toLocaleString("vi-VN")} đ`;
+  };
+
+  const normalizeTourHref = (href) => {
+    if (!href) return "";
+    const s = String(href).trim();
+    if (!s.startsWith("/tours/")) return "";
+    return s.replace(/^\/tours\//, "").split("#")[0].split("?")[0];
+  };
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -49,11 +81,11 @@ const TourAdvisorChat = () => {
     setMessages((m) => [...m, { role: "user", content: text }]);
     setLoading(true);
     try {
-      const { data } = await axios.post(
-        `${BACKEND_BASE_URL}/api/tour-advisor`,
-        { message: text },
-        { timeout: 25000 },
-      );
+      const data = await askTourAdvisor({
+        backendUrl: BACKEND_BASE_URL,
+        message: text,
+        timeoutMs: 25000,
+      });
       if (!data.success) {
         setError(data.message || "Không gửi được câu hỏi.");
         return;
@@ -140,8 +172,71 @@ const TourAdvisorChat = () => {
                     <div className="prose prose-sm max-w-none dark:prose-invert prose-p:my-1.5 prose-a:font-semibold prose-a:text-sky-600 prose-a:no-underline hover:prose-a:underline dark:prose-a:text-sky-400">
                       <ReactMarkdown
                         components={{
-                          a: ({ href, children }) =>
-                            href?.startsWith("/") ? (
+                          a: ({ href, children }) => {
+                            const tourKey = normalizeTourHref(href);
+                            const tour = tourKey ? tourBySlugOrId.get(tourKey) : null;
+
+                            if (tour) {
+                              const canonical = buildTourSlug(tour);
+                              const to = `/tours/${canonical || tourKey}`;
+                              const image =
+                                tour.image ||
+                                (Array.isArray(tour.images) ? tour.images[0] : "") ||
+                                "";
+                              const sale = Number(tour.salePrice ?? 0) || 0;
+                              const base = Number(tour.price ?? 0) || 0;
+                              const showSale = sale > 0 && sale < base;
+                              const finalPrice = showSale ? sale : base;
+
+                              return (
+                                <div className="not-prose my-2 w-full max-w-[18rem] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900">
+                                  <Link to={to} className="block">
+                                    <div className="relative aspect-[16/9] w-full bg-slate-100 dark:bg-slate-800">
+                                      {image ? (
+                                        <img
+                                          src={image}
+                                          alt={tour.title || "Tour"}
+                                          className="h-full w-full object-cover"
+                                          loading="lazy"
+                                        />
+                                      ) : null}
+                                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/0 to-black/0" />
+                                      <div className="absolute bottom-2 left-2 right-2">
+                                        <p className="line-clamp-2 text-[12px] font-black leading-snug text-white drop-shadow">
+                                          {tour.title || children}
+                                        </p>
+                                      </div>
+                                    </div>
+                                  </Link>
+
+                                  <div className="flex items-center justify-between gap-2 p-3">
+                                    <div className="min-w-0">
+                                      <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400 dark:text-slate-400">
+                                        Giá
+                                      </p>
+                                      <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                                        <span className="text-sm font-black text-emerald-600 dark:text-emerald-400">
+                                          {formatVnd(finalPrice)}
+                                        </span>
+                                        {showSale ? (
+                                          <span className="text-[11px] font-semibold text-slate-400 line-through">
+                                            {formatVnd(base)}
+                                          </span>
+                                        ) : null}
+                                      </div>
+                                    </div>
+                                    <Link
+                                      to={to}
+                                      className="shrink-0 rounded-xl bg-gradient-to-br from-sky-600 to-indigo-700 px-3 py-2 text-[12px] font-black text-white shadow-md hover:brightness-110"
+                                    >
+                                      Đặt ngay
+                                    </Link>
+                                  </div>
+                                </div>
+                              );
+                            }
+
+                            return href?.startsWith("/") ? (
                               <Link
                                 to={href}
                                 className="font-semibold text-sky-600 underline decoration-sky-400/60 underline-offset-2 hover:text-indigo-600 dark:text-sky-400"
@@ -157,7 +252,8 @@ const TourAdvisorChat = () => {
                               >
                                 {children}
                               </a>
-                            ),
+                            );
+                          },
                         }}
                       >
                         {msg.content}
@@ -217,10 +313,17 @@ const TourAdvisorChat = () => {
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="group flex items-center gap-2 rounded-full border border-violet-200 bg-white/95 px-4 py-2.5 text-[13px] font-bold text-violet-800 shadow-lg ring-4 ring-violet-100/60 backdrop-blur-sm transition hover:bg-violet-600 hover:text-white dark:border-violet-700 dark:bg-slate-800 dark:text-violet-200 dark:ring-violet-900/40 dark:hover:bg-violet-600 dark:hover:text-white"
+        className="group relative flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-violet-200 bg-white/95 text-violet-800 shadow-lg ring-4 ring-violet-100/60 backdrop-blur-sm transition hover:border-violet-300 hover:bg-violet-600 hover:text-white motion-reduce:transition-none dark:border-violet-700 dark:bg-slate-800 dark:text-violet-200 dark:ring-violet-900/40 dark:hover:border-violet-500 dark:hover:bg-violet-600 dark:hover:text-white"
+        aria-label="Tư vấn AI"
+        title="Tư vấn AI"
       >
-        <Sparkles className="h-4 w-4 text-violet-500 transition group-hover:text-white dark:text-violet-400" />
-        Tư vấn AI
+        <Sparkles
+          className="h-7 w-7 text-violet-500 transition group-hover:text-white dark:text-violet-400"
+          strokeWidth={2.2}
+        />
+        <span className="pointer-events-none absolute -bottom-0.5 -right-0.5 inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-gradient-to-br from-violet-600 to-indigo-600 px-1 text-[10px] font-black uppercase tracking-wide text-white shadow-md ring-2 ring-white dark:ring-slate-800">
+          AI
+        </span>
       </button>
     </div>
   );

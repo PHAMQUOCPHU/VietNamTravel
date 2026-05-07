@@ -17,6 +17,46 @@ import imgPrudential from "../assets/insurance/prudential.png";
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
+const toLocalDateInputValue = (d) => {
+  if (!(d instanceof Date) || Number.isNaN(d.getTime())) return "";
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+};
+
+const startOfDay = (d) => {
+  const x = new Date(d);
+  x.setHours(0, 0, 0, 0);
+  return x;
+};
+
+const endOfDay = (d) => {
+  const x = new Date(d);
+  x.setHours(23, 59, 59, 999);
+  return x;
+};
+
+const startOfWeekMonday = (d) => {
+  const x = startOfDay(d);
+  const day = x.getDay(); // 0=Sun ... 6=Sat
+  const diff = (day + 6) % 7; // Mon=0 ... Sun=6
+  x.setDate(x.getDate() - diff);
+  return x;
+};
+
+const startOfMonth = (d) => {
+  const x = startOfDay(d);
+  x.setDate(1);
+  return x;
+};
+
+const addMonths = (d, months) => {
+  const x = new Date(d);
+  x.setMonth(x.getMonth() + months);
+  return x;
+};
+
 const PARTNER_ORDER = [
   "Bảo Việt Life",
   "Manulife Vietnam",
@@ -37,6 +77,10 @@ const InsurancePartners = () => {
   const { aToken, backendUrl } = useContext(AdminContext);
   const [leads, setLeads] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [partnerFilter, setPartnerFilter] = useState("all");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [quickRange, setQuickRange] = useState(null); // thisWeek | thisMonth | lastMonth | custom | null
 
   useEffect(() => {
     const load = async () => {
@@ -60,12 +104,140 @@ const InsurancePartners = () => {
     load();
   }, [aToken, backendUrl]);
 
+  const partnerOptions = useMemo(() => {
+    const set = new Set();
+    (leads || []).forEach((l) => {
+      const p = typeof l?.partner === "string" ? l.partner.trim() : "";
+      if (p) set.add(p);
+    });
+    const base = Array.from(set);
+    base.sort((a, b) => a.localeCompare(b, "vi"));
+    return ["all", ...base];
+  }, [leads]);
+
+  const filteredLeads = useMemo(() => {
+    const from = dateFrom ? startOfDay(new Date(dateFrom)) : null;
+    const to = dateTo ? endOfDay(new Date(dateTo)) : null;
+    const hasFrom = from && !Number.isNaN(from.getTime());
+    const hasTo = to && !Number.isNaN(to.getTime());
+
+    return (leads || []).filter((l) => {
+      if (partnerFilter !== "all" && l?.partner !== partnerFilter) return false;
+      if (!hasFrom && !hasTo) return true;
+      const t = l?.createdAt ? new Date(l.createdAt) : null;
+      if (!t || Number.isNaN(t.getTime())) return false;
+      if (hasFrom && t < from) return false;
+      if (hasTo && t > to) return false;
+      return true;
+    });
+  }, [leads, partnerFilter, dateFrom, dateTo]);
+
+  const applyQuickRange = (mode) => {
+    const now = new Date();
+    if (mode === "thisWeek") {
+      setQuickRange("thisWeek");
+      setDateFrom(toLocalDateInputValue(startOfWeekMonday(now)));
+      setDateTo(toLocalDateInputValue(now));
+      return;
+    }
+    if (mode === "thisMonth") {
+      setQuickRange("thisMonth");
+      setDateFrom(toLocalDateInputValue(startOfMonth(now)));
+      setDateTo(toLocalDateInputValue(now));
+      return;
+    }
+    if (mode === "lastMonth") {
+      setQuickRange("lastMonth");
+      const startThis = startOfMonth(now);
+      const startLast = startOfMonth(addMonths(startThis, -1));
+      const endLast = endOfDay(new Date(startThis.getTime() - 1));
+      setDateFrom(toLocalDateInputValue(startLast));
+      setDateTo(toLocalDateInputValue(endLast));
+    }
+  };
+
+  const clearFilters = () => {
+    setPartnerFilter("all");
+    setDateFrom("");
+    setDateTo("");
+    setQuickRange(null);
+  };
+
+  const exportCsv = () => {
+    const rows = Array.isArray(filteredLeads) ? filteredLeads : [];
+    if (!rows.length) {
+      toast.info("Không có dữ liệu để xuất CSV (theo bộ lọc hiện tại).");
+      return;
+    }
+
+    const escapeCell = (value) => {
+      const raw = value == null ? "" : String(value);
+      const needsQuote =
+        raw.includes(",") || raw.includes("\n") || raw.includes("\r") || raw.includes('"');
+      const safe = raw.replace(/"/g, '""');
+      return needsQuote ? `"${safe}"` : safe;
+    };
+
+    const headers = [
+      "Họ tên",
+      "Số điện thoại",
+      "Email",
+      "Đối tác quan tâm",
+      "Thời gian gửi",
+      "Trạng thái đồng ý",
+    ];
+
+    const lines = [headers.map(escapeCell).join(",")];
+    rows.forEach((l) => {
+      const created = l?.createdAt ? new Date(l.createdAt) : null;
+      const timeText =
+        created && !Number.isNaN(created.getTime())
+          ? created.toLocaleString("vi-VN")
+          : "";
+      lines.push(
+        [
+          l?.fullName || "",
+          l?.phone || "",
+          l?.email || "",
+          l?.partner || "",
+          timeText,
+          l?.consentShareForInsuranceAdvice ? "Đồng ý" : "Không",
+        ]
+          .map(escapeCell)
+          .join(","),
+      );
+    });
+
+    const bom = "\uFEFF"; // Excel-friendly UTF-8
+    const csv = bom + lines.join("\r\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+
+    const now = new Date();
+    const stamp = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(
+      now.getDate(),
+    ).padStart(2, "0")}`;
+    const namePart =
+      partnerFilter === "all" ? "tat-ca-doi-tac" : String(partnerFilter).toLowerCase().replace(/\s+/g, "-");
+    const rangePart =
+      dateFrom || dateTo ? `_${dateFrom || "na"}_${dateTo || "na"}` : "";
+    const filename = `insurance-leads_${namePart}${rangePart}_${stamp}.csv`;
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1500);
+  };
+
   const pieData = useMemo(() => {
     const values = PARTNER_ORDER.map(
-      (p) => leads.filter((l) => l.partner === p).length,
+      (p) => filteredLeads.filter((l) => l.partner === p).length,
     );
     const knownSum = values.reduce((a, b) => a + b, 0);
-    const other = leads.length - knownSum;
+    const other = filteredLeads.length - knownSum;
     const labels = [...PARTNER_ORDER];
     const data = [...values];
     const colors = [...PARTNER_COLORS];
@@ -74,7 +246,7 @@ const InsurancePartners = () => {
       data.push(other);
       colors.push("#94a3b8");
     }
-    const total = leads.length;
+    const total = filteredLeads.length;
     return {
       labels,
       datasets: [
@@ -88,7 +260,7 @@ const InsurancePartners = () => {
       total,
       rawValues: data,
     };
-  }, [leads]);
+  }, [filteredLeads]);
 
   const pieOptions = useMemo(
     () => ({
@@ -127,8 +299,123 @@ const InsurancePartners = () => {
             Dữ liệu gửi từ trang About (form tư vấn bảo hiểm).
           </p>
         </div>
-        <div className="rounded-2xl border border-gray-200 bg-white px-4 py-2 text-sm font-bold text-gray-700 shadow-sm">
-          Tổng: <span className="text-blue-600">{leads.length}</span> yêu cầu
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={exportCsv}
+            disabled={loading || filteredLeads.length === 0}
+            className="inline-flex items-center gap-2 rounded-none bg-emerald-600 px-5 py-2.5 text-sm font-extrabold text-white shadow-lg shadow-emerald-100 transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+            title="Xuất danh sách theo bộ lọc"
+          >
+            Xuất CSV
+          </button>
+          <div className="rounded-none border border-gray-200 bg-white px-4 py-2 text-sm font-bold text-gray-700 shadow-sm">
+            Tổng: <span className="text-blue-600">{filteredLeads.length}</span> yêu cầu
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+        <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+          <div className="min-w-0">
+            <p className="text-xs font-bold uppercase tracking-wider text-gray-400">
+              Bộ lọc
+            </p>
+            <p className="mt-1 text-sm font-semibold text-gray-700">
+              Lọc theo thời gian và đối tác để xem đúng nhóm khách.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => applyQuickRange("thisWeek")}
+              className={`rounded-none border px-3 py-2 text-xs font-extrabold transition ${
+                quickRange === "thisWeek"
+                  ? "border-blue-600 bg-blue-600 text-white shadow-lg shadow-blue-100"
+                  : "border-blue-100 bg-blue-50 text-blue-700 hover:bg-blue-100"
+              }`}
+            >
+              Tuần này
+            </button>
+            <button
+              type="button"
+              onClick={() => applyQuickRange("thisMonth")}
+              className={`rounded-none border px-3 py-2 text-xs font-extrabold transition ${
+                quickRange === "thisMonth"
+                  ? "border-blue-600 bg-blue-600 text-white shadow-lg shadow-blue-100"
+                  : "border-blue-100 bg-blue-50 text-blue-700 hover:bg-blue-100"
+              }`}
+            >
+              Tháng này
+            </button>
+            <button
+              type="button"
+              onClick={() => applyQuickRange("lastMonth")}
+              className={`rounded-none border px-3 py-2 text-xs font-extrabold transition ${
+                quickRange === "lastMonth"
+                  ? "border-blue-600 bg-blue-600 text-white shadow-lg shadow-blue-100"
+                  : "border-blue-100 bg-blue-50 text-blue-700 hover:bg-blue-100"
+              }`}
+            >
+              Tháng trước
+            </button>
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="rounded-none border border-gray-200 bg-white px-3 py-2 text-xs font-extrabold text-gray-700 hover:bg-gray-50"
+              title="Xóa bộ lọc"
+            >
+              Reset
+            </button>
+          </div>
+        </div>
+
+        <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-12">
+          <div className="md:col-span-4">
+            <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+              Đối tác
+            </label>
+            <select
+              value={partnerFilter}
+              onChange={(e) => setPartnerFilter(e.target.value)}
+              className="mt-1 w-full rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3 text-sm font-semibold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {partnerOptions.map((p) => (
+                <option key={p} value={p}>
+                  {p === "all" ? "Tất cả đối tác" : p}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="md:col-span-4">
+            <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+              Từ ngày
+            </label>
+            <input
+              type="date"
+              value={dateFrom}
+              onChange={(e) => {
+                setDateFrom(e.target.value);
+                setQuickRange("custom");
+              }}
+              className="mt-1 w-full rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3 text-sm font-semibold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div className="md:col-span-4">
+            <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+              Đến ngày
+            </label>
+            <input
+              type="date"
+              value={dateTo}
+              onChange={(e) => {
+                setDateTo(e.target.value);
+                setQuickRange("custom");
+              }}
+              className="mt-1 w-full rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3 text-sm font-semibold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
         </div>
       </div>
 
@@ -167,9 +454,9 @@ const InsurancePartners = () => {
             <div className="flex justify-center py-16 text-blue-600">
               <Loader2 className="h-10 w-10 animate-spin" />
             </div>
-          ) : leads.length === 0 ? (
+          ) : filteredLeads.length === 0 ? (
             <p className="py-12 text-center text-sm text-gray-500">
-              Chưa có yêu cầu tư vấn nào.
+              Không có dữ liệu phù hợp bộ lọc.
             </p>
           ) : (
             <div className="overflow-x-auto rounded-xl border border-gray-100">
@@ -186,7 +473,7 @@ const InsurancePartners = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {leads.map((row, i) => (
+                  {filteredLeads.map((row, i) => (
                     <tr key={row._id} className="hover:bg-blue-50/30">
                       <td className="px-4 py-3 font-medium text-gray-400">{i + 1}</td>
                       <td className="px-4 py-3 font-semibold text-gray-900">{row.fullName}</td>

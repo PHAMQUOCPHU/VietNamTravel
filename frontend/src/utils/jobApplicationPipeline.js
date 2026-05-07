@@ -19,3 +19,4 @@ export function statusToCurrentStep(status) {
 export function isRejectedStatus(status) {
   return status === "rejected";
 }
+

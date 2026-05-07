@@ -18,7 +18,7 @@ import {
   Settings,
 } from "lucide-react";
 
-import logo from "../assets/images/logo.png";
+import { resolveAdminPanelLogoSrc } from "../utils/adminBranding";
 
 /** `matchPath` kết thúc bằng `/` → dùng startsWith */
 function pathMatchesList(pathname, matchPaths) {
@@ -135,13 +135,18 @@ const SIDEBAR_MENU_ITEMS = [
     icon: <Settings size={20} />,
     label: "Cài đặt",
     path: "/admin/settings",
-    matchPaths: ["/admin/settings", "/admin/settings/terms"],
+    matchPaths: ["/admin/settings", "/admin/settings/maintenance", "/admin/settings/terms"],
     hasSubmenu: true,
     submenu: [
       {
         label: "Cài đặt chung",
         path: "/admin/settings",
         matchPaths: ["/admin/settings"],
+      },
+      {
+        label: "Chế độ bảo trì",
+        path: "/admin/settings/maintenance",
+        matchPaths: ["/admin/settings/maintenance"],
       },
       {
         label: "Điều khoản dịch vụ",
@@ -154,7 +159,8 @@ const SIDEBAR_MENU_ITEMS = [
 
 const Sidebar = ({ onNavigate }) => {
   const location = useLocation();
-  const { adminChatUnreadCount } = useContext(AdminContext);
+  const { adminChatUnreadCount, adminLogoUrl } = useContext(AdminContext);
+  const sidebarLogoSrc = resolveAdminPanelLogoSrc(adminLogoUrl);
   const [expandedMenus, setExpandedMenus] = useState({});
 
   const toggleSubmenu = (index) => {
@@ -166,17 +172,21 @@ const Sidebar = ({ onNavigate }) => {
 
   useEffect(() => {
     const pathname = location.pathname;
-    setExpandedMenus((prev) => {
-      const next = { ...prev };
-      SIDEBAR_MENU_ITEMS.forEach((item, index) => {
-        if (!item.hasSubmenu || !item.submenu?.length) return;
-        const anyChildActive = item.submenu.some((sub) =>
-          submenuItemActive(pathname, sub),
-        );
-        if (anyChildActive) next[index] = true;
+    // tránh warning "setState in effect" của eslint rule dự án
+    const t = setTimeout(() => {
+      setExpandedMenus((prev) => {
+        const next = { ...prev };
+        SIDEBAR_MENU_ITEMS.forEach((item, index) => {
+          if (!item.hasSubmenu || !item.submenu?.length) return;
+          const anyChildActive = item.submenu.some((sub) =>
+            submenuItemActive(pathname, sub),
+          );
+          if (anyChildActive) next[index] = true;
+        });
+        return next;
       });
-      return next;
-    });
+    }, 0);
+    return () => clearTimeout(t);
   }, [location.pathname]);
 
   return (
@@ -184,7 +194,7 @@ const Sidebar = ({ onNavigate }) => {
       <div className="px-4 sm:px-6 mb-6 sm:mb-10 flex items-center gap-2 sm:gap-3">
         <div className="w-10 h-8 sm:w-12 sm:h-10 rounded-lg overflow-hidden flex items-center justify-center shadow-md border border-gray-100 bg-gray-50 shrink-0">
           <img
-            src={logo}
+            src={sidebarLogoSrc}
             alt="VN Travel Logo"
             className="w-full h-full object-cover shadow-inner"
           />

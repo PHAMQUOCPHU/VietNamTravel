@@ -2,8 +2,8 @@ import React, { useState, useContext } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { AlertTriangle, CreditCard } from "lucide-react";
 import { toast } from "react-toastify";
-import axios from "axios";
 import { AppContext } from "../context/AppContext";
+import { createVnPayPayment } from "../services";
 
 const PaymentPage = () => {
   const { state } = useLocation();
@@ -42,17 +42,19 @@ const PaymentPage = () => {
       // Đảm bảo số tiền là số nguyên
       const amountToSend = Math.round(Number(booking.totalPrice));
 
-      const response = await axios.post(`${backendUrl}/api/payment/vnpay`, {
-        bookingId: booking._id,
+      const data = await createVnPayPayment({
+        backendUrl,
         amount: amountToSend,
+        bookingId: booking._id,
+        tourTitle: booking.tourTitle,
       });
 
-      if (response.data.success && response.data.paymentUrl) {
+      if (data.success && data.paymentUrl) {
         toast.info("Đang chuyển hướng sang cổng thanh toán VNPay...");
         // Chuyển hướng trình duyệt sang trang thanh toán của VNPay
-        window.location.href = response.data.paymentUrl;
+        window.location.href = data.paymentUrl;
       } else {
-        toast.error(response.data.message || "Không thể tạo link thanh toán");
+        toast.error(data.message || "Không thể tạo link thanh toán");
         setIsProcessing(false);
       }
     } catch (error) {

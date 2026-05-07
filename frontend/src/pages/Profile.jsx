@@ -1,4 +1,4 @@
-import React, { useContext, useState, useEffect } from "react";
+import React, { useContext, useMemo, useState, useEffect } from "react";
 import { AppContext } from "../context/AppContext";
 import { useAuth } from "../hooks/useAuth";
 import {
@@ -9,9 +9,11 @@ import {
   Loader2,
 } from "lucide-react";
 import { toast } from "react-toastify";
+import { updateHomeSlide } from "../services";
 
 const Profile = () => {
-  const { user } = useContext(AppContext);
+  const { user, token, backendUrl, siteConfig, refreshSiteConfig } =
+    useContext(AppContext);
   const { updateProfile } = useAuth();
 
   const DEFAULT_AVATAR =
@@ -20,20 +22,57 @@ const Profile = () => {
   const [userData, setUserData] = useState({
     name: "",
     phone: "",
-    dob: "",
     gender: "male",
+    birthYear: "",
+    occupation: "",
+    maritalStatus: "other",
   });
 
   const [image, setImage] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [bannerFiles, setBannerFiles] = useState([null, null, null]);
+  const [bannerLoading, setBannerLoading] = useState([false, false, false]);
+
+  const bannerSlides = useMemo(() => {
+    const defaults = [
+      {
+        url: "/home-slides/slide-1.png",
+        alt: "Khám phá Vịnh Hạ Long — VietNam Travel",
+      },
+      {
+        url: "/home-slides/slide-2.png",
+        alt: "Việt Nam — Hội An, biển và hành trình của bạn",
+      },
+      {
+        url: "/home-slides/slide-3.png",
+        alt: "Du lịch Việt Nam — ưu đãi và hành trình trọn vẹn",
+      },
+    ];
+    const fromConfig =
+      Array.isArray(siteConfig?.homeSlides) && siteConfig.homeSlides.length
+        ? siteConfig.homeSlides
+        : null;
+    const safe = fromConfig || defaults;
+    return defaults.map((d, i) => safe[i] || d);
+  }, [siteConfig?.homeSlides]);
 
   useEffect(() => {
     if (user) {
+      const yearFromDob = user.dob
+        ? new Date(user.dob).getFullYear()
+        : "";
       setUserData({
         name: user.name || "",
         phone: user.phone || "",
-        dob: user.dob ? user.dob.split("T")[0] : "",
         gender: user.gender || "male",
+        birthYear:
+          user.birthYear != null && String(user.birthYear).trim() !== ""
+            ? String(user.birthYear)
+            : yearFromDob && Number.isFinite(yearFromDob)
+              ? String(yearFromDob)
+              : "",
+        occupation: user.occupation || "",
+        maritalStatus: user.maritalStatus || "other",
       });
     }
   }, [user]);
@@ -59,8 +98,10 @@ const Profile = () => {
       formData.append("userId", user._id);
       formData.append("name", userData.name);
       formData.append("phone", userData.phone);
-      formData.append("dob", userData.dob);
       formData.append("gender", userData.gender);
+      formData.append("birthYear", userData.birthYear);
+      formData.append("occupation", userData.occupation);
+      formData.append("maritalStatus", userData.maritalStatus);
       if (image) formData.append("image", image);
 
       const success = await updateProfile(formData);
@@ -70,6 +111,58 @@ const Profile = () => {
       toast.error("Lỗi cập nhật hồ sơ");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const uploadBannerSlot = async (slotIndex) => {
+    const slot = slotIndex + 1;
+    const file = bannerFiles[slotIndex];
+    if (!file) {
+      toast.info("Vui lòng chọn ảnh trước khi upload");
+      return;
+    }
+    if (!token) {
+      toast.error("Bạn cần đăng nhập lại");
+      return;
+    }
+    if (user?.role !== "admin") {
+      toast.error("Chỉ admin mới có thể chỉnh banner");
+      return;
+    }
+
+    setBannerLoading((prev) => {
+      const next = [...prev];
+      next[slotIndex] = true;
+      return next;
+    });
+
+    try {
+      const data = await updateHomeSlide({
+        backendUrl,
+        token,
+        slot,
+        imageFile: file,
+        alt: bannerSlides[slotIndex]?.alt,
+      });
+      if (data?.success) {
+        toast.success("Đã cập nhật banner");
+        setBannerFiles((prev) => {
+          const next = [...prev];
+          next[slotIndex] = null;
+          return next;
+        });
+        await refreshSiteConfig?.();
+      } else {
+        toast.error(data?.message || "Không thể cập nhật banner");
+      }
+    } catch (_error) {
+      toast.error("Upload banner thất bại");
+    } finally {
+      setBannerLoading((prev) => {
+        const next = [...prev];
+        next[slotIndex] = false;
+        return next;
+      });
     }
   };
 
@@ -193,12 +286,15 @@ const Profile = () => {
               </div>
               <div>
                 <label className="mb-2 block text-sm font-semibold text-gray-500 dark:text-slate-400">
-                  Ngày sinh
+                  Năm sinh
                 </label>
                 <input
-                  type="date"
-                  name="dob"
-                  value={userData.dob}
+                  type="number"
+                  inputMode="numeric"
+                  min="1900"
+                  max={new Date().getFullYear()}
+                  name="birthYear"
+                  value={userData.birthYear}
                   onChange={handleInputChange}
                   className="w-full min-w-0 rounded-xl border border-gray-200 px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-950 dark:text-slate-100"
                 />
@@ -216,6 +312,34 @@ const Profile = () => {
                   <option value="male">Nam</option>
                   <option value="female">Nữ</option>
                   <option value="other">Khác</option>
+                </select>
+              </div>
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-gray-500 dark:text-slate-400">
+                  Nghề nghiệp
+                </label>
+                <input
+                  type="text"
+                  name="occupation"
+                  value={userData.occupation}
+                  onChange={handleInputChange}
+                  placeholder="VD: Nhân viên văn phòng"
+                  className="w-full min-w-0 rounded-xl border border-gray-200 px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-950 dark:text-slate-100"
+                />
+              </div>
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-gray-500 dark:text-slate-400">
+                  Tình trạng hôn nhân
+                </label>
+                <select
+                  name="maritalStatus"
+                  value={userData.maritalStatus}
+                  onChange={handleInputChange}
+                  className="w-full min-w-0 rounded-xl border border-gray-200 px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-950 dark:text-slate-100"
+                >
+                  <option value="single">Độc thân</option>
+                  <option value="married">Đã có gia đình</option>
+                  <option value="other">Khác / Không muốn nói</option>
                 </select>
               </div>
             </div>
@@ -262,6 +386,73 @@ const Profile = () => {
           </div>
         </div>
       </div>
+
+      {user?.role === "admin" ? (
+        <section className="space-y-4 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:rounded-3xl sm:p-6">
+          <div className="space-y-1">
+            <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">
+              Cài đặt banner trang chủ
+            </h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              Upload ảnh để thay thế banner (carousel) ở trang Home. Mỗi slot tương ứng
+              1 slide.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            {bannerSlides.map((slide, idx) => {
+              const pendingFile = bannerFiles[idx];
+              const previewUrl = pendingFile
+                ? URL.createObjectURL(pendingFile)
+                : slide.url;
+              return (
+                <div
+                  key={idx}
+                  className="min-w-0 rounded-2xl border border-slate-100 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800/50"
+                >
+                  <div className="aspect-video w-full overflow-hidden rounded-xl ring-1 ring-slate-200/80 dark:ring-slate-700/80">
+                    <img
+                      src={previewUrl}
+                      alt={slide.alt || `Slide ${idx + 1}`}
+                      className="h-full w-full object-cover"
+                      onLoad={() => {
+                        if (pendingFile) URL.revokeObjectURL(previewUrl);
+                      }}
+                    />
+                  </div>
+
+                  <div className="mt-3 space-y-2">
+                    <p className="text-xs font-semibold text-slate-600 dark:text-slate-300">
+                      Slide {idx + 1}
+                    </p>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="block w-full text-xs text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-blue-600 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-white hover:file:bg-blue-700 dark:text-slate-300"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0] || null;
+                        setBannerFiles((prev) => {
+                          const next = [...prev];
+                          next[idx] = f;
+                          return next;
+                        });
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => uploadBannerSlot(idx)}
+                      disabled={!bannerFiles[idx] || bannerLoading[idx]}
+                      className="w-full rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition disabled:cursor-not-allowed disabled:opacity-60 dark:bg-slate-100 dark:text-slate-900"
+                    >
+                      {bannerLoading[idx] ? "Đang upload..." : "Cập nhật slide"}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      ) : null}
 
     </div>
   );

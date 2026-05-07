@@ -1,6 +1,7 @@
 import reviewModel from "../models/reviewModel.js";
 import bookingModel from "../models/bookingModel.js";
 import { uploadBufferToCloudinary, CLOUDINARY_FOLDERS } from "../services/cloudinaryUpload.js";
+import { notifyAdminNewReview } from "../services/adminNotifications.js";
 
 const surveyKeys = ["guide", "transport", "food", "schedule"];
 
@@ -94,6 +95,11 @@ export const createReview = async (req, res) => {
       images: imageUrls,
       survey,
     });
+    try {
+      await notifyAdminNewReview(newReview, booking);
+    } catch {
+      // ignore
+    }
 
     return res.json({
       success: true,

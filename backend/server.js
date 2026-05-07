@@ -43,6 +43,7 @@ import safetyRouter from "./routes/safetyRoute.js";
 import jobApplicationRouter from "./routes/jobApplicationRoute.js";
 import jobRouter from "./routes/jobRoute.js";
 import termsRouter from "./routes/termsRoute.js";
+import siteConfigRouter from "./routes/siteConfigRoute.js";
 
 const PORT = process.env.PORT || 5001;
 const app = express();
@@ -52,9 +53,11 @@ const app = express();
 const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:5174",
+  "http://localhost:4173",
   "http://localhost:3000",
   "http://127.0.0.1:5173",
   "http://127.0.0.1:5174",
+  "http://127.0.0.1:4173",
   "http://127.0.0.1:3000",
   "https://viet-nam-travel.vercel.app",
 ];
@@ -442,6 +445,7 @@ app.use("/api/safety", safetyRouter);
 app.use("/api/jobs", jobRouter);
 app.use("/api/job-applications", jobApplicationRouter);
 app.use("/api/terms", termsRouter);
+app.use("/api/site-config", siteConfigRouter);
 app.use("/api", geminiTourAdvisorRouter);
 
 app.get("/", (req, res) => {

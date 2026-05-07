@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useContext, useMemo, useCallback } from "react";
 import { Link } from "react-router-dom";
-import axios from "axios";
 import { motion } from "framer-motion";
 import { MapPin, Compass, Sparkles, Loader2 } from "lucide-react";
 import { geoMercator, geoPath } from "d3-geo";
@@ -10,6 +9,7 @@ import {
   normKey,
   resolveVisitedProvinces,
 } from "../lib/vietnamCollectionMap.js";
+import { getMyCollectionCities } from "../services";
 
 const MAP_W = 1000;
 const MAP_H = 620;
@@ -164,12 +164,9 @@ export default function MyCollection() {
       }
       setLoading(true);
       try {
-        const res = await axios.get(
-          `${backendUrl}/api/bookings/my-collection`,
-          { headers: { token } },
-        );
-        if (res.data.success && Array.isArray(res.data.cities)) {
-          setVisitedCities(res.data.cities);
+        const data = await getMyCollectionCities({ backendUrl, token });
+        if (data.success && Array.isArray(data.cities)) {
+          setVisitedCities(data.cities);
         }
       } catch {
         setVisitedCities([]);

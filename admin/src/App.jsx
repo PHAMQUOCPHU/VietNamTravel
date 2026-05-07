@@ -1,8 +1,9 @@
-import { Suspense, lazy, useContext } from "react";
+import { Suspense, lazy, useContext, useEffect } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { AdminContext } from "./context/AdminContext.jsx";
+import { applyAdminPanelFavicon, resolveAdminPanelLogoSrc } from "./utils/adminBranding";
 
 import AdminLayout from "./components/AdminLayout";
 
@@ -12,6 +13,9 @@ const AddTour = lazy(() => import("./pages/AddTour"));
 const EditTour = lazy(() => import("./pages/EditTour"));
 const BookingManagement = lazy(() => import("./pages/BookingManagement"));
 const Login = lazy(() => import("./pages/Login"));
+const AdminForgotPassword = lazy(() => import("./pages/AdminForgotPassword.jsx"));
+const AdminVerifyOtpReset = lazy(() => import("./pages/AdminVerifyOtpReset.jsx"));
+const AdminResetPassword = lazy(() => import("./pages/AdminResetPassword.jsx"));
 const UserManagement = lazy(() => import("./pages/UserManagement"));
 const PostManagement = lazy(() => import("./pages/PostManagement"));
 const AddBlog = lazy(() => import("./pages/AddBlog"));
@@ -27,6 +31,7 @@ const ApplicationManagement = lazy(
 );
 const Settings = lazy(() => import("./pages/Settings.jsx"));
 const TermsManagement = lazy(() => import("./pages/TermsManagement.jsx"));
+const MaintenanceSettings = lazy(() => import("./pages/MaintenanceSettings.jsx"));
 
 function PageFallback() {
   return (
@@ -41,7 +46,11 @@ function PageFallback() {
 }
 
 function App() {
-  const { aToken } = useContext(AdminContext);
+  const { aToken, adminLogoUrl } = useContext(AdminContext);
+
+  useEffect(() => {
+    applyAdminPanelFavicon(resolveAdminPanelLogoSrc(adminLogoUrl));
+  }, [adminLogoUrl]);
 
   return (
     <>
@@ -53,6 +62,43 @@ function App() {
           element={
             <Suspense fallback={<PageFallback />}>
               {aToken ? <Navigate to="/admin" replace /> : <Login />}
+            </Suspense>
+          }
+        />
+
+        <Route
+          path="/admin/forgot-password"
+          element={
+            <Suspense fallback={<PageFallback />}>
+              {aToken ? (
+                <Navigate to="/admin" replace />
+              ) : (
+                <AdminForgotPassword />
+              )}
+            </Suspense>
+          }
+        />
+        <Route
+          path="/admin/verify-otp-reset"
+          element={
+            <Suspense fallback={<PageFallback />}>
+              {aToken ? (
+                <Navigate to="/admin" replace />
+              ) : (
+                <AdminVerifyOtpReset />
+              )}
+            </Suspense>
+          }
+        />
+        <Route
+          path="/admin/reset-password"
+          element={
+            <Suspense fallback={<PageFallback />}>
+              {aToken ? (
+                <Navigate to="/admin" replace />
+              ) : (
+                <AdminResetPassword />
+              )}
             </Suspense>
           }
         />
@@ -80,6 +126,7 @@ function App() {
           <Route path="jobs" element={<JobManagement />} />
           <Route path="applications" element={<ApplicationManagement />} />
           <Route path="settings/terms" element={<TermsManagement />} />
+          <Route path="settings/maintenance" element={<MaintenanceSettings />} />
           <Route path="settings" element={<Settings />} />
         </Route>
 
