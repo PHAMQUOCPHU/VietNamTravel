@@ -149,12 +149,14 @@ function parseSaleDateInput(value) {
   if (!raw) return null;
 
   if (ISO_DATE_TIME_LOCAL.test(raw)) {
-    const parsed = new Date(`${raw}:00`);
+    // `datetime-local` không có timezone. Quy ước đây là giờ Việt Nam (+07:00)
+    // để tránh lệch giờ khi server chạy UTC.
+    const parsed = new Date(`${raw}:00+07:00`);
     return Number.isNaN(parsed.getTime()) ? null : parsed;
   }
 
   if (ISO_DATE.test(raw)) {
-    const parsed = new Date(`${raw}T00:00:00`);
+    const parsed = new Date(`${raw}T00:00:00+07:00`);
     return Number.isNaN(parsed.getTime()) ? null : parsed;
   }
 
