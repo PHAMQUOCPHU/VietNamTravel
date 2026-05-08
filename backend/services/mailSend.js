@@ -2,17 +2,21 @@ import transporter from "../config/nodemailer.js";
 
 const RESEND_API = "https://api.resend.com/emails";
 
+export function isResendMailEnabled() {
+  const flag = String(process.env.MAIL_USE_RESEND || "")
+    .trim()
+    .toLowerCase();
+  return flag === "1" || flag === "true" || flag === "yes";
+}
+
 /**
- * Gửi email: ưu tiên Resend (HTTPS, phù hợp Render chặn SMTP), không có API key thì dùng Nodemailer/SMTP.
- *
- * Env Resend:
- * - RESEND_API_KEY=bearer token
- * - RESEND_FROM (khuyến nghị): cố định "Tên hiển thị &lt;email@domain-da-xac-minh&gt;"
- * - Test nhanh: dùng "VietNam Travel &lt;onboarding@resend.dev&gt;" (đọc giới hạn Resend trong dashboard)
+ * Mặc định: Nodemailer/SMTP (Gmail) — giống hành vi cũ trước khi thêm Resend.
+ * Chỉ gửi qua Resend khi bật rõ: MAIL_USE_RESEND=true VÀ có RESEND_API_KEY.
+ * (Tránh trường hợp nhầm thêm RESEND_API_KEY trên Render khiến mọi mail đi API thay vì SMTP.)
  */
 export async function sendAppEmail({ to, subject, text, html, from: fromOverride }) {
   const apiKey = process.env.RESEND_API_KEY?.trim();
-  if (apiKey) {
+  if (shouldUseResend() && apiKey) {
     const from =
       process.env.RESEND_FROM?.trim() ||
       fromOverride?.trim() ||
@@ -45,6 +49,10 @@ export async function sendAppEmail({ to, subject, text, html, from: fromOverride
       throw new Error(`Resend: ${detail}`);
     }
     return;
+  }
+
+  if (isResendMailEnabled() && !apiKey) {
+    throw new Error("Đặt MAIL_USE_RESEND nhưng thiếu RESEND_API_KEY");
   }
 
   const fromAddr = fromOverride?.trim() || process.env.SENDER_EMAIL;

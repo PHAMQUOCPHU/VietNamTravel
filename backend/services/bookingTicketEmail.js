@@ -1,4 +1,4 @@
-import { sendAppEmail } from "./mailSend.js";
+import { sendAppEmail, isResendMailEnabled } from "./mailSend.js";
 import { getBookingShortCodeHash } from "../utils/bookingShortCode.js";
 
 function escapeHtml(s) {
@@ -139,9 +139,10 @@ export async function sendBookingTicketEmail(booking) {
   }
 
   const fromAddr = process.env.SENDER_EMAIL;
-  const hasResend = Boolean(process.env.RESEND_API_KEY?.trim());
+  const hasResend =
+    isResendMailEnabled() && Boolean(process.env.RESEND_API_KEY?.trim());
   if (!hasResend && !fromAddr) {
-    console.warn("[ticket-email] Bỏ qua: thiếu SENDER_EMAIL và RESEND_API_KEY");
+    console.warn("[ticket-email] Bỏ qua: thiếu SENDER_EMAIL (hoặc bật MAIL_USE_RESEND + RESEND_API_KEY)");
     return { sent: false, reason: "no_sender" };
   }
 

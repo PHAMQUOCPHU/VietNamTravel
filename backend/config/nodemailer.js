@@ -45,8 +45,8 @@ export function explainMailTransportError(error) {
 
   if (code === "ENETUNREACH" || combined.includes("ENETUNREACH")) {
     return (
-      "SMTP bị chặn từ hosting (ENETUNREACH). Render thường không cho SMTP: thêm RESEND_API_KEY trên backend " +
-      '(Resend → API Keys) và RESEND_FROM="VietNam Travel <onboarding@resend.dev>", rồi redeploy.'
+      "SMTP bị chặn trên hosting (ENETUNREACH). Cách cổ SMTP không được Render một số giai đoạn: nếu trước đây vốn chạy Gmail được giữ nguyên SENDER_EMAIL/App Password; " +
+      "nếu vẫn lỗi: MAIL_USE_RESEND=true + RESEND_API_KEY + RESEND_FROM trên Resend."
     );
   }
   if (code === "ETIMEDOUT" || combined.includes("TIMEOUT")) {
