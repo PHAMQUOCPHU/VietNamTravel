@@ -38,13 +38,17 @@ const ForgotPassword = () => {
     } catch (error) {
       const aborted = error.code === "ECONNABORTED";
       const noResponse = !error.response;
+      const errText = String(error.message || "").toLowerCase();
       let msg =
         error.response?.data?.message ||
         error.message ||
         "Không kết nối được máy chủ.";
-      if (aborted || (noResponse && String(error.message || "").toLowerCase().includes("timeout"))) {
+      if (aborted || (noResponse && errText.includes("timeout"))) {
         msg =
           "Timeout: không nhận phản hồi API. Kiểm tra VITE_BACKEND_URL (HTTPS đúng) trên Vercel và thử GET .../api/health trên trình duyệt.";
+      } else if (noResponse && errText.includes("network")) {
+        msg =
+          "Lỗi mạng: trình duyệt không tới được API. Mở tab mới kiểm tra /api/health; nếu backend Render đang ngủ, tải /api/health 1–2 lần rồi thử lại. Kiểm tra Console/Network có lỗi CORS không; domain khác .vercel.app cần thêm CORS trên backend.";
       }
       toast.error(msg);
     } finally {

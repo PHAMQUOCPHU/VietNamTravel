@@ -49,6 +49,11 @@ const app = express();
 
 // --- 1. CẤU HÌNH NGUỒN CHO PHÉP (Dùng chung cho cả CORS và Socket) ---
 // Cùng cổng 5173/5174/3000; trình duyệt có thể dùng localhost hoặc 127.0.0.1 — CORS coi là hai origin khác nhau.
+const corsExtraOrigins = String(process.env.CORS_EXTRA_ORIGINS || "")
+  .split(",")
+  .map((o) => o.trim())
+  .filter(Boolean);
+
 const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:5174",
@@ -59,6 +64,7 @@ const allowedOrigins = [
   "http://127.0.0.1:4173",
   "http://127.0.0.1:3000",
   "https://viet-nam-travel.vercel.app",
+  ...corsExtraOrigins,
 ];
 
 // --- 2. CẤU HÌNH HTTP SERVER & SOCKET.IO ---
