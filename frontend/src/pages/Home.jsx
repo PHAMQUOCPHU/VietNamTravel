@@ -1,7 +1,6 @@
 import React from "react";
 import Header from "../components/Header";
-// import SearchBar from "../components/SearchBar"; // Tạm thời comment hoặc xóa cái cũ
-import AdvancedSearch from "../components/AdvancedSearch"; // Import cái mới vào đây
+import AdvancedSearch from "../components/AdvancedSearch";
 import Services from "../components/Services";
 import AllTours from "../components/AllTours";
 import TravelLog from "../components/TravelLog";
@@ -17,8 +16,7 @@ const Home = () => {
         <Header />
       </div>
 
-      {/* 2. Phần tìm kiếm nâng cao (Thay thế SearchBar cũ) */}
-      {/* Container này giúp thanh search nổi lên trên và đè lên Header một chút */}
+      {/* Tìm kiếm nâng cao — đè một phần lên Hero */}
       <div id="step-search" className="relative z-30">
         <AdvancedSearch />
       </div>

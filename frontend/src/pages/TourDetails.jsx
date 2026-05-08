@@ -186,7 +186,9 @@ const TourDetails = () => {
           setAllReviews(data.reviews || []);
         }
       } catch {
-        console.log("Lỗi tải thống kê review");
+        if (import.meta.env.DEV) {
+          console.warn("[TourDetails] Lỗi tải thống kê review");
+        }
       }
     };
     fetchReviewStats();

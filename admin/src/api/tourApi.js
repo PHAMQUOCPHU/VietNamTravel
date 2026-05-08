@@ -3,8 +3,6 @@ import axios from "axios";
 // API Thêm Tour
 export const addTourApi = async (formData, token, backendUrl) => {
   const url = `${backendUrl.trim()}/api/tour/add`;
-  console.log("🚀 Request gửi đến:", url);
-
   const { data } = await axios.post(url, formData, {
     // SỬA: token -> atoken
     headers: { atoken: token },

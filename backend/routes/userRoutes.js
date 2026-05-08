@@ -2,7 +2,6 @@ import express from "express";
 import {
   registerUser,
   loginUser,
-  googleLoginUser,
   sendOtp,
   verifyOtp,
   forgotPassword,
@@ -29,7 +28,6 @@ const userRouter = express.Router();
 // --- 1. CÁC ROUTE PUBLIC (Không cần đăng nhập) ---
 userRouter.post("/register", registerUser);
 userRouter.post("/login", loginUser);
-userRouter.post("/google-login", googleLoginUser);
 userRouter.post("/send-otp", sendOtp);
 userRouter.post("/verify-otp", verifyOtp);
 userRouter.post("/verify-otp-forgot", verifyOtp);

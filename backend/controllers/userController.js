@@ -9,7 +9,6 @@ import bookingModel from "../models/bookingModel.js"; // NHỚ KIỂM TRA ĐƯ�
 import jobModel from "../models/jobModel.js";
 import { uploadBufferToCloudinary, CLOUDINARY_FOLDERS } from "../services/cloudinaryUpload.js";
 import { notifyAdminAccountCreated } from "../services/adminNotifications.js";
-import { OAuth2Client } from "google-auth-library";
 
 // Hàm tạo Token
 const createToken = (id, role) => {
@@ -17,8 +16,6 @@ const createToken = (id, role) => {
     expiresIn: "3d",
   });
 };
-
-const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID || "");
 
 // 1. Gửi OTP
 export const sendOtp = async (req, res) => {
@@ -148,89 +145,6 @@ export const loginUser = async (req, res) => {
   } catch (error) {
     console.error("Login Error:", error);
     res.json({ success: false, message: "Lỗi hệ thống: " + error.message });
-  }
-};
-
-// 3b. Đăng nhập với Google (verify id_token → cấp JWT)
-export const googleLoginUser = async (req, res) => {
-  try {
-    const credential =
-      typeof req.body?.credential === "string" ? req.body.credential.trim() : "";
-    if (!credential) {
-      return res.json({ success: false, message: "Thiếu credential từ Google" });
-    }
-    if (!process.env.GOOGLE_CLIENT_ID) {
-      return res.json({
-        success: false,
-        message: "Backend chưa cấu hình GOOGLE_CLIENT_ID",
-      });
-    }
-
-    const ticket = await googleClient.verifyIdToken({
-      idToken: credential,
-      audience: process.env.GOOGLE_CLIENT_ID,
-    });
-    const payload = ticket.getPayload();
-    const email = String(payload?.email || "").trim().toLowerCase();
-    const name =
-      String(payload?.name || "").trim() || (email ? email.split("@")[0] : "User");
-    const picture = String(payload?.picture || "").trim();
-
-    if (!email) {
-      return res.json({
-        success: false,
-        message: "Google credential không hợp lệ (thiếu email)",
-      });
-    }
-
-    let user = await userModel.findOne({ email }).populate("favorites");
-
-    if (!user) {
-      const salt = await bcrypt.genSalt(10);
-      const randomPass = cryptoRandomString({ length: 24, type: "alphanumeric" });
-      const hashedPassword = await bcrypt.hash(randomPass, salt);
-
-      const newUser = new userModel({
-        name,
-        email,
-        password: hashedPassword,
-        phone: "",
-        role: "user",
-        image: picture || "",
-        favorites: [],
-        savedJobs: [],
-      });
-      user = await newUser.save();
-      user = await userModel.findById(user._id).populate("favorites");
-      try {
-        await notifyAdminAccountCreated(user);
-      } catch {
-        // ignore
-      }
-    }
-
-    if (user.isActive === false) {
-      return res.json({
-        success: false,
-        message: "Tài khoản đã ngừng hoạt động. Liên hệ quản trị viên.",
-      });
-    }
-
-    const token = createToken(user._id, user.role);
-    const userResponse = user.toObject();
-    delete userResponse.password;
-
-    return res.json({
-      success: true,
-      token,
-      user: userResponse,
-    });
-  } catch (error) {
-    console.error("Google Login Error:", error);
-    return res.json({
-      success: false,
-      message: "Không thể đăng nhập với Google: " + (error?.message || "Lỗi hệ thống"),
-    });
   }
 };
 

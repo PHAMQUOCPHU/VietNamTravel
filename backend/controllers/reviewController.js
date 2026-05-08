@@ -22,10 +22,6 @@ const getTravelStatus = (bookAt, duration) => {
 
 export const createReview = async (req, res) => {
   try {
-    console.log("=== CREATE REVIEW ===");
-    console.log("req.body:", req.body);
-    console.log("req.files:", req.files);
-    
     const userId = req.userId;
     let { bookingId, rating, comment = "", survey } = req.body;
 

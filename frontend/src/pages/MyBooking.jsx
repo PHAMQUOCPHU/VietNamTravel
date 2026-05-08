@@ -70,7 +70,9 @@ const MyBooking = () => {
           setReviewedBookingIds(data.bookingIds || []);
         }
       } catch {
-        console.log("Không tải được danh sách booking đã review");
+        if (import.meta.env.DEV) {
+          console.warn("[MyBooking] Không tải danh sách booking đã review");
+        }
       }
     };
     fetchReviewedBookings();
