@@ -1,4 +1,4 @@
-import transporter from "../config/nodemailer.js";
+import { sendAppEmail } from "./mailSend.js";
 import { getBookingShortCodeHash } from "../utils/bookingShortCode.js";
 
 function escapeHtml(s) {
@@ -139,16 +139,19 @@ export async function sendBookingTicketEmail(booking) {
   }
 
   const fromAddr = process.env.SENDER_EMAIL;
-  if (!fromAddr) {
-    console.warn("[ticket-email] Bỏ qua: thiếu SENDER_EMAIL trong .env");
+  const hasResend = Boolean(process.env.RESEND_API_KEY?.trim());
+  if (!hasResend && !fromAddr) {
+    console.warn("[ticket-email] Bỏ qua: thiếu SENDER_EMAIL và RESEND_API_KEY");
     return { sent: false, reason: "no_sender" };
   }
 
   const code = getBookingShortCodeHash(booking);
   const subject = `Vé điện tử VietNam Travel — ${code}`;
 
-  await transporter.sendMail({
-    from: `"VietNam Travel" <${fromAddr}>`,
+  await sendAppEmail({
+    from: hasResend
+      ? undefined
+      : `"VietNam Travel" <${fromAddr}>`,
     to,
     subject,
     text: buildTicketText(booking),

@@ -45,8 +45,8 @@ export function explainMailTransportError(error) {
 
   if (code === "ENETUNREACH" || combined.includes("ENETUNREACH")) {
     return (
-      "Máy chủ không kết nối được SMTP (ENETUNREACH). Trên Render: thử thêm vào Env " +
-      "SMTP_PORT=587 và SMTP_SECURE=false; hoặc host chặn SMTP — khi đó nên dùng API mail (SendGrid, Resend, SES)."
+      "SMTP bị chặn từ hosting (ENETUNREACH). Render thường không cho SMTP: thêm RESEND_API_KEY trên backend " +
+      '(Resend → API Keys) và RESEND_FROM="VietNam Travel <onboarding@resend.dev>", rồi redeploy.'
     );
   }
   if (code === "ETIMEDOUT" || combined.includes("TIMEOUT")) {

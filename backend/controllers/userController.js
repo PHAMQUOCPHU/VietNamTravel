@@ -1,5 +1,6 @@
 import otpModel from "../models/otpModel.js";
-import transporter, { explainMailTransportError } from "../config/nodemailer.js";
+import { explainMailTransportError } from "../config/nodemailer.js";
+import { sendAppEmail } from "../services/mailSend.js";
 import cryptoRandomString from "crypto-random-string";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
@@ -25,11 +26,11 @@ export const sendOtp = async (req, res) => {
     const otp = cryptoRandomString({ length: 6, type: "distinguishable" });
     await otpModel.findOneAndDelete({ email });
     await new otpModel({ email, otp }).save();
-    await transporter.sendMail({
-      from: process.env.SENDER_EMAIL,
+    await sendAppEmail({
       to: email,
       subject: "Mã xác thực VietNam Travel",
       text: `Mã của bạn là: ${otp}`,
+      from: process.env.SENDER_EMAIL,
     });
     res.json({ success: true, message: "Mã OTP đã được gửi!" });
   } catch (error) {
@@ -162,11 +163,11 @@ export const forgotPassword = async (req, res) => {
     const otp = cryptoRandomString({ length: 6, type: "distinguishable" });
     await otpModel.findOneAndDelete({ email });
     await new otpModel({ email, otp }).save();
-    await transporter.sendMail({
-      from: process.env.SENDER_EMAIL,
+    await sendAppEmail({
       to: email,
       subject: "Yêu cầu Khôi phục mật khẩu - VietNam Travel",
       text: `Mã của bạn là: ${otp}`,
+      from: process.env.SENDER_EMAIL,
     });
     res.json({ success: true, message: "Mã OTP đã được gửi!" });
   } catch (error) {
@@ -199,8 +200,7 @@ export const adminForgotPassword = async (req, res) => {
     await otpModel.findOneAndDelete({ email });
     await new otpModel({ email, otp }).save();
 
-    await transporter.sendMail({
-      from: process.env.SENDER_EMAIL,
+    await sendAppEmail({
       to: email,
       subject: "[VN Travel Admin] Mã khôi phục mật khẩu",
       text: [
@@ -208,6 +208,7 @@ export const adminForgotPassword = async (req, res) => {
         `Mã OTP (có hiệu lực ngắn): ${otp}`,
         `Không chia sẻ mã với ai. Nếu không phải bạn thực hiện, bỏ qua email này.`,
       ].join("\n"),
+      from: process.env.SENDER_EMAIL,
     });
 
     return res.json(genericOk);
