@@ -43,6 +43,12 @@ export const loginUser = async ({ backendUrl, email, password, userCaptcha, serv
   return data;
 };
 
+export const loginWithGoogle = async ({ backendUrl, credential }) => {
+  const client = buildHttpClient(backendUrl);
+  const { data } = await client.post("/api/user/google-login", { credential });
+  return data;
+};
+
 export const requestOtp = async ({ backendUrl, email }) => {
   const client = buildHttpClient(backendUrl);
   const { data } = await client.post("/api/user/send-otp", { email });

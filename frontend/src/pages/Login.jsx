@@ -2,7 +2,8 @@ import React, { useState, useContext, useEffect, useCallback } from "react";
 import { toast } from "react-toastify";
 import { AppContext } from "../context/AppContext";
 import { useNavigate } from "react-router-dom";
-import { getCaptcha, loginUser, requestOtp } from "../services";
+import { getCaptcha, loginUser, loginWithGoogle, requestOtp } from "../services";
+import { GoogleLogin } from "@react-oauth/google";
 
 const LoginPage = () => {
   // SỬA: Dùng setUser cho đúng với AppContext của Phú
@@ -19,6 +20,7 @@ const LoginPage = () => {
   const [serverCaptcha, setServerCaptcha] = useState("");
   const [userCaptchaInput, setUserCaptchaInput] = useState("");
   const [isLoadingOtp, setIsLoadingOtp] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   const navigate = useNavigate();
 
@@ -111,6 +113,31 @@ const LoginPage = () => {
     }
   };
 
+  const handleGoogleSuccess = async (credentialResponse) => {
+    const credential = credentialResponse?.credential;
+    if (!credential) {
+      toast.error("Không lấy được credential từ Google.");
+      return;
+    }
+    try {
+      setGoogleLoading(true);
+      const response = await loginWithGoogle({ backendUrl, credential });
+      if (response.success) {
+        setToken(response.token);
+        localStorage.setItem("token", response.token);
+        setUser(response.user);
+        toast.success(`Chào mừng ${response.user?.name || "bạn"} quay lại!`);
+        navigate("/");
+        return;
+      }
+      toast.error(response.message || "Không thể đăng nhập với Google");
+    } catch (e) {
+      toast.error(e?.response?.data?.message || e?.message || "Lỗi kết nối");
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-3 sm:p-4 font-sans">
       <h1 className="mb-4 max-w-[min(100%,24rem)] text-center text-xl font-bold text-gray-800 sm:mb-6 sm:max-w-none sm:text-2xl md:mb-10 md:text-5xl dark:text-slate-100">
@@ -121,6 +148,30 @@ const LoginPage = () => {
         <h2 className="text-xl sm:text-2xl font-semibold text-center text-gray-800">
           {isLogin ? "Đăng Nhập" : "Đăng Ký"}
         </h2>
+
+        {isLogin ? (
+          <div className="mt-4 sm:mt-6">
+            <div className="flex justify-center">
+              <div className={`${googleLoading ? "pointer-events-none opacity-70" : ""}`}>
+                <GoogleLogin
+                  onSuccess={handleGoogleSuccess}
+                  onError={() => toast.error("Đăng nhập Google thất bại.")}
+                  useOneTap
+                  theme="outline"
+                  size="large"
+                  text="continue_with"
+                  shape="pill"
+                  width="340"
+                />
+              </div>
+            </div>
+            <div className="my-4 flex items-center gap-3">
+              <div className="h-px flex-1 bg-gray-200" />
+              <span className="text-xs font-semibold text-gray-400">hoặc</span>
+              <div className="h-px flex-1 bg-gray-200" />
+            </div>
+          </div>
+        ) : null}
 
         <form onSubmit={onSubmitHandler} className="space-y-3 sm:space-y-4 mt-4 sm:mt-6">
           {!isLogin && (
