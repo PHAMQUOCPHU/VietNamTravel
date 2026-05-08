@@ -137,6 +137,10 @@ export const updateMaintenance = async (req, res) => {
       typeof req.body?.title === "string" ? req.body.title.trim() : undefined;
     const message =
       typeof req.body?.message === "string" ? req.body.message.trim() : undefined;
+    const expectedTime =
+      typeof req.body?.expectedTime === "string"
+        ? req.body.expectedTime.trim()
+        : undefined;
     const contact = req.body?.contact || {};
 
     const set = {
@@ -147,6 +151,7 @@ export const updateMaintenance = async (req, res) => {
     if (message !== undefined)
       set["maintenance.message"] =
         message || "Trang web đang cập nhật, vui lòng quay lại sau.";
+    if (expectedTime !== undefined) set["maintenance.expectedTime"] = expectedTime;
 
     if (contact && typeof contact === "object") {
       if (typeof contact.name === "string")

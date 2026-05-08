@@ -31,6 +31,7 @@ const siteConfigSchema = new mongoose.Schema(
         type: String,
         default: "Trang web đang cập nhật, vui lòng quay lại sau.",
       },
+      expectedTime: { type: String, default: "" },
       contact: {
         name: { type: String, default: "Mr Phú" },
         phone: { type: String, default: "0905713702" },

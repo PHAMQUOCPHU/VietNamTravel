@@ -5,28 +5,57 @@ import {
   Ticket,
   ChevronRight,
   Home,
-  Map,
   ArrowLeft,
   Heart,
   User,
   DollarSign,
   BookImage,
-  AlertTriangle,
   Briefcase,
+  Cloud,
+  Droplets,
+  Wind,
+  Sunrise,
+  Sunset,
+  Search,
+  Loader2,
 } from "lucide-react";
 import VoucherCard from "./VoucherCard";
 import { AppContext } from "../context/AppContext";
 import { useNavigate } from "react-router-dom";
-import { getPublicVouchers } from "../services";
+import {
+  fetchOpenWeatherForecast,
+  fetchOpenWeatherGeo,
+  getPublicVouchers,
+} from "../services";
 import { resolveSiteLogoSrc } from "../utils/siteLogo";
+import {
+  CITY_COORD_FALLBACK,
+  WEATHER_CITY_QUERY_MAP,
+  getWeatherIcon,
+  normWeatherCityKey,
+  pickGeoResult,
+} from "../pages/tour-details/weatherUtils";
 
 const AppSidebar = ({ isOpen, onClose }) => {
   const { backendUrl, user, token, siteConfig } = useContext(AppContext);
   const [vouchers, setVouchers] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [view, setView] = useState("menu"); // 'menu' | 'vouchers' | 'exchange'
+  const [view, setView] = useState("menu"); // 'menu' | 'vouchers' | 'exchange' | 'weather'
   const [exchangeAmount, setExchangeAmount] = useState("");
   const [exchangeCurrency, setExchangeCurrency] = useState("USD");
+
+  // --- Weather state (OpenWeather) ---
+  const [weatherCity, setWeatherCity] = useState(() => {
+    try {
+      return localStorage.getItem("vt_weather_city") || "Đà Nẵng";
+    } catch {
+      return "Đà Nẵng";
+    }
+  });
+  const [weatherQuery, setWeatherQuery] = useState("");
+  const [weatherLoading, setWeatherLoading] = useState(false);
+  const [weatherError, setWeatherError] = useState("");
+  const [weatherData, setWeatherData] = useState(null);
 
   const exchangeRates = {
     USD: 25430,
@@ -44,6 +73,7 @@ const AppSidebar = ({ isOpen, onClose }) => {
   useEffect(() => {
     if (!isOpen) return;
     setView("menu");
+    setWeatherQuery("");
     const ac = new AbortController();
     const load = async () => {
       setLoading(true);
@@ -69,6 +99,88 @@ const AppSidebar = ({ isOpen, onClose }) => {
     load();
     return () => ac.abort();
   }, [isOpen, backendUrl, token]);
+
+  const loadWeather = async (nextCity) => {
+    const city = String(nextCity || "").trim();
+    if (!city) return;
+    const API_KEY = import.meta.env.VITE_WEATHER_API_KEY;
+    if (!API_KEY) {
+      setWeatherError("Thiếu cấu hình VITE_WEATHER_API_KEY để tải thời tiết.");
+      setWeatherData(null);
+      return;
+    }
+
+    const ac = new AbortController();
+    setWeatherLoading(true);
+    setWeatherError("");
+    try {
+      const cityNorm = normWeatherCityKey(city);
+      const mappedCandidates = WEATHER_CITY_QUERY_MAP[cityNorm] || [];
+      const candidates = Array.from(
+        new Set([...mappedCandidates, `${city}, VN`, city]),
+      ).filter(Boolean);
+
+      let foundCoord = null;
+      for (const q of candidates) {
+        const geo = await fetchOpenWeatherGeo({
+          q,
+          limit: 5,
+          apiKey: API_KEY,
+          signal: ac.signal,
+        });
+        const picked = pickGeoResult(geo);
+        if (picked) {
+          foundCoord = picked;
+          break;
+        }
+      }
+
+      const fallback = CITY_COORD_FALLBACK[cityNorm];
+      if (!foundCoord && fallback) {
+        foundCoord = { lat: fallback.lat, lon: fallback.lon, country: "VN" };
+      }
+      if (!foundCoord) {
+        setWeatherError("Không tìm thấy địa điểm. Hãy thử nhập tên tỉnh/thành khác.");
+        setWeatherData(null);
+        return;
+      }
+
+      const forecast = await fetchOpenWeatherForecast({
+        lat: foundCoord.lat,
+        lon: foundCoord.lon,
+        apiKey: API_KEY,
+        units: "metric",
+        lang: "vi",
+        signal: ac.signal,
+      });
+
+      setWeatherData({
+        city,
+        coord: { lat: foundCoord.lat, lon: foundCoord.lon },
+        forecast,
+      });
+      setWeatherCity(city);
+      try {
+        localStorage.setItem("vt_weather_city", city);
+      } catch {
+        // ignore
+      }
+    } catch (err) {
+      setWeatherError(err?.message || "Không tải được thời tiết lúc này.");
+      setWeatherData(null);
+    } finally {
+      setWeatherLoading(false);
+      ac.abort();
+    }
+  };
+
+  useEffect(() => {
+    if (!isOpen) return;
+    if (view !== "weather") return;
+    // Lazy load when open weather view
+    loadWeather(weatherCity);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, view]);
 
   const handleUseNow = (code) => {
     navigator.clipboard.writeText(code);
@@ -193,20 +305,20 @@ const AppSidebar = ({ isOpen, onClose }) => {
                     <div className="h-px bg-gray-100 my-2 mx-2"></div>
 
                     <button
-                      onClick={() => handleNavigation("/disaster-map")}
-                      className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-slate-100 transition-colors group"
+                      onClick={() => setView("weather")}
+                      className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-blue-50 transition-colors group"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="p-2 bg-slate-100 text-slate-700 rounded-lg group-hover:bg-slate-200 transition-colors">
-                          <Map size={20} />
+                        <div className="p-2 bg-blue-100 text-blue-600 rounded-lg group-hover:bg-blue-200 transition-colors">
+                          <Cloud size={20} />
                         </div>
                         <span className="font-bold text-gray-800">
-                          Bản đồ cảnh báo
+                          Thời tiết hôm nay
                         </span>
                       </div>
                       <ChevronRight
                         size={18}
-                        className="text-gray-400 group-hover:text-slate-500"
+                        className="text-gray-400 group-hover:text-blue-500"
                       />
                     </button>
 
@@ -378,13 +490,449 @@ const AppSidebar = ({ isOpen, onClose }) => {
                     </div>
                   </div>
                 </motion.div>
+              ) : view === "weather" ? (
+                <motion.div
+                  key="weather"
+                  initial={{ x: 20, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  exit={{ x: 20, opacity: 0 }}
+                  className="flex flex-col h-full bg-slate-50"
+                >
+                  <div className="bg-white px-4 py-4 flex items-center border-b border-gray-100 shadow-sm z-10 gap-3">
+                    <button
+                      onClick={() => setView("menu")}
+                      className="p-2 bg-gray-50 text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+                    >
+                      <ArrowLeft size={20} />
+                    </button>
+                    <h2 className="text-lg font-black text-gray-800">
+                      Thời tiết hôm nay
+                    </h2>
+                  </div>
+
+                  <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                    <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
+                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">
+                        Tìm tỉnh / thành
+                      </label>
+                      <div className="flex gap-2">
+                        <div className="relative flex-1">
+                          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                          <input
+                            value={weatherQuery}
+                            onChange={(e) => setWeatherQuery(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                const q = weatherQuery.trim() || weatherCity;
+                                loadWeather(q);
+                              }
+                            }}
+                            placeholder="Ví dụ: Đà Nẵng, Hà Nội..."
+                            className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-10 pr-3 text-sm font-semibold text-slate-800 outline-none focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-400"
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          disabled={weatherLoading}
+                          onClick={() => {
+                            const q = weatherQuery.trim() || weatherCity;
+                            loadWeather(q);
+                          }}
+                          className="shrink-0 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-extrabold text-white hover:bg-blue-700 disabled:opacity-60"
+                        >
+                          Xem
+                        </button>
+                      </div>
+                      <p className="mt-2 text-[11px] text-slate-400">
+                        Đang xem: <span className="font-bold text-slate-600">{weatherCity}</span>
+                      </p>
+
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {[
+                          "Đà Nẵng",
+                          "Hà Nội",
+                          "TP. Hồ Chí Minh",
+                          "Đà Lạt",
+                          "Nha Trang",
+                          "Vũng Tàu",
+                        ].map((city) => {
+                          const active = normWeatherCityKey(city) === normWeatherCityKey(weatherCity);
+                          return (
+                            <button
+                              key={city}
+                              type="button"
+                              disabled={weatherLoading}
+                              onClick={() => {
+                                setWeatherQuery("");
+                                loadWeather(city);
+                              }}
+                              className={`rounded-full border px-3 py-1.5 text-xs font-extrabold transition ${
+                                active
+                                  ? "border-blue-200 bg-blue-50 text-blue-700"
+                                  : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                              } disabled:opacity-60`}
+                            >
+                              {city}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div
+                      className="rounded-[28px] overflow-hidden shadow-lg border border-slate-200/60 text-white relative"
+                    >
+                      <div className="relative p-5">
+                        {weatherLoading ? (
+                          <div className="flex items-center gap-2 text-white/90">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <span className="text-sm font-semibold">
+                              Đang tải thời tiết…
+                            </span>
+                          </div>
+                        ) : weatherError ? (
+                          <div className="text-sm font-semibold text-white/95">
+                            {weatherError}
+                          </div>
+                        ) : weatherData?.forecast?.list?.length ? (
+                          (() => {
+                            const forecast = weatherData.forecast;
+                            const nowItem = forecast.list[0];
+                            const main = nowItem?.weather?.[0]?.main;
+                            const desc = nowItem?.weather?.[0]?.description || "";
+                            const temp = Math.round(Number(nowItem?.main?.temp) || 0);
+                            const humidity = Math.round(Number(nowItem?.main?.humidity) || 0);
+                            const windMs = Number(nowItem?.wind?.speed) || 0;
+                            const windKmh = Math.round(windMs * 3.6);
+
+                            const themeKey = (() => {
+                              const m = String(main || "").toLowerCase();
+                              const d = String(desc || "").toLowerCase();
+                              if (m.includes("thunder")) return "storm";
+                              if (m.includes("rain") || m.includes("drizzle") || d.includes("mưa")) return "rain";
+                              if (m.includes("snow") || d.includes("tuyết")) return "snow";
+                              if (m.includes("mist") || m.includes("fog") || m.includes("haze") || d.includes("sương")) return "fog";
+                              if (m.includes("cloud")) return "cloudy";
+                              if (m.includes("clear") || d.includes("nắng")) return "sunny";
+                              return "cloudy";
+                            })();
+
+                            const theme = (() => {
+                              // Màu sắc trực quan theo trạng thái thời tiết.
+                              // Nếu nhiệt độ cao, tăng "ấm" cho theme nắng/mây.
+                              const isHot = Number.isFinite(temp) && temp >= 32;
+                              switch (themeKey) {
+                                case "storm":
+                                  return {
+                                    bg: "bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900",
+                                    border: "border-indigo-300/25",
+                                    chip: "bg-white/10 border-white/10",
+                                    accent: "text-violet-100",
+                                    overlay: "storm",
+                                  };
+                                case "rain":
+                                  return {
+                                    bg: "bg-gradient-to-br from-sky-700 via-blue-800 to-indigo-900",
+                                    border: "border-sky-200/25",
+                                    chip: "bg-white/10 border-white/10",
+                                    accent: "text-sky-50",
+                                    overlay: "rain",
+                                  };
+                                case "snow":
+                                  return {
+                                    bg: "bg-gradient-to-br from-slate-200 via-slate-400 to-slate-700",
+                                    border: "border-white/40",
+                                    chip: "bg-white/30 border-white/30",
+                                    accent: "text-slate-900",
+                                    overlay: "snow",
+                                  };
+                                case "fog":
+                                  return {
+                                    bg: "bg-gradient-to-br from-slate-600 via-slate-700 to-slate-800",
+                                    border: "border-slate-200/20",
+                                    chip: "bg-white/10 border-white/10",
+                                    accent: "text-slate-50",
+                                    overlay: "fog",
+                                  };
+                                case "sunny":
+                                  return {
+                                    bg: isHot
+                                      ? "bg-gradient-to-br from-orange-400 via-amber-500 to-sky-500"
+                                      : "bg-gradient-to-br from-sky-400 via-blue-500 to-indigo-600",
+                                    border: isHot ? "border-amber-100/30" : "border-blue-100/40",
+                                    chip: "bg-white/12 border-white/12",
+                                    accent: "text-white",
+                                    overlay: "sun",
+                                  };
+                                case "cloudy":
+                                default:
+                                  return {
+                                    bg: isHot
+                                      ? "bg-gradient-to-br from-amber-400 via-sky-500 to-indigo-600"
+                                      : "bg-gradient-to-br from-slate-500 via-sky-600 to-indigo-700",
+                                    border: "border-white/10",
+                                    chip: "bg-white/10 border-white/10",
+                                    accent: "text-white",
+                                    overlay: "clouds",
+                                  };
+                              }
+                            })();
+
+                            const todayKey = new Date().toISOString().slice(0, 10);
+                            const todayItems = forecast.list.filter((x) =>
+                              String(x?.dt_txt || "").startsWith(todayKey),
+                            );
+                            const temps = todayItems.map((x) => Number(x?.main?.temp)).filter((n) => Number.isFinite(n));
+                            const hi = temps.length ? Math.round(Math.max(...temps)) : temp;
+                            const lo = temps.length ? Math.round(Math.min(...temps)) : temp;
+
+                            const sunrise = forecast?.city?.sunrise
+                              ? new Date(forecast.city.sunrise * 1000).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })
+                              : "--:--";
+                            const sunset = forecast?.city?.sunset
+                              ? new Date(forecast.city.sunset * 1000).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })
+                              : "--:--";
+
+                            const { Icon: WxIcon } = getWeatherIcon(main);
+                            const hourly = forecast.list.slice(0, 4);
+
+                            return (
+                              <>
+                                {/* Nền theo trạng thái thời tiết */}
+                                <div className={`absolute inset-0 ${theme.bg}`} aria-hidden />
+                                <div className="absolute inset-0 opacity-90" aria-hidden>
+                                  {theme.overlay === "rain" ? (
+                                    <div className="vtw-rain" />
+                                  ) : theme.overlay === "storm" ? (
+                                    <div className="vtw-storm" />
+                                  ) : theme.overlay === "clouds" ? (
+                                    <div className="vtw-clouds" />
+                                  ) : theme.overlay === "sun" ? (
+                                    <div className="vtw-sun" />
+                                  ) : theme.overlay === "fog" ? (
+                                    <div className="vtw-fog" />
+                                  ) : theme.overlay === "snow" ? (
+                                    <div className="vtw-snow" />
+                                  ) : null}
+                                </div>
+
+                                <div className={`absolute inset-0 border ${theme.border}`} aria-hidden />
+                                <div className="absolute inset-0 bg-black/10" aria-hidden />
+
+                                <div className="relative">
+                                <div className="flex items-start justify-between gap-4">
+                                  <div className="min-w-0">
+                                    <div className="flex items-center gap-2 text-white/95">
+                                      <span className="text-sm font-bold tracking-wide">
+                                        {weatherData.city}
+                                      </span>
+                                    </div>
+                                    <div className="mt-3 flex items-end gap-2">
+                                      <div className="text-6xl font-black leading-none">
+                                        {temp}°
+                                      </div>
+                                      <div className="pb-2 text-xl font-black opacity-95">
+                                        C
+                                      </div>
+                                    </div>
+                                    <p className={`mt-2 text-base font-semibold ${theme.accent}`}>
+                                      {desc ? desc[0].toUpperCase() + desc.slice(1) : "Thời tiết"}
+                                    </p>
+                                    <p className="mt-1 text-sm font-semibold text-white/80">
+                                      H:{hi}° &nbsp;&nbsp; L:{lo}°
+                                    </p>
+                                  </div>
+                                  <div className={`h-20 w-20 rounded-2xl border ${theme.chip} flex items-center justify-center backdrop-blur-sm`}>
+                                    <WxIcon className="h-10 w-10 text-white/95" />
+                                  </div>
+                                </div>
+
+                                <div className="mt-5 grid grid-cols-2 gap-3">
+                                  <div className={`rounded-2xl border ${theme.chip} p-4 backdrop-blur-sm`}>
+                                    <div className="flex items-center gap-2 text-white/85 text-sm font-semibold">
+                                      <Droplets className="h-4 w-4" />
+                                      Độ ẩm
+                                    </div>
+                                    <div className="mt-2 text-2xl font-black">
+                                      {humidity}%
+                                    </div>
+                                  </div>
+                                  <div className={`rounded-2xl border ${theme.chip} p-4 backdrop-blur-sm`}>
+                                    <div className="flex items-center gap-2 text-white/85 text-sm font-semibold">
+                                      <Wind className="h-4 w-4" />
+                                      Gió
+                                    </div>
+                                    <div className="mt-2 text-2xl font-black">
+                                      {windKmh} km/h
+                                    </div>
+                                  </div>
+                                  <div className={`rounded-2xl border ${theme.chip} p-4 backdrop-blur-sm`}>
+                                    <div className="flex items-center gap-2 text-white/85 text-sm font-semibold">
+                                      <Sunrise className="h-4 w-4" />
+                                      Bình minh
+                                    </div>
+                                    <div className="mt-2 text-2xl font-black">
+                                      {sunrise}
+                                    </div>
+                                  </div>
+                                  <div className={`rounded-2xl border ${theme.chip} p-4 backdrop-blur-sm`}>
+                                    <div className="flex items-center gap-2 text-white/85 text-sm font-semibold">
+                                      <Sunset className="h-4 w-4" />
+                                      Hoàng hôn
+                                    </div>
+                                    <div className="mt-2 text-2xl font-black">
+                                      {sunset}
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <div className={`mt-5 rounded-2xl border ${theme.chip} p-4 backdrop-blur-sm`}>
+                                  <p className="text-sm font-extrabold text-white/90">
+                                    Dự báo theo giờ
+                                  </p>
+                                  <div className="mt-4 grid grid-cols-4 gap-3">
+                                    {hourly.map((h, idx) => {
+                                      const t = String(h?.dt_txt || "").slice(11, 16) || "--:--";
+                                      const tTemp = Math.round(Number(h?.main?.temp) || 0);
+                                      const { Icon: HIcon } = getWeatherIcon(h?.weather?.[0]?.main);
+                                      return (
+                                        <div
+                                          key={`${h?.dt_txt}-${idx}`}
+                                          className={`rounded-2xl border ${theme.chip} p-3 text-center`}
+                                        >
+                                          <div className="text-xs font-bold text-white/80">
+                                            {t}
+                                          </div>
+                                          <div className="mt-2 flex justify-center">
+                                            <HIcon className="h-5 w-5 text-white/90" />
+                                          </div>
+                                          <div className="mt-2 text-lg font-black">
+                                            {tTemp}°
+                                          </div>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                                </div>
+                              </>
+                            );
+                          })()
+                        ) : (
+                          <div className="text-sm font-semibold text-white/95">
+                            Chưa có dữ liệu thời tiết.
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
               ) : null}
             </AnimatePresence>
           </motion.div>
         </>
       )}
+
+      {/* Weather overlays (scoped) */}
+      <style>{`
+        .vtw-rain {
+          position: absolute;
+          inset: -40px;
+          background-image:
+            repeating-linear-gradient(
+              105deg,
+              rgba(255,255,255,0.00) 0px,
+              rgba(255,255,255,0.00) 8px,
+              rgba(255,255,255,0.18) 9px,
+              rgba(255,255,255,0.18) 10px
+            );
+          opacity: 0.55;
+          transform: rotate(-8deg);
+          animation: vtw-rain-move 1.1s linear infinite;
+        }
+        @keyframes vtw-rain-move {
+          from { background-position: 0px 0px; }
+          to { background-position: 0px 120px; }
+        }
+        .vtw-storm {
+          position: absolute;
+          inset: 0;
+          background:
+            radial-gradient(circle at 20% 20%, rgba(255,255,255,0.08), transparent 55%),
+            radial-gradient(circle at 70% 30%, rgba(99,102,241,0.22), transparent 60%),
+            radial-gradient(circle at 40% 80%, rgba(255,255,255,0.06), transparent 55%);
+          animation: vtw-storm-pulse 2.2s ease-in-out infinite;
+          opacity: 0.9;
+        }
+        @keyframes vtw-storm-pulse {
+          0%, 100% { filter: brightness(1); }
+          45% { filter: brightness(1.06); }
+          50% { filter: brightness(1.18); }
+          55% { filter: brightness(1.05); }
+        }
+        .vtw-clouds {
+          position: absolute;
+          inset: -20px;
+          background:
+            radial-gradient(circle at 15% 35%, rgba(255,255,255,0.20), transparent 55%),
+            radial-gradient(circle at 55% 20%, rgba(255,255,255,0.16), transparent 60%),
+            radial-gradient(circle at 78% 55%, rgba(255,255,255,0.18), transparent 55%),
+            radial-gradient(circle at 35% 70%, rgba(255,255,255,0.12), transparent 55%);
+          filter: blur(1px);
+          opacity: 0.75;
+          animation: vtw-clouds-drift 8s ease-in-out infinite;
+        }
+        @keyframes vtw-clouds-drift {
+          0%, 100% { transform: translateX(-6px); }
+          50% { transform: translateX(10px); }
+        }
+        .vtw-sun {
+          position: absolute;
+          inset: 0;
+          background:
+            radial-gradient(circle at 78% 18%, rgba(255,255,255,0.18), transparent 55%),
+            radial-gradient(circle at 82% 22%, rgba(251,191,36,0.35), transparent 48%),
+            radial-gradient(circle at 18% 78%, rgba(255,255,255,0.06), transparent 55%);
+          animation: vtw-sun-glow 3.4s ease-in-out infinite;
+          opacity: 0.95;
+        }
+        @keyframes vtw-sun-glow {
+          0%, 100% { filter: saturate(1) brightness(1); }
+          50% { filter: saturate(1.15) brightness(1.08); }
+        }
+        .vtw-fog {
+          position: absolute;
+          inset: 0;
+          background:
+            linear-gradient(to bottom, rgba(255,255,255,0.10), rgba(255,255,255,0.02)),
+            radial-gradient(circle at 35% 45%, rgba(255,255,255,0.16), transparent 60%),
+            radial-gradient(circle at 70% 55%, rgba(255,255,255,0.12), transparent 60%);
+          opacity: 0.85;
+          animation: vtw-fog-float 6.5s ease-in-out infinite;
+        }
+        @keyframes vtw-fog-float {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(6px); }
+        }
+        .vtw-snow {
+          position: absolute;
+          inset: -30px;
+          background-image:
+            radial-gradient(circle, rgba(255,255,255,0.55) 1px, transparent 1.5px),
+            radial-gradient(circle, rgba(255,255,255,0.40) 1px, transparent 1.5px);
+          background-size: 26px 26px, 34px 34px;
+          background-position: 0 0, 10px 10px;
+          opacity: 0.35;
+          animation: vtw-snow-fall 5.2s linear infinite;
+        }
+        @keyframes vtw-snow-fall {
+          from { background-position: 0 0, 10px 10px; }
+          to { background-position: 0 140px, 10px 170px; }
+        }
+      `}</style>
     </AnimatePresence>
   );
 };
 
 export default AppSidebar;
+

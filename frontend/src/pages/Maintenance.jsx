@@ -7,6 +7,7 @@ const DEFAULT_MESSAGE =
 const Maintenance = ({ maintenance }) => {
   const title = maintenance?.title || DEFAULT_TITLE;
   const message = maintenance?.message || DEFAULT_MESSAGE;
+  const expectedTime = typeof maintenance?.expectedTime === "string" ? maintenance.expectedTime.trim() : "";
   const contact = maintenance?.contact || {};
   const name = contact?.name || "MR Phú";
   const phone = contact?.phone || "0905713702";
@@ -54,6 +55,17 @@ const Maintenance = ({ maintenance }) => {
           <p className="mx-auto mb-8 max-w-md text-lg font-normal leading-relaxed text-slate-400">
             {message}
           </p>
+
+          {expectedTime ? (
+            <div className="mx-auto mb-6 w-full max-w-md rounded-2xl border border-blue-500/15 bg-blue-500/10 px-5 py-4 text-left text-sm font-medium text-slate-200">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-blue-200/90">
+                Thời gian dự kiến
+              </p>
+              <p className="mt-1 text-base font-semibold text-slate-100">
+                {expectedTime}
+              </p>
+            </div>
+          ) : null}
 
           <div className="rounded-2xl border border-slate-600/50 bg-slate-950/40 p-6 text-left shadow-sm backdrop-blur-md">
             <p className="mb-2 text-sm font-semibold uppercase tracking-wider text-slate-500">

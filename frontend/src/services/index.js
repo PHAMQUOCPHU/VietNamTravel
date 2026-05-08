@@ -6,7 +6,6 @@ export * from "./reviewService";
 export * from "./tourService";
 export * from "./userService";
 export * from "./voucherService";
-export * from "./weatherService";
 export * from "./termsService";
 export * from "./messageService";
 export * from "./careerService";

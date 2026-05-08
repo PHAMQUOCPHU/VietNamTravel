@@ -375,10 +375,7 @@ cp admin/.env.example admin/.env
 - `GET /` - Lấy thông báo của user
 - `PUT /:id/read` - Đánh dấu đã đọc
 
-### Safety Routes (`/api/safety`)
-
-- `GET /` - Lấy thông tin an toàn
-
+---
 ---
 
 ## 📁 Cấu Trúc Thư Mục

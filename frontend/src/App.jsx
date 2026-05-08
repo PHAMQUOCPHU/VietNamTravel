@@ -31,7 +31,6 @@ const MyCollection = lazy(() => import("./pages/MyCollection"));
 const Favorites = lazy(() => import("./pages/Favorites"));
 const Notifications = lazy(() => import("./pages/Notifications"));
 const Diaries = lazy(() => import("./pages/Diaries"));
-const DisasterMap = lazy(() => import("./pages/DisasterMap"));
 const Careers = lazy(() => import("./pages/Careers"));
 const SearchResultList = lazy(() => import("./pages/SearchResultList"));
 const Terms = lazy(() => import("./pages/Terms.jsx"));
@@ -127,7 +126,6 @@ const App = () => {
             <Route path="/privileges" element={<Privileges />} />
             <Route path="/favorites" element={<Favorites />} />
             <Route path="/notifications" element={<Notifications />} />
-            <Route path="/disaster-map" element={<DisasterMap />} />
             <Route path="/careers" element={<Careers />} />
             <Route path="/my-collection" element={<MyCollection />} />
             <Route path="/diaries" element={<Diaries />} />
