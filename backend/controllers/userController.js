@@ -1,5 +1,5 @@
 import otpModel from "../models/otpModel.js";
-import transporter from "../config/nodemailer.js";
+import transporter, { explainMailTransportError } from "../config/nodemailer.js";
 import cryptoRandomString from "crypto-random-string";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
@@ -33,7 +33,11 @@ export const sendOtp = async (req, res) => {
     });
     res.json({ success: true, message: "Mã OTP đã được gửi!" });
   } catch (error) {
-    res.json({ success: false, message: error.message });
+    console.error("[send-otp] sendMail:", error?.code || error?.message || error);
+    res.json({
+      success: false,
+      message: explainMailTransportError(error),
+    });
   }
 };
 
@@ -166,7 +170,11 @@ export const forgotPassword = async (req, res) => {
     });
     res.json({ success: true, message: "Mã OTP đã được gửi!" });
   } catch (error) {
-    res.json({ success: false, message: error.message });
+    console.error("[forgot-password] sendMail:", error?.code || error?.message || error);
+    res.json({
+      success: false,
+      message: explainMailTransportError(error),
+    });
   }
 };
 
@@ -204,7 +212,11 @@ export const adminForgotPassword = async (req, res) => {
 
     return res.json(genericOk);
   } catch (error) {
-    return res.json({ success: false, message: error.message });
+    console.error("[admin-forgot-password] sendMail:", error?.code || error?.message || error);
+    return res.json({
+      success: false,
+      message: explainMailTransportError(error),
+    });
   }
 };
 
