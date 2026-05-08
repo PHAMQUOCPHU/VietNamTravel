@@ -14,7 +14,11 @@ export const verifyAndRegisterRequest = async ({ backendUrl, email, otp, fullDat
 
 export const forgotPasswordRequest = async ({ backendUrl, email }) => {
   const client = buildHttpClient(backendUrl);
-  const { data } = await client.post("/api/user/forgot-password", { email });
+  const { data } = await client.post(
+    "/api/user/forgot-password",
+    { email },
+    { timeout: 90_000 },
+  );
   return data;
 };
 

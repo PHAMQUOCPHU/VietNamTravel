@@ -17,12 +17,21 @@ const ForgotPassword = () => {
     setIsLoading(true);
     try {
       const data = await forgotPasswordRequest({ backendUrl, email });
-      if (data.success) {
-        toast.success("Mã OTP đã được gửi!");
+      if (data?.success) {
+        toast.success(data.message || "Mã OTP đã được gửi!");
         navigate("/verify-otp", { state: { email } });
+        return;
       }
+      toast.error(data?.message || "Không gửi được mã OTP. Thử lại sau.");
     } catch (error) {
-      toast.error(error.response?.data?.message || "Email không tồn tại");
+      const msg =
+        error.code === "ECONNABORTED"
+          ? "Hết thời gian chờ máy chủ. Kiểm tra kết nối hoặc thử lại."
+          : error.response?.data?.message ||
+            error.message ||
+            "Không kết nối được máy chủ.";
+      toast.error(msg);
+    } finally {
       setIsLoading(false);
     }
   };
