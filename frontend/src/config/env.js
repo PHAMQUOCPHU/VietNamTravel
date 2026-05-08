@@ -21,8 +21,17 @@ if (import.meta.env.DEV) {
     BACKEND_URL.includes("localhost") || BACKEND_URL.includes("127.0.0.1");
   if (!isLocalHost && pointsToLocal) {
     console.error(
-      "[env] VITE_BACKEND_URL đang trỏ tới localhost trong bản build production. " +
-        "Thêm biến VITE_BACKEND_URL đúng backend (HTTPS) trên Vercel → Settings → Environment Variables, rồi deploy lại.",
+      "[env] VITE_BACKEND_URL đang trỏ tới localhost trong bản production. " +
+        "Set VITE_BACKEND_URL = URL API HTTPS đầy đủ trên Vercel (Settings → Env) rồi Redeploy.",
+    );
+  }
+  const pageHttps =
+    typeof window !== "undefined" && window.location.protocol === "https:";
+  const apiHttpOnly = BACKEND_URL.startsWith("http://") && !pointsToLocal;
+  if (!isLocalHost && pageHttps && apiHttpOnly) {
+    console.error(
+      "[env] Mixed content: site HTTPS nhưng VITE_BACKEND_URL dùng http:// → trình duyệt thường chặn, gây timeout/lỗi mạng. " +
+        "Hãy dùng HTTPS cho API hoặc bật HTTPS trên host backend (Railway/Render CDN URL).",
     );
   }
 }

@@ -427,6 +427,11 @@ io.on("connection", (socket) => {
 // --- 6. ROUTES & DATABASE ---
 connectCloudinary();
 
+/** Không đụng Mongo: dùng kiểm tra deploy / wakeup & tránh chờ SMTP. */
+app.get("/api/health", (_req, res) => {
+  res.status(200).json({ ok: true, uptime: process.uptime() });
+});
+
 app.use("/api/user/captcha", captchaRouter);
 app.use("/api/user", userRouter);
 app.use("/api/bookings", bookingRouter);

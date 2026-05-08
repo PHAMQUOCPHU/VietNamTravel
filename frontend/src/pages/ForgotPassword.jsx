@@ -24,12 +24,16 @@ const ForgotPassword = () => {
       }
       toast.error(data?.message || "Không gửi được mã OTP. Thử lại sau.");
     } catch (error) {
-      const msg =
-        error.code === "ECONNABORTED"
-          ? "Hết thời gian chờ máy chủ. Kiểm tra kết nối hoặc thử lại."
-          : error.response?.data?.message ||
-            error.message ||
-            "Không kết nối được máy chủ.";
+      const aborted = error.code === "ECONNABORTED";
+      const noResponse = !error.response;
+      let msg =
+        error.response?.data?.message ||
+        error.message ||
+        "Không kết nối được máy chủ.";
+      if (aborted || (noResponse && String(error.message || "").toLowerCase().includes("timeout"))) {
+        msg =
+          "Timeout: không nhận phản hồi API. Kiểm tra VITE_BACKEND_URL (HTTPS đúng) trên Vercel và thử GET .../api/health trên trình duyệt.";
+      }
       toast.error(msg);
     } finally {
       setIsLoading(false);
