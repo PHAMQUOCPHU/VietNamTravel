@@ -28,6 +28,20 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
   const devServerPort = Number.parseInt(env.VITE_DEV_SERVER_PORT, 10);
 
+  const backendCandidate = String(env.VITE_BACKEND_URL ?? "").trim();
+  if (
+    mode === "production" &&
+    process.env.VERCEL === "1" &&
+    (!backendCandidate ||
+      /localhost|127\.0\.0\.1/i.test(backendCandidate))
+  ) {
+    throw new Error(
+      "[VietNam Travel] Production build trên Vercel cần VITE_BACKEND_URL trỏ tới URL API công khai (HTTPS). " +
+        "Vào Project → Settings → Environment Variables → thêm ví dụ https://vietnamtravel.onrender.com rồi Redeploy. " +
+        "Không dùng localhost.",
+    );
+  }
+
   return {
     plugins: [react()],
     assetsInclude: ["**/*.ttf"],

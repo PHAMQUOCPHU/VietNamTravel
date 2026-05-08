@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import { AppContext } from "../context/AppContext";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -9,6 +9,18 @@ const ForgotPassword = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { backendUrl } = useContext(AppContext);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (import.meta.env.DEV) return;
+    const host = typeof window !== "undefined" ? window.location.hostname : "";
+    if (!host || host === "localhost" || host === "127.0.0.1") return;
+    const api = String(backendUrl || "");
+    if (api.includes("localhost") || api.includes("127.0.0.1")) {
+      toast.error(
+        "Thiếu cấu hình: frontend production đang gọi API localhost. Trên Vercel thêm biến VITE_BACKEND_URL = URL backend (HTTPS) và chạy lại Deploy.",
+      );
+    }
+  }, [backendUrl]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
