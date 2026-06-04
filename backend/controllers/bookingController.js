@@ -530,10 +530,12 @@ export const getAdminStats = async (req, res) => {
 
     bookings.forEach((booking) => {
       const createdAt = new Date(booking.createdAt);
-      
+
       // Convert to Vietnam timezone for comparison
-      const vietnamCreatedAt = new Date(createdAt.getTime() + 7 * 60 * 60 * 1000);
-      
+      const vietnamCreatedAt = new Date(
+        createdAt.getTime() + 7 * 60 * 60 * 1000,
+      );
+
       const monthOffset =
         (now.getUTCFullYear() - vietnamCreatedAt.getUTCFullYear()) * 12 +
         (now.getUTCMonth() - vietnamCreatedAt.getUTCMonth());
