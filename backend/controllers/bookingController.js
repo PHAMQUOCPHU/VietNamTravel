@@ -465,6 +465,21 @@ export const cancelExpiredBookingByUser = async (req, res) => {
   }
 };
 
+// Helper: Get current date in Vietnam timezone (UTC+7)
+const getVietnamNow = () => {
+  const now = new Date();
+  const vietnamTime = new Date(now.getTime() + 7 * 60 * 60 * 1000);
+  return vietnamTime;
+};
+
+// Helper: Get today's date at 00:00:00 in Vietnam timezone
+const getVietnamToday = () => {
+  const vietnamNow = getVietnamNow();
+  const today = new Date(vietnamNow);
+  today.setUTCHours(0, 0, 0, 0);
+  return today;
+};
+
 // 8. Thống kê
 export const getAdminStats = async (req, res) => {
   try {
@@ -487,7 +502,7 @@ export const getAdminStats = async (req, res) => {
 
     const monthlyLabels = [];
     const monthlyData = [];
-    const now = new Date();
+    const now = getVietnamNow();
     for (let i = 5; i >= 0; i -= 1) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
       monthlyLabels.push(`Thang ${d.getMonth() + 1}`);
@@ -496,11 +511,11 @@ export const getAdminStats = async (req, res) => {
 
     const weeklyLabels = [];
     const weeklyData = [];
+    const vietnamToday = getVietnamToday();
     for (let i = 6; i >= 0; i -= 1) {
-      const d = new Date();
-      d.setHours(0, 0, 0, 0);
-      d.setDate(d.getDate() - i);
-      weeklyLabels.push(`${d.getDate()}/${d.getMonth() + 1}`);
+      const d = new Date(vietnamToday);
+      d.setUTCDate(d.getUTCDate() - i);
+      weeklyLabels.push(`${d.getUTCDate()}/${d.getUTCMonth() + 1}`);
       weeklyData.push(0);
     }
 
@@ -515,20 +530,22 @@ export const getAdminStats = async (req, res) => {
 
     bookings.forEach((booking) => {
       const createdAt = new Date(booking.createdAt);
+      
+      // Convert to Vietnam timezone for comparison
+      const vietnamCreatedAt = new Date(createdAt.getTime() + 7 * 60 * 60 * 1000);
+      
       const monthOffset =
-        (now.getFullYear() - createdAt.getFullYear()) * 12 +
-        (now.getMonth() - createdAt.getMonth());
+        (now.getUTCFullYear() - vietnamCreatedAt.getUTCFullYear()) * 12 +
+        (now.getUTCMonth() - vietnamCreatedAt.getUTCMonth());
       if (monthOffset >= 0 && monthOffset < 6) {
         const idx = 5 - monthOffset;
         monthlyData[idx] += booking.totalPrice || 0;
       }
 
-      const bookingDay = new Date(createdAt);
-      bookingDay.setHours(0, 0, 0, 0);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
+      const bookingDay = new Date(vietnamCreatedAt);
+      bookingDay.setUTCHours(0, 0, 0, 0);
       const daysDiff = Math.floor(
-        (today.getTime() - bookingDay.getTime()) / (1000 * 60 * 60 * 24),
+        (vietnamToday.getTime() - bookingDay.getTime()) / (1000 * 60 * 60 * 24),
       );
       if (daysDiff >= 0 && daysDiff < 7) {
         const idx = 6 - daysDiff;
