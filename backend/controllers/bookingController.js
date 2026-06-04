@@ -525,8 +525,10 @@ export const getAdminStats = async (req, res) => {
 
       const bookingDay = new Date(createdAt);
       bookingDay.setHours(0, 0, 0, 0);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
       const daysDiff = Math.floor(
-        (new Date().setHours(0, 0, 0, 0) - bookingDay.getTime()) /
+        (today.getTime() - bookingDay.getTime()) /
           (1000 * 60 * 60 * 24),
       );
       if (daysDiff >= 0 && daysDiff < 7) {
