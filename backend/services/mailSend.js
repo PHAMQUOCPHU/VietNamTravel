@@ -14,9 +14,15 @@ export function isResendMailEnabled() {
  * Chỉ gửi qua Resend khi bật rõ: MAIL_USE_RESEND=true VÀ có RESEND_API_KEY.
  * (Tránh trường hợp nhầm thêm RESEND_API_KEY trên Render khiến mọi mail đi API thay vì SMTP.)
  */
-export async function sendAppEmail({ to, subject, text, html, from: fromOverride }) {
+export async function sendAppEmail({
+  to,
+  subject,
+  text,
+  html,
+  from: fromOverride,
+}) {
   const apiKey = process.env.RESEND_API_KEY?.trim();
-  if (shouldUseResend() && apiKey) {
+  if (isResendMailEnabled() && apiKey) {
     const from =
       process.env.RESEND_FROM?.trim() ||
       fromOverride?.trim() ||
@@ -56,7 +62,8 @@ export async function sendAppEmail({ to, subject, text, html, from: fromOverride
   }
 
   const fromAddr = fromOverride?.trim() || process.env.SENDER_EMAIL;
-  if (!fromAddr) throw new Error("Thiếu SENDER_EMAIL (hoặc thêm RESEND_API_KEY)");
+  if (!fromAddr)
+    throw new Error("Thiếu SENDER_EMAIL (hoặc thêm RESEND_API_KEY)");
 
   await transporter.sendMail({
     from: fromAddr,

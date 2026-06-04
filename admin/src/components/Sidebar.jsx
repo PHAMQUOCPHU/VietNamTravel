@@ -47,13 +47,18 @@ const SIDEBAR_MENU_ITEMS = [
     icon: <Map size={20} />,
     label: "Quản lý tour",
     path: "/admin/tours",
-    matchPaths: ["/admin/tours", "/admin/add-tour", "/admin/edit-tour/"],
+    matchPaths: ["/admin/tours", "/admin/add-tour", "/admin/edit-tour/", "/admin/tour-dispatch"],
     hasSubmenu: true,
     submenu: [
       {
         label: "Chỉnh sửa tour",
         path: "/admin/tours",
         matchPaths: ["/admin/tours", "/admin/edit-tour/"],
+      },
+      {
+        label: "Điều phối tour",
+        path: "/admin/tour-dispatch",
+        matchPaths: ["/admin/tour-dispatch"],
       },
       {
         label: "Thêm tour mới",

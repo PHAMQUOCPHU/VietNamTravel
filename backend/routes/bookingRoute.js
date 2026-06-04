@@ -12,6 +12,7 @@ import {
   createSchedule,
   deleteSchedule,
   getUserCollection,
+  getTourDispatch,
 } from "../controllers/bookingController.js";
 import adminAuth from "../middlewares/adminAuth.js";
 import authMiddleware from "../middlewares/auth.js";
@@ -20,6 +21,7 @@ const bookingRouter = express.Router();
 
 // --- ROUTE DÀNH CHO ADMIN ---
 bookingRouter.get("/stats", adminAuth, getAdminStats);
+bookingRouter.get("/dispatch", adminAuth, getTourDispatch);
 bookingRouter.get("/all", adminAuth, getAllBookings);
 bookingRouter.post("/update-status", adminAuth, updateBookingStatus);
 

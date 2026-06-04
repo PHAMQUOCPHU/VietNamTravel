@@ -640,3 +640,178 @@ export const getUserCollection = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+const SEATS_PER_VEHICLE = 16;
+const PASSENGERS_PER_GUIDE = 25;
+
+const vnDateRange = (dateStr) => {
+  const start = new Date(`${dateStr}T00:00:00+07:00`);
+  const end = new Date(`${dateStr}T23:59:59.999+07:00`);
+  return { start, end };
+};
+
+const todayVnDateKey = () =>
+  new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Ho_Chi_Minh" });
+
+/** Admin: thống kê đơn / khách theo tour và ngày khởi hành — phục vụ điều phối xe, HDV */
+export const getTourDispatch = async (req, res) => {
+  try {
+    const { date, tourId, fromDate, toDate } = req.query;
+
+    let rangeStart;
+    let rangeEnd;
+    let dateLabel = date || "";
+
+    if (fromDate && toDate) {
+      rangeStart = vnDateRange(fromDate).start;
+      rangeEnd = vnDateRange(toDate).end;
+      dateLabel = `${fromDate} → ${toDate}`;
+    } else {
+      const day = date || todayVnDateKey();
+      ({ start: rangeStart, end: rangeEnd } = vnDateRange(day));
+      dateLabel = day;
+    }
+
+    const scheduleQuery = {
+      startDate: { $gte: rangeStart, $lte: rangeEnd },
+    };
+    if (tourId) {
+      scheduleQuery.tourId = tourId;
+    }
+
+    const schedules = await scheduleModel
+      .find(scheduleQuery)
+      .populate("tourId", "title city duration maxGroupSize region")
+      .sort({ startDate: 1 })
+      .lean();
+
+    const scheduleIds = schedules.map((s) => s._id);
+
+    const bookings =
+      scheduleIds.length > 0
+        ? await bookingModel
+            .find({
+              scheduleId: { $in: scheduleIds },
+              status: { $nin: ["cancelled"] },
+            })
+            .select(
+              "scheduleId tourId name email phone guestSize status paymentStatus paymentMethod createdAt",
+            )
+            .sort({ createdAt: -1 })
+            .lean()
+        : [];
+
+    const bookingsBySchedule = new Map();
+    for (const booking of bookings) {
+      const key = String(booking.scheduleId);
+      if (!bookingsBySchedule.has(key)) bookingsBySchedule.set(key, []);
+      bookingsBySchedule.get(key).push(booking);
+    }
+
+    const departures = schedules.map((schedule) => {
+      const sid = String(schedule._id);
+      const scheduleBookings = bookingsBySchedule.get(sid) || [];
+      const tour = schedule.tourId;
+
+      let bookingCount = 0;
+      let passengerCount = 0;
+      let confirmedBookings = 0;
+      let pendingBookings = 0;
+      let cancelPendingBookings = 0;
+
+      const bookingDetails = scheduleBookings.map((b) => {
+        const travelers = countBookingTravelers(b);
+        bookingCount += 1;
+        passengerCount += travelers;
+        if (b.status === "confirmed") confirmedBookings += 1;
+        else if (b.status === "pending") pendingBookings += 1;
+        else if (b.status === "cancel_pending") cancelPendingBookings += 1;
+
+        return {
+          _id: b._id,
+          name: b.name,
+          email: b.email,
+          phone: b.phone,
+          guestSize: b.guestSize,
+          travelers,
+          status: b.status,
+          paymentStatus: b.paymentStatus,
+          paymentMethod: b.paymentMethod,
+          createdAt: b.createdAt,
+        };
+      });
+
+      const maxGroupSize =
+        schedule.maxGroupSize || tour?.maxGroupSize || 0;
+      const suggestedGuides =
+        passengerCount > 0
+          ? Math.max(1, Math.ceil(passengerCount / PASSENGERS_PER_GUIDE))
+          : 0;
+      const suggestedVehicles =
+        passengerCount > 0
+          ? Math.max(1, Math.ceil(passengerCount / SEATS_PER_VEHICLE))
+          : 0;
+
+      return {
+        scheduleId: schedule._id,
+        tourId: tour?._id || schedule.tourId,
+        tourTitle: tour?.title || "—",
+        tourCity: tour?.city || "",
+        tourDuration: tour?.duration || 1,
+        tourRegion: tour?.region || "",
+        departureAt: schedule.startDate,
+        maxGroupSize,
+        joinedParticipants: schedule.joinedParticipants || 0,
+        remainingSeats: Math.max(
+          0,
+          maxGroupSize - (schedule.joinedParticipants || 0),
+        ),
+        bookingCount,
+        passengerCount,
+        confirmedBookings,
+        pendingBookings,
+        cancelPendingBookings,
+        fillRate:
+          maxGroupSize > 0
+            ? Math.min(100, Math.round((passengerCount / maxGroupSize) * 100))
+            : 0,
+        suggestedGuides,
+        suggestedVehicles,
+        seatsPerVehicle: SEATS_PER_VEHICLE,
+        bookings: bookingDetails,
+      };
+    });
+
+    departures.sort((a, b) => {
+      if (b.passengerCount !== a.passengerCount) {
+        return b.passengerCount - a.passengerCount;
+      }
+      return new Date(a.departureAt) - new Date(b.departureAt);
+    });
+
+    const summary = {
+      departureSlots: departures.length,
+      slotsWithBookings: departures.filter((d) => d.bookingCount > 0).length,
+      totalBookings: departures.reduce((s, d) => s + d.bookingCount, 0),
+      totalPassengers: departures.reduce((s, d) => s + d.passengerCount, 0),
+      totalSuggestedVehicles: departures.reduce(
+        (s, d) => s + d.suggestedVehicles,
+        0,
+      ),
+      totalSuggestedGuides: departures.reduce(
+        (s, d) => s + d.suggestedGuides,
+        0,
+      ),
+    };
+
+    res.status(200).json({
+      success: true,
+      date: dateLabel,
+      range: { from: rangeStart, to: rangeEnd },
+      summary,
+      departures,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};

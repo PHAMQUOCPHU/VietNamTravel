@@ -9,6 +9,7 @@ import AdminLayout from "./components/AdminLayout";
 
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const TourManagement = lazy(() => import("./pages/TourManagement"));
+const TourDispatch = lazy(() => import("./pages/TourDispatch"));
 const AddTour = lazy(() => import("./pages/AddTour"));
 const EditTour = lazy(() => import("./pages/EditTour"));
 const BookingManagement = lazy(() => import("./pages/BookingManagement"));
@@ -112,6 +113,7 @@ function App() {
           <Route index element={<Dashboard />} />
           <Route path="messages" element={<Messages />} />
           <Route path="tours" element={<TourManagement />} />
+          <Route path="tour-dispatch" element={<TourDispatch />} />
           <Route path="add-tour" element={<AddTour />} />
           <Route path="edit-tour/:tourKey" element={<EditTour />} />
           <Route path="promotions" element={<PromotionManager />} />

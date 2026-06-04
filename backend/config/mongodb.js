@@ -1,4 +1,10 @@
+import dns from "dns";
 import mongoose from "mongoose";
+
+// Windows đôi khi không resolve được SRV của Atlas (querySrv ECONNREFUSED).
+if (process.platform === "win32") {
+  dns.setServers(["8.8.8.8", "1.1.1.1"]);
+}
 
 const connectDB = async () => {
   const uri = process.env.MONGO_URI;

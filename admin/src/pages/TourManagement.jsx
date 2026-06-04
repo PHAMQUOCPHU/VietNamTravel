@@ -24,6 +24,7 @@ import {
   CircleDollarSign,
   Map,
   TrendingUp,
+  Bus,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { buildTourSlug } from "../utils/tourSlug";
@@ -151,6 +152,14 @@ const TourManagement = () => {
             <Map className="text-white" size={22} strokeWidth={2} />
           </div>
         </div>
+        <button
+          type="button"
+          onClick={() => navigate("/admin/tour-dispatch")}
+          className="mt-4 inline-flex items-center gap-2 rounded-xl bg-white/15 px-4 py-2 text-sm font-bold text-white ring-1 ring-white/25 transition hover:bg-white/25"
+        >
+          <Bus size={16} />
+          Điều phối tour theo ngày
+        </button>
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -299,6 +308,15 @@ const TourManagement = () => {
                   <div className="flex flex-wrap gap-2 border-t border-slate-100 px-4 pb-4 pt-3">
                     <button
                       onClick={() =>
+                        navigate(`/admin/tour-dispatch?tourId=${item._id}`)
+                      }
+                      className="inline-flex items-center justify-center rounded-2xl bg-indigo-50 px-3 py-2 text-indigo-600 transition hover:bg-indigo-600 hover:text-white"
+                      title="Điều phối tour"
+                    >
+                      <Bus size={16} />
+                    </button>
+                    <button
+                      onClick={() =>
                         navigate(`/admin/edit-tour/${buildTourSlug(item)}`)
                       }
                       className="inline-flex items-center justify-center rounded-2xl bg-blue-50 px-3 py-2 text-blue-600 transition hover:bg-blue-600 hover:text-white"
@@ -415,6 +433,17 @@ const TourManagement = () => {
                       </td>
                       <td className="p-4">
                         <div className="flex justify-center gap-2">
+                          <button
+                            onClick={() =>
+                              navigate(
+                                `/admin/tour-dispatch?tourId=${item._id}`,
+                              )
+                            }
+                            className="p-2.5 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-600 hover:text-white transition-all shadow-sm"
+                            title="Điều phối tour"
+                          >
+                            <Bus size={16} />
+                          </button>
                           <button
                             onClick={() =>
                               navigate(
