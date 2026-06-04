@@ -250,7 +250,7 @@ const TourDispatch = () => {
           accent="text-emerald-600"
         />
         <SummaryCard
-          label="Xe gợi ý (16 chỗ)"
+          label="Xe gợi ý (1)"
           value={summary.totalSuggestedVehicles}
           icon={<Bus size={18} />}
           accent="text-amber-600"
@@ -483,7 +483,7 @@ const TourDispatch = () => {
       </div>
 
       <p className="text-xs text-slate-400">
-        Gợi ý xe/HDV tính theo ~{16} khách/xe và ~25 khách/HDV — có thể điều chỉnh
+        Gợi ý xe/HDV tính theo  khách/xe và  khách/HDV — có thể điều chỉnh
         thực tế tùy loại xe và quy mô đoàn.
       </p>
     </div>

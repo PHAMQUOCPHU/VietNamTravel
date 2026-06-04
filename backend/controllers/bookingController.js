@@ -528,8 +528,7 @@ export const getAdminStats = async (req, res) => {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const daysDiff = Math.floor(
-        (today.getTime() - bookingDay.getTime()) /
-          (1000 * 60 * 60 * 24),
+        (today.getTime() - bookingDay.getTime()) / (1000 * 60 * 60 * 24),
       );
       if (daysDiff >= 0 && daysDiff < 7) {
         const idx = 6 - daysDiff;
@@ -743,8 +742,7 @@ export const getTourDispatch = async (req, res) => {
         };
       });
 
-      const maxGroupSize =
-        schedule.maxGroupSize || tour?.maxGroupSize || 0;
+      const maxGroupSize = schedule.maxGroupSize || tour?.maxGroupSize || 0;
       const suggestedGuides =
         passengerCount > 0
           ? Math.max(1, Math.ceil(passengerCount / PASSENGERS_PER_GUIDE))
